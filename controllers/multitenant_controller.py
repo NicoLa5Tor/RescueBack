@@ -1,0 +1,154 @@
+from flask import request, jsonify
+from services.usuario_service import UsuarioService
+
+class MultiTenantController:
+    def __init__(self):
+        self.usuario_service = UsuarioService()
+    
+    def create_usuario_for_empresa(self, empresa_id):
+        """
+        Endpoint: POST /empresas/<empresa_id>/usuarios
+        Crea un usuario para una empresa específica
+        """
+        try:
+            # Obtener datos del request
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'errors': ['No se enviaron datos']
+                }), 400
+            
+            # Llamar al servicio para crear el usuario
+            result = self.usuario_service.create_usuario_for_empresa(empresa_id, data)
+            
+            # Retornar respuesta según el resultado
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': result.get('message', 'Usuario creado correctamente'),
+                    'data': result['data']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def get_usuarios_by_empresa(self, empresa_id):
+        """
+        Endpoint: GET /empresas/<empresa_id>/usuarios
+        Obtiene todos los usuarios de una empresa
+        """
+        try:
+            result = self.usuario_service.get_usuarios_by_empresa(empresa_id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'data': result['data'],
+                    'count': result['count'],
+                    'empresa': result['empresa']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def get_usuario_by_empresa(self, empresa_id, usuario_id):
+        """
+        Endpoint: GET /empresas/<empresa_id>/usuarios/<usuario_id>
+        Obtiene un usuario específico de una empresa
+        """
+        try:
+            result = self.usuario_service.get_usuario_by_id_and_empresa(usuario_id, empresa_id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'data': result['data']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def update_usuario_by_empresa(self, empresa_id, usuario_id):
+        """
+        Endpoint: PUT /empresas/<empresa_id>/usuarios/<usuario_id>
+        Actualiza un usuario específico de una empresa
+        """
+        try:
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'errors': ['No se enviaron datos']
+                }), 400
+            
+            result = self.usuario_service.update_usuario_for_empresa(usuario_id, empresa_id, data)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': result.get('message', 'Usuario actualizado correctamente'),
+                    'data': result['data']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def delete_usuario_by_empresa(self, empresa_id, usuario_id):
+        """
+        Endpoint: DELETE /empresas/<empresa_id>/usuarios/<usuario_id>
+        Elimina un usuario específico de una empresa
+        """
+        try:
+            result = self.usuario_service.delete_usuario_for_empresa(usuario_id, empresa_id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': result['message']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
