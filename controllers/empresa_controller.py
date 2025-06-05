@@ -1,23 +1,56 @@
-from flask import request, jsonify, g
+from flask import request, jsonify
 from functools import wraps
 from services.empresa_service import EmpresaService
-
-def require_super_admin(f):
-    """Decorador para verificar que el usuario sea super admin"""
+from services.auth_service import AuthService
+def token_required(f):
+    """Decorador que requiere un token JWT válido"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Aquí deberías implementar tu lógica de autenticación
-        # Por ahora, asumimos que el super_admin_id viene en los headers
-        super_admin_id = request.headers.get('X-Super-Admin-ID')
+        token = None
         
-        if not super_admin_id:
+        # Obtener token del header Authorization
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+        
+        if not token:
             return jsonify({
                 'success': False,
-                'errors': ['Se requiere autenticación de super admin']
+                'message': 'Token de acceso requerido',
+                'errors': ['Se requiere autenticación']
             }), 401
         
-        # Guardar el ID del super admin en el contexto de la request
-        g.super_admin_id = super_admin_id
+        # Verificar token
+        auth_service = AuthService()
+        verification = auth_service.verify_token(token)
+        
+        if not verification['valid']:
+            return jsonify({
+                'success': False,
+                'message': 'Token inválido',
+                'errors': [verification.get('error', 'Token inválido')]
+            }), 401
+        
+        # Agregar información del usuario al contexto
+        request.current_user = verification['payload']
+        request.user_permissions = verification['permisos']
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+def admin_required(f):
+    """Decorador que requiere permisos de administrador"""
+    @wraps(f)
+    @token_required
+    def decorated_function(*args, **kwargs):
+        if request.current_user['tipo'] != 'admin':
+            return jsonify({
+                'success': False,
+                'message': 'Se requieren permisos de administrador',
+                'errors': ['Acceso denegado']
+            }), 403
+        
         return f(*args, **kwargs)
     
     return decorated_function
@@ -26,7 +59,7 @@ class EmpresaController:
     def __init__(self):
         self.empresa_service = EmpresaService()
     
-    @require_super_admin
+    @admin_required
     def create_empresa(self):
         """Endpoint para crear una empresa (solo super admin)"""
         try:
@@ -38,8 +71,8 @@ class EmpresaController:
                     'errors': ['No se enviaron datos']
                 }), 400
             
-            # Obtener el ID del super admin del contexto
-            super_admin_id = g.super_admin_id
+            # Obtener el ID del super admin del token JWT
+            super_admin_id = request.current_user['user_id']
             
             result = self.empresa_service.create_empresa(data, super_admin_id)
             
@@ -85,8 +118,14 @@ class EmpresaController:
             
             if include_inactive:
                 # Verificar autenticación de super admin si se solicitan inactivas
-                super_admin_id = request.headers.get('X-Super-Admin-ID')
-                if not super_admin_id:
+                auth_header = request.headers.get('Authorization')
+                if auth_header and auth_header.startswith('Bearer '):
+                    auth_service = AuthService()
+                    token = auth_header[7:]
+                    verification = auth_service.verify_token(token)
+                    if not (verification['valid'] and verification['tipo'] == 'admin'):
+                        include_inactive = False
+                else:
                     include_inactive = False
             
             result = self.empresa_service.get_all_empresas(include_inactive)
@@ -106,11 +145,11 @@ class EmpresaController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
-    @require_super_admin
+    @admin_required
     def get_my_empresas(self):
         """Endpoint para obtener empresas creadas por el super admin autenticado"""
         try:
-            super_admin_id = g.super_admin_id
+            super_admin_id = request.current_user['user_id']
             result = self.empresa_service.get_empresas_by_creador(super_admin_id)
             
             if result['success']:
@@ -128,7 +167,7 @@ class EmpresaController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
-    @require_super_admin
+    @admin_required
     def update_empresa(self, empresa_id):
         """Endpoint para actualizar una empresa (solo el creador)"""
         try:
@@ -140,7 +179,7 @@ class EmpresaController:
                     'errors': ['No se enviaron datos']
                 }), 400
             
-            super_admin_id = g.super_admin_id
+            super_admin_id = request.current_user['user_id']
             result = self.empresa_service.update_empresa(empresa_id, data, super_admin_id)
             
             if result['success']:
@@ -158,11 +197,11 @@ class EmpresaController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
-    @require_super_admin
+    @admin_required
     def delete_empresa(self, empresa_id):
         """Endpoint para eliminar una empresa (solo el creador)"""
         try:
-            super_admin_id = g.super_admin_id
+            super_admin_id = request.current_user['user_id']
             result = self.empresa_service.delete_empresa(empresa_id, super_admin_id)
             
             if result['success']:
@@ -207,7 +246,7 @@ class EmpresaController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
-    @require_super_admin
+    @admin_required
     def get_empresa_stats(self):
         """Endpoint para obtener estadísticas de empresas (solo super admin)"""
         try:

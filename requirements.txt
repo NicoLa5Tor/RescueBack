@@ -1,5 +1,7 @@
-flask==2.3.3
-pymongo==4.5.0
-python-dotenv==1.0.0
-flask-cors==4.0.0
-bson==0.5.10
+flask
+pymongo
+python-dotenv
+flask-cors
+bson
+PyJWT
+bcrypt

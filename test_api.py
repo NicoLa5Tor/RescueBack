@@ -1,331 +1,168 @@
 """
-Script completo para testing de todos los endpoints de la API
-Incluye pruebas para usuarios y empresas con casos de éxito y error
+Script para debuggear problemas de autenticación
+Ejecutar: python debug_auth_issues.py
 """
 
-import requests
-import json
-import time
-from datetime import datetime
+import bcrypt
+from database import Database
+from models.administrador import Administrador
+from repositories.auth_repository import AuthRepository
+from services.auth_service import AuthService
 
-class APITester:
-    def __init__(self, base_url="http://localhost:5000"):
-        self.base_url = base_url
-        self.super_admin_id = "507f1f77bcf86cd799439011"  # ID de ejemplo
-        self.headers = {
-            "Content-Type": "application/json",
-            "X-Super-Admin-ID": self.super_admin_id
-        }
-        self.created_ids = {"users": [], "empresas": []}
-        
-    def print_separator(self, title):
-        """Imprime un separador visual"""
-        print("\n" + "="*60)
-        print(f"🧪 {title}")
-        print("="*60)
+def test_password_hash():
+    """Prueba si el hash de contraseña funciona correctamente"""
+    print("🔐 Probando hash de contraseña...")
     
-    def print_test(self, test_name):
-        """Imprime el nombre del test"""
-        print(f"\n🔍 {test_name}")
-        print("-" * 40)
+    password = "admin123"
+    stored_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdVAT5iOnE.ZdaC"
     
-    def make_request(self, method, endpoint, data=None, params=None, use_auth=False):
-        """Hace una petición HTTP y maneja errores"""
-        url = f"{self.base_url}{endpoint}"
-        headers = self.headers if use_auth else {"Content-Type": "application/json"}
+    # Verificar si el hash coincide
+    is_valid = bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+    print(f"Password: {password}")
+    print(f"Hash stored: {stored_hash}")
+    print(f"Hash válido: {is_valid}")
+    
+    if not is_valid:
+        print("❌ El hash no coincide con la contraseña")
+        # Generar un nuevo hash
+        new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        print(f"Nuevo hash generado: {new_hash}")
+    else:
+        print("✅ El hash es válido")
+    
+    return is_valid
+
+def test_database_connection():
+    """Prueba la conexión a la base de datos"""
+    print("\n📊 Probando conexión a base de datos...")
+    
+    try:
+        db = Database()
+        database = db.get_database()
         
-        try:
-            if method.upper() == "GET":
-                response = requests.get(url, params=params, headers=headers)
-            elif method.upper() == "POST":
-                response = requests.post(url, json=data, headers=headers)
-            elif method.upper() == "PUT":
-                response = requests.put(url, json=data, headers=headers)
-            elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers)
-            else:
-                raise ValueError(f"Método HTTP no soportado: {method}")
+        # Buscar el administrador directamente
+        admin_data = database.administradores.find_one({"usuario": "superadmin"})
+        
+        if admin_data:
+            print("✅ Administrador encontrado en la base de datos")
+            print(f"Usuario: {admin_data.get('usuario')}")
+            print(f"Email: {admin_data.get('email')}")
+            print(f"Activo: {admin_data.get('activo')}")
+            print(f"Hash en DB: {admin_data.get('password_hash')}")
+            return admin_data
+        else:
+            print("❌ No se encontró el administrador en la base de datos")
+            return None
             
-            print(f"Status: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Error conectando a la base de datos: {e}")
+        return None
+
+def test_auth_repository():
+    """Prueba el repositorio de autenticación"""
+    print("\n🔍 Probando AuthRepository...")
+    
+    try:
+        auth_repo = AuthRepository()
+        
+        # Buscar por usuario
+        admin = auth_repo.find_admin_by_usuario("superadmin")
+        if admin:
+            print("✅ AuthRepository encontró el administrador por usuario")
+            print(f"Admin encontrado: {admin.usuario}")
             
-            try:
-                json_response = response.json()
-                print(f"Response: {json.dumps(json_response, indent=2, ensure_ascii=False)}")
-                return response.status_code, json_response
-            except:
-                print(f"Response (text): {response.text}")
-                return response.status_code, response.text
-                
-        except requests.exceptions.ConnectionError:
-            print("❌ Error: No se pudo conectar al servidor")
-            return None, None
-        except Exception as e:
-            print(f"❌ Error: {e}")
-            return None, None
-
-    def test_health_endpoints(self):
-        """Prueba los endpoints de salud"""
-        self.print_separator("ENDPOINTS DE SALUD")
-        
-        self.print_test("Health Check")
-        self.make_request("GET", "/health")
-        
-        self.print_test("Endpoint raíz")
-        self.make_request("GET", "/")
-
-    def test_user_endpoints(self):
-        """Prueba todos los endpoints de usuarios"""
-        self.print_separator("ENDPOINTS DE USUARIOS")
-        
-        # 1. Crear usuario válido
-        self.print_test("Crear usuario válido")
-        user_data = {
-            "name": "Juan Pérez",
-            "email": f"juan.perez.{int(time.time())}@email.com",
-            "age": 30
-        }
-        status, response = self.make_request("POST", "/api/users", data=user_data)
-        if status == 201 and response.get('success'):
-            user_id = response['data']['_id']
-            self.created_ids["users"].append(user_id)
-            print(f"✅ Usuario creado con ID: {user_id}")
-        
-        # 2. Crear usuario con datos inválidos
-        self.print_test("Crear usuario con datos inválidos")
-        invalid_user = {
-            "name": "",
-            "email": "email-invalido",
-            "age": -5
-        }
-        self.make_request("POST", "/api/users", data=invalid_user)
-        
-        # 3. Crear usuario con email duplicado
-        self.print_test("Crear usuario con email duplicado")
-        duplicate_user = {
-            "name": "María González",
-            "email": user_data["email"],  # Email duplicado
-            "age": 25
-        }
-        self.make_request("POST", "/api/users", data=duplicate_user)
-        
-        # 4. Obtener todos los usuarios
-        self.print_test("Obtener todos los usuarios")
-        self.make_request("GET", "/api/users")
-        
-        # 5. Obtener usuario por ID (si se creó uno)
-        if self.created_ids["users"]:
-            user_id = self.created_ids["users"][0]
-            self.print_test(f"Obtener usuario por ID: {user_id}")
-            self.make_request("GET", f"/api/users/{user_id}")
+            # Probar verificación de contraseña
+            password_valid = admin.verify_password("admin123")
+            print(f"Verificación de contraseña: {password_valid}")
             
-            # 6. Actualizar usuario
-            self.print_test("Actualizar usuario")
-            update_data = {
-                "name": "Juan Pérez Actualizado",
-                "age": 31
-            }
-            self.make_request("PUT", f"/api/users/{user_id}", data=update_data)
-        
-        # 7. Obtener usuario inexistente
-        self.print_test("Obtener usuario inexistente")
-        fake_id = "507f1f77bcf86cd799439999"
-        self.make_request("GET", f"/api/users/{fake_id}")
-        
-        # 8. Buscar usuarios por rango de edad
-        self.print_test("Buscar usuarios por edad")
-        self.make_request("GET", "/api/users/age-range", params={"min_age": 25, "max_age": 35})
-        
-        # 9. Buscar con parámetros inválidos
-        self.print_test("Buscar con parámetros de edad inválidos")
-        self.make_request("GET", "/api/users/age-range", params={"min_age": "abc", "max_age": "xyz"})
-
-    def test_empresa_endpoints(self):
-        """Prueba todos los endpoints de empresas"""
-        self.print_separator("ENDPOINTS DE EMPRESAS")
-        
-        # 1. Crear empresa válida (con auth)
-        self.print_test("Crear empresa válida")
-        empresa_data = {
-            "nombre": f"TechCorp {int(time.time())}",
-            "descripcion": "Empresa de desarrollo de software y consultoría tecnológica especializada en soluciones empresariales innovadoras",
-            "ubicacion": "Bogotá, Colombia"
-        }
-        status, response = self.make_request("POST", "/api/empresas", data=empresa_data, use_auth=True)
-        if status == 201 and response.get('success'):
-            empresa_id = response['data']['_id']
-            self.created_ids["empresas"].append(empresa_id)
-            print(f"✅ Empresa creada con ID: {empresa_id}")
-        
-        # 2. Crear empresa sin autenticación
-        self.print_test("Crear empresa sin autenticación")
-        self.make_request("POST", "/api/empresas", data=empresa_data)
-        
-        # 3. Crear empresa con datos inválidos
-        self.print_test("Crear empresa con datos inválidos")
-        invalid_empresa = {
-            "nombre": "",
-            "descripcion": "Muy corta",
-            "ubicacion": "X"
-        }
-        self.make_request("POST", "/api/empresas", data=invalid_empresa, use_auth=True)
-        
-        # 4. Crear empresa con nombre duplicado
-        self.print_test("Crear empresa con nombre duplicado")
-        duplicate_empresa = {
-            "nombre": empresa_data["nombre"],
-            "descripcion": "Otra descripción para empresa con nombre duplicado",
-            "ubicacion": "Medellín, Colombia"
-        }
-        self.make_request("POST", "/api/empresas", data=duplicate_empresa, use_auth=True)
-        
-        # 5. Obtener todas las empresas
-        self.print_test("Obtener todas las empresas")
-        self.make_request("GET", "/api/empresas")
-        
-        # 6. Obtener todas las empresas incluyendo inactivas (con auth)
-        self.print_test("Obtener empresas incluyendo inactivas")
-        self.make_request("GET", "/api/empresas", params={"include_inactive": "true"}, use_auth=True)
-        
-        # 7. Obtener empresa por ID (si se creó una)
-        if self.created_ids["empresas"]:
-            empresa_id = self.created_ids["empresas"][0]
-            self.print_test(f"Obtener empresa por ID: {empresa_id}")
-            self.make_request("GET", f"/api/empresas/{empresa_id}")
+            return admin
+        else:
+            print("❌ AuthRepository no encontró el administrador")
+            return None
             
-            # 8. Actualizar empresa
-            self.print_test("Actualizar empresa")
-            update_data = {
-                "descripcion": "Descripción actualizada de la empresa con más detalles sobre sus servicios",
-                "ubicacion": "Bogotá D.C., Colombia"
-            }
-            self.make_request("PUT", f"/api/empresas/{empresa_id}", data=update_data, use_auth=True)
+    except Exception as e:
+        print(f"❌ Error en AuthRepository: {e}")
+        return None
+
+def test_auth_service():
+    """Prueba el servicio de autenticación"""
+    print("\n🔧 Probando AuthService...")
+    
+    try:
+        auth_service = AuthService()
+        
+        # Intentar login
+        result = auth_service.login("superadmin", "admin123")
+        
+        print(f"Resultado del login: {result}")
+        
+        if result['success']:
+            print("✅ AuthService login exitoso")
+        else:
+            print(f"❌ AuthService login falló: {result.get('errors', [])}")
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Error en AuthService: {e}")
+        return None
+
+def fix_password_hash():
+    """Actualiza el hash de contraseña en la base de datos"""
+    print("\n🛠️ Actualizando hash de contraseña...")
+    
+    try:
+        password = "admin123"
+        new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        db = Database()
+        database = db.get_database()
+        
+        result = database.administradores.update_one(
+            {"usuario": "superadmin"},
+            {"$set": {"password_hash": new_hash}}
+        )
+        
+        if result.modified_count > 0:
+            print(f"✅ Hash actualizado exitosamente: {new_hash}")
+            return True
+        else:
+            print("❌ No se pudo actualizar el hash")
+            return False
             
-            # 9. Actualizar empresa sin autenticación
-            self.print_test("Actualizar empresa sin autenticación")
-            self.make_request("PUT", f"/api/empresas/{empresa_id}", data=update_data)
-        
-        # 10. Obtener empresa inexistente
-        self.print_test("Obtener empresa inexistente")
-        fake_id = "507f1f77bcf86cd799439999"
-        self.make_request("GET", f"/api/empresas/{fake_id}")
-        
-        # 11. Obtener mis empresas
-        self.print_test("Obtener mis empresas")
-        self.make_request("GET", "/api/empresas/mis-empresas", use_auth=True)
-        
-        # 12. Obtener mis empresas sin autenticación
-        self.print_test("Obtener mis empresas sin autenticación")
-        self.make_request("GET", "/api/empresas/mis-empresas")
-        
-        # 13. Buscar empresas por ubicación
-        self.print_test("Buscar empresas por ubicación")
-        self.make_request("GET", "/api/empresas/buscar-por-ubicacion", params={"ubicacion": "Bogotá"})
-        
-        # 14. Buscar sin parámetro ubicación
-        self.print_test("Buscar sin parámetro ubicación")
-        self.make_request("GET", "/api/empresas/buscar-por-ubicacion")
-        
-        # 15. Obtener estadísticas
-        self.print_test("Obtener estadísticas")
-        self.make_request("GET", "/api/empresas/estadisticas", use_auth=True)
-        
-        # 16. Obtener estadísticas sin autenticación
-        self.print_test("Obtener estadísticas sin autenticación")
-        self.make_request("GET", "/api/empresas/estadisticas")
-
-    def test_error_endpoints(self):
-        """Prueba endpoints que no existen"""
-        self.print_separator("ENDPOINTS DE ERROR")
-        
-        self.print_test("Endpoint inexistente")
-        self.make_request("GET", "/api/inexistente")
-        
-        self.print_test("Método no permitido")
-        self.make_request("PATCH", "/api/users")
-
-    def cleanup_test_data(self):
-        """Limpia los datos de prueba creados (opcional)"""
-        self.print_separator("LIMPIEZA DE DATOS DE PRUEBA")
-        
-        # Eliminar usuarios creados
-        for user_id in self.created_ids["users"]:
-            self.print_test(f"Eliminando usuario: {user_id}")
-            self.make_request("DELETE", f"/api/users/{user_id}")
-        
-        # Eliminar empresas creadas
-        for empresa_id in self.created_ids["empresas"]:
-            self.print_test(f"Eliminando empresa: {empresa_id}")
-            self.make_request("DELETE", f"/api/empresas/{empresa_id}", use_auth=True)
-
-    def run_all_tests(self, cleanup=False):
-        """Ejecuta todas las pruebas"""
-        print("🚀 INICIANDO TESTING COMPLETO DE LA API")
-        print(f"📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🌐 URL Base: {self.base_url}")
-        print(f"🔑 Super Admin ID: {self.super_admin_id}")
-        
-        # Verificar que el servidor esté disponible
-        status, _ = self.make_request("GET", "/health")
-        if status is None:
-            print("❌ El servidor no está disponible. Asegúrate de ejecutar 'python app.py'")
-            return
-        
-        # Ejecutar todas las pruebas
-        self.test_health_endpoints()
-        self.test_user_endpoints()
-        self.test_empresa_endpoints()
-        self.test_error_endpoints()
-        
-        # Limpieza opcional
-        if cleanup:
-            self.cleanup_test_data()
-        
-        # Resumen final
-        self.print_separator("RESUMEN FINAL")
-        print(f"✅ Tests completados exitosamente")
-        print(f"📊 Usuarios creados: {len(self.created_ids['users'])}")
-        print(f"🏢 Empresas creadas: {len(self.created_ids['empresas'])}")
-        
-        if not cleanup:
-            print("\n💡 Tip: Ejecuta con cleanup=True para eliminar los datos de prueba:")
-            print("   tester.run_all_tests(cleanup=True)")
+    except Exception as e:
+        print(f"❌ Error actualizando hash: {e}")
+        return False
 
 def main():
-    """Función principal"""
-    print("🎯 API Testing Tool")
-    print("Selecciona una opción:")
-    print("1. Ejecutar todas las pruebas")
-    print("2. Ejecutar todas las pruebas + limpiar datos")
-    print("3. Solo endpoints de usuarios")
-    print("4. Solo endpoints de empresas")
-    print("5. Solo endpoints de salud")
+    """Función principal de debugging"""
+    print("🚀 INICIANDO DEBUGGING DE AUTENTICACIÓN\n")
     
-    choice = input("\nIngresa tu opción (1-5): ").strip()
+    # 1. Probar hash de contraseña
+    hash_valid = test_password_hash()
     
-    tester = APITester()
+    # 2. Probar conexión a base de datos
+    admin_data = test_database_connection()
     
-    if choice == "1":
-        tester.run_all_tests(cleanup=False)
-    elif choice == "2":
-        tester.run_all_tests(cleanup=True)
-    elif choice == "3":
-        tester.test_health_endpoints()
-        tester.test_user_endpoints()
-    elif choice == "4":
-        tester.test_health_endpoints()
-        tester.test_empresa_endpoints()
-    elif choice == "5":
-        tester.test_health_endpoints()
-    else:
-        print("❌ Opción inválida")
-        return
+    # 3. Probar repositorio
+    admin_repo = test_auth_repository()
     
-    print("\n🎉 ¡Testing completado!")
+    # 4. Probar servicio
+    auth_result = test_auth_service()
+    
+    print("\n" + "="*50)
+    print("📋 RESUMEN:")
+    print(f"Hash válido: {'✅' if hash_valid else '❌'}")
+    print(f"Admin en DB: {'✅' if admin_data else '❌'}")
+    print(f"AuthRepo OK: {'✅' if admin_repo else '❌'}")
+    print(f"AuthService OK: {'✅' if auth_result and auth_result.get('success') else '❌'}")
+    
+    # Si el hash no es válido, ofrecer arreglarlo
+    if not hash_valid:
+        response = input("\n¿Quieres actualizar el hash de contraseña? (y/n): ")
+        if response.lower() == 'y':
+            fix_password_hash()
+            print("Hash actualizado. Ejecuta el script de nuevo para verificar.")
 
 if __name__ == "__main__":
-    # Ejecutar directamente todas las pruebas
-    tester = APITester()
-    tester.run_all_tests(cleanup=False)
-    
-    # O ejecutar el menú interactivo
-    # main()
+    main()

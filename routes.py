@@ -1,8 +1,29 @@
 from flask import Blueprint
 from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
+from controllers.multitenant_controller import MultiTenantController
+from controllers.auth_controller import AuthController
 
-# ========== BLUEPRINT DE USUARIOS ==========
+# ========== BLUEPRINT DE AUTENTICACIÓN ==========
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_controller = AuthController()
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """POST /auth/login - Autenticar usuario y obtener JWT"""
+    return auth_controller.login()
+
+@auth_bp.route('/verify', methods=['POST'])
+def verify_token():
+    """POST /auth/verify - Verificar validez de token JWT"""
+    return auth_controller.verify_token()
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh_token():
+    """POST /auth/refresh - Renovar token JWT"""
+    return auth_controller.refresh_token()
+
+# ========== BLUEPRINT DE USUARIOS (ORIGINAL) ==========
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
 user_controller = UserController()
 
@@ -81,8 +102,6 @@ def get_stats():
     return empresa_controller.get_empresa_stats()
 
 # ========== BLUEPRINT DE MULTI-TENANT (USUARIOS POR EMPRESA) ==========
-from controllers.multitenant_controller import MultiTenantController
-
 multitenant_bp = Blueprint('multitenant', __name__, url_prefix='/empresas')
 multitenant_controller = MultiTenantController()
 
@@ -114,6 +133,7 @@ def delete_usuario_by_empresa(empresa_id, usuario_id):
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
+    app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(multitenant_bp)

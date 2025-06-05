@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 from config import Config
-
 class Database:
     _instance = None
     _client = None
