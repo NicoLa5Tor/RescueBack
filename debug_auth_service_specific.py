@@ -39,9 +39,9 @@ def debug_auth_service_step_by_step():
                     print("❌ La verificación de contraseña está fallando")
                     
                     # Verificar si el método verify_password está funcionando
-                    import bcrypt
-                    manual_check = bcrypt.checkpw("admin123".encode('utf-8'), admin.password_hash.encode('utf-8'))
-                    print(f"Verificación manual con bcrypt: {manual_check}")
+                    from utils.security import verify_password
+                    manual_check = verify_password("admin123", admin.password_hash)
+                    print(f"Verificación manual con nuevo hash: {manual_check}")
                     
                 else:
                     print("✅ Verificación de contraseña OK")

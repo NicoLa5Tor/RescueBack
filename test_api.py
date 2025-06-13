@@ -3,7 +3,7 @@ Script para debuggear problemas de autenticación
 Ejecutar: python debug_auth_issues.py
 """
 
-import bcrypt
+from utils.security import hash_password, verify_password
 from database import Database
 from models.administrador import Administrador
 from repositories.auth_repository import AuthRepository
@@ -14,10 +14,10 @@ def test_password_hash():
     print("🔐 Probando hash de contraseña...")
     
     password = "admin123"
-    stored_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdVAT5iOnE.ZdaC"
+    stored_hash = "38fe0f4520c482b9ea25a3cf65e40e897d4ab1264226e2cfc3b6e11d721cf90c"
     
     # Verificar si el hash coincide
-    is_valid = bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+    is_valid = verify_password(password, stored_hash)
     print(f"Password: {password}")
     print(f"Hash stored: {stored_hash}")
     print(f"Hash válido: {is_valid}")
@@ -25,7 +25,7 @@ def test_password_hash():
     if not is_valid:
         print("❌ El hash no coincide con la contraseña")
         # Generar un nuevo hash
-        new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_hash = hash_password(password)
         print(f"Nuevo hash generado: {new_hash}")
     else:
         print("✅ El hash es válido")
@@ -113,7 +113,7 @@ def fix_password_hash():
     
     try:
         password = "admin123"
-        new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_hash = hash_password(password)
         
         db = Database()
         database = db.get_database()

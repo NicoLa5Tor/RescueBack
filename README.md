@@ -396,7 +396,7 @@ curl -X POST http://localhost:5000/auth/refresh \
 
 ## 📝 Notas Adicionales
 
-1. **Seguridad:** Todos los passwords están hasheados con bcrypt
+1. **Seguridad:** Todos los passwords se hashean con SHA-256 usando la SECRET_KEY
 2. **Soft Delete:** Las eliminaciones son lógicas, no físicas
 3. **Índices:** Se crean automáticamente para optimizar consultas
 4. **CORS:** Habilitado para desarrollo (configurar para producción)

@@ -1,6 +1,6 @@
 from datetime import datetime
 from bson import ObjectId
-import bcrypt
+from utils.security import hash_password as generate_hash, verify_password
 
 class Administrador:
     def __init__(self, usuario=None, password_hash=None, nombre=None, email=None, 
@@ -65,14 +65,14 @@ class Administrador:
     
     @staticmethod
     def hash_password(password):
-        """Genera hash de contraseña"""
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        """Genera hash de contraseña usando SECRET_KEY"""
+        return generate_hash(password)
     
     def verify_password(self, password):
         """Verifica si la contraseña es correcta"""
         if not self.password_hash or not password:
             return False
-        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        return verify_password(password, self.password_hash)
     
     def update_login_timestamp(self):
         """Actualiza el timestamp del último login"""

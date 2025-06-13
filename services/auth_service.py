@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timedelta
-import bcrypt
+from utils.security import verify_password
 from config import Config
 from repositories.auth_repository import AuthRepository
 class AuthService:
@@ -101,8 +101,8 @@ class AuthService:
             # Verificar contraseña (asumiendo que la empresa tiene campo 'password_hash')
             if 'password_hash' not in empresa:
                 return {'success': False}
-            
-            if not bcrypt.checkpw(password.encode('utf-8'), empresa['password_hash'].encode('utf-8')):
+
+            if not verify_password(password, empresa['password_hash']):
                 return {'success': False}
             
             # Actualizar último login
@@ -322,8 +322,8 @@ class AuthService:
             # Verificar contraseña (asumiendo que la empresa tiene campo 'password_hash')
             if 'password_hash' not in empresa:
                 return {'success': False}
-            
-            if not bcrypt.checkpw(password.encode('utf-8'), empresa['password_hash'].encode('utf-8')):
+
+            if not verify_password(password, empresa['password_hash']):
                 return {'success': False}
             
             # Actualizar último login
