@@ -1,4 +1,5 @@
 from bson import ObjectId
+import bcrypt
 from models.usuario import Usuario
 from repositories.usuario_repository import UsuarioRepository
 from repositories.empresa_repository import EmpresaRepository
@@ -32,13 +33,25 @@ class UsuarioService:
                     'status_code': 403
                 }
             
+            password = usuario_data.get('password')
+
             # 2. Crear objeto Usuario
             usuario = Usuario(
                 nombre=usuario_data.get('nombre'),
                 cedula=usuario_data.get('cedula'),
                 rol=usuario_data.get('rol'),
-                empresa_id=empresa_id_obj
+                empresa_id=empresa_id_obj,
+                password_hash=None
             )
+
+            if not password:
+                return {
+                    'success': False,
+                    'errors': ['La contraseña es obligatoria'],
+                    'status_code': 400
+                }
+
+            usuario.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             # 3. Validar datos del usuario
             validation_errors = usuario.validate()
@@ -189,12 +202,17 @@ class UsuarioService:
                 cedula=usuario_data.get('cedula', existing_usuario.cedula),
                 rol=usuario_data.get('rol', existing_usuario.rol),
                 empresa_id=existing_usuario.empresa_id,
+                password_hash=existing_usuario.password_hash,
                 _id=existing_usuario._id
             )
             
             # Mantener datos originales
             updated_usuario.fecha_creacion = existing_usuario.fecha_creacion
             updated_usuario.activo = existing_usuario.activo
+
+            new_password = usuario_data.get('password')
+            if new_password:
+                updated_usuario.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             # Validar datos
             validation_errors = updated_usuario.validate()

@@ -2,13 +2,14 @@ from datetime import datetime
 from bson import ObjectId
 
 class Empresa:
-    def __init__(self, nombre=None, descripcion=None, ubicacion=None, creado_por=None, _id=None,password=None):
+    def __init__(self, nombre=None, descripcion=None, ubicacion=None, email=None, password_hash=None, creado_por=None, _id=None):
         self._id = _id
         self.nombre = nombre
         self.descripcion = descripcion
         self.ubicacion = ubicacion
+        self.email = email
+        self.password_hash = password_hash
         self.creado_por = creado_por
-        self.password = password
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
         self.activa = True  # Campo adicional para soft delete
@@ -19,9 +20,10 @@ class Empresa:
             'nombre': self.nombre,
             'descripcion': self.descripcion,
             'ubicacion': self.ubicacion,
+            'email': self.email,
+            'password_hash': self.password_hash,
             'creado_por': self.creado_por,
             'fecha_creacion': self.fecha_creacion,
-            'password' : self.password,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activa': self.activa
         }
@@ -37,6 +39,8 @@ class Empresa:
         empresa.nombre = data.get('nombre')
         empresa.descripcion = data.get('descripcion')
         empresa.ubicacion = data.get('ubicacion')
+        empresa.email = data.get('email')
+        empresa.password_hash = data.get('password_hash')
         empresa.creado_por = data.get('creado_por')
         empresa.fecha_creacion = data.get('fecha_creacion')
         empresa.fecha_actualizacion = data.get('fecha_actualizacion')
@@ -50,6 +54,7 @@ class Empresa:
             'nombre': self.nombre,
             'descripcion': self.descripcion,
             'ubicacion': self.ubicacion,
+            'email': self.email,
             'creado_por': str(self.creado_por) if self.creado_por else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
@@ -86,7 +91,15 @@ class Empresa:
         
         if len(self.ubicacion.strip()) > 200:
             errors.append("La ubicación no puede exceder 200 caracteres")
-        
+
+        if not self.email or len(self.email.strip()) == 0:
+            errors.append("El email es obligatorio")
+        elif '@' not in self.email:
+            errors.append("El email debe tener un formato válido")
+
+        if not self.password_hash:
+            errors.append("La contraseña es obligatoria")
+
         if not self.creado_por:
             errors.append("El ID del super admin creador es obligatorio")
         
@@ -104,3 +117,5 @@ class Empresa:
             self.descripcion = self.descripcion.strip()
         if self.ubicacion:
             self.ubicacion = self.ubicacion.strip()
+        if self.email:
+            self.email = self.email.strip().lower()
