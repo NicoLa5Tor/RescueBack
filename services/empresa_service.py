@@ -1,4 +1,5 @@
 from bson import ObjectId
+import bcrypt
 from models.empresa import Empresa
 from repositories.empresa_repository import EmpresaRepository
 
@@ -26,13 +27,26 @@ class EmpresaService:
                         'errors': ['El ID del super admin no es válido']
                     }
             
+            password = empresa_data.get('password')
+            email = empresa_data.get('email')
+
             # Crear objeto Empresa
             empresa = Empresa(
                 nombre=empresa_data.get('nombre'),
                 descripcion=empresa_data.get('descripcion'),
                 ubicacion=empresa_data.get('ubicacion'),
+                email=email,
+                password_hash=None,
                 creado_por=super_admin_id
             )
+
+            if not password:
+                return {
+                    'success': False,
+                    'errors': ['La contraseña es obligatoria']
+                }
+            # Hash password
+            empresa.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             # Validar datos
             validation_errors = empresa.validate()
@@ -49,6 +63,15 @@ class EmpresaService:
                     'success': False,
                     'errors': ['Ya existe una empresa con ese nombre']
                 }
+
+            # Verificar si el email ya existe
+            if email:
+                existing_email = self.empresa_repository.find_by_email(email)
+                if existing_email:
+                    return {
+                        'success': False,
+                        'errors': ['Ya existe una empresa con ese email']
+                    }
             
             # Crear empresa
             created_empresa = self.empresa_repository.create(empresa)
@@ -143,6 +166,8 @@ class EmpresaService:
                 nombre=empresa_data.get('nombre', existing_empresa.nombre),
                 descripcion=empresa_data.get('descripcion', existing_empresa.descripcion),
                 ubicacion=empresa_data.get('ubicacion', existing_empresa.ubicacion),
+                email=empresa_data.get('email', existing_empresa.email),
+                password_hash=existing_empresa.password_hash,
                 creado_por=existing_empresa.creado_por,
                 _id=existing_empresa._id
             )
@@ -150,6 +175,10 @@ class EmpresaService:
             # Mantener datos originales
             updated_empresa.fecha_creacion = existing_empresa.fecha_creacion
             updated_empresa.activa = existing_empresa.activa
+
+            new_password = empresa_data.get('password')
+            if new_password:
+                updated_empresa.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             # Validar datos
             validation_errors = updated_empresa.validate()
@@ -166,6 +195,14 @@ class EmpresaService:
                     return {
                         'success': False,
                         'errors': ['Ya existe una empresa con ese nombre']
+                    }
+
+            if updated_empresa.email != existing_empresa.email:
+                email_exists = self.empresa_repository.find_by_email(updated_empresa.email)
+                if email_exists:
+                    return {
+                        'success': False,
+                        'errors': ['Ya existe una empresa con ese email']
                     }
             
             # Actualizar empresa

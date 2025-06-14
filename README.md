@@ -217,6 +217,8 @@ curl -X POST http://localhost:5000/empresas/507f1f77bcf86cd799439011/usuarios \
     "nombre": "Juan Pérez",
     "cedula": "12345678",
     "rol": "usuario"
+    ,
+    "password": "usuario123"
   }'
 ```
 
@@ -287,7 +289,8 @@ curl -X POST http://localhost:5000/empresas/$EMPRESA_ID/usuarios \
   -d '{
     "nombre": "María González",
     "cedula": "87654321",
-    "rol": "gerente"
+    "rol": "gerente",
+    "password": "usuario123"
   }'
 ```
 
@@ -313,6 +316,8 @@ curl -X POST http://localhost:5000/empresas/$EMPRESA_ID/usuarios \
     "nombre": "Carlos Rodríguez",
     "cedula": "11223344",
     "rol": "operador"
+    ,
+    "password": "usuario123"
   }'
 
 # 4. Listar usuarios
@@ -352,12 +357,14 @@ curl -X GET http://localhost:5000/empresas/$EMPRESA_ID/usuarios \
 - **Nombre:** 2-100 caracteres
 - **Cédula:** 6-15 dígitos, única por empresa
 - **Rol:** Debe ser uno de los roles válidos
+- **Password:** Requerido, se almacena hasheado
 
 ### Empresas
 - **Nombre:** 2-100 caracteres, único globalmente
 - **Descripción:** 10-500 caracteres
 - **Ubicación:** 3-200 caracteres
 - **Email:** Formato válido, único para login
+- **Password:** Requerido, se almacena hasheado
 
 ## 🔧 Variables de Entorno
 

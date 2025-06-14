@@ -2,12 +2,13 @@ from datetime import datetime
 from bson import ObjectId
 
 class Usuario:
-    def __init__(self, nombre=None, cedula=None, rol=None, empresa_id=None, _id=None):
+    def __init__(self, nombre=None, cedula=None, rol=None, empresa_id=None, password_hash=None, _id=None):
         self._id = _id
         self.nombre = nombre
         self.cedula = cedula
         self.rol = rol
         self.empresa_id = empresa_id
+        self.password_hash = password_hash
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
         self.activo = True
@@ -19,6 +20,7 @@ class Usuario:
             'cedula': self.cedula,
             'rol': self.rol,
             'empresa_id': self.empresa_id,
+            'password_hash': self.password_hash,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activo': self.activo
@@ -36,6 +38,7 @@ class Usuario:
         usuario.cedula = data.get('cedula')
         usuario.rol = data.get('rol')
         usuario.empresa_id = data.get('empresa_id')
+        usuario.password_hash = data.get('password_hash')
         usuario.fecha_creacion = data.get('fecha_creacion')
         usuario.fecha_actualizacion = data.get('fecha_actualizacion')
         usuario.activo = data.get('activo', True)
@@ -90,7 +93,10 @@ class Usuario:
         
         if not self.empresa_id:
             errors.append("El ID de la empresa es obligatorio")
-        
+
+        if not self.password_hash:
+            errors.append("La contraseña es obligatoria")
+
         return errors
     
     def normalize_data(self):
