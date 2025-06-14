@@ -66,7 +66,9 @@ class AuthController:
         Verifica si un token JWT es válido
         """
         try:
+            print("entra")
             data = request.get_json()
+            print("verifica")
             token = data.get('token') if data else None
             
             if not token:

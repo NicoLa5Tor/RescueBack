@@ -2,12 +2,13 @@ from datetime import datetime
 from bson import ObjectId
 
 class Empresa:
-    def __init__(self, nombre=None, descripcion=None, ubicacion=None, creado_por=None, _id=None):
+    def __init__(self, nombre=None, descripcion=None, ubicacion=None, creado_por=None, _id=None,password=None):
         self._id = _id
         self.nombre = nombre
         self.descripcion = descripcion
         self.ubicacion = ubicacion
         self.creado_por = creado_por
+        self.password = password
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
         self.activa = True  # Campo adicional para soft delete
@@ -20,6 +21,7 @@ class Empresa:
             'ubicacion': self.ubicacion,
             'creado_por': self.creado_por,
             'fecha_creacion': self.fecha_creacion,
+            'password' : self.password,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activa': self.activa
         }
