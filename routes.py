@@ -14,18 +14,22 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     """POST /auth/login - Iniciar sesión"""
     data = request.get_json() or {}
-    email_or_username = data.get('email_or_username')
+    email = data.get('email')
+    usuario = data.get('usuario') or data.get('username')
     password = data.get('password')
 
-    if not email_or_username or not password:
+    # Debe enviarse email o usuario junto con la contraseña
+    if not password or (not email and not usuario):
         return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
+
+    login_value = email or usuario
 
     db = Database().get_database()
     user = db.users.find_one({
         '$or': [
-            {'email': email_or_username},
-            {'username': email_or_username},
-            {'usuario': email_or_username}
+            {'email': login_value},
+            {'username': login_value},
+            {'usuario': login_value}
         ]
     })
 
