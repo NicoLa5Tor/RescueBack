@@ -24,18 +24,25 @@ def login():
     user = db.users.find_one({
         '$or': [
             {'email': email_or_username},
-            {'username': email_or_username}
+            {'username': email_or_username},
+            {'usuario': email_or_username}
         ]
     })
 
-    if not user or not user.get('is_active', True) or not check_password_hash(user.get('password_hash', ''), password):
+    # El campo de activación puede ser 'activo' o 'is_active'
+    is_active = user.get('activo') if user else None
+    if is_active is None:
+        is_active = user.get('is_active', True) if user else None
+
+    if (not user or not is_active or
+            not check_password_hash(user.get('password_hash', ''), password)):
         return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
     user_perms = user.get('permisos', [])
     claims = {
         'email': user.get('email'),
-        'username': user.get('username'),
-        'role': user.get('role'),
+        'username': user.get('username') or user.get('usuario'),
+        'role': user.get('role') or user.get('rol'),
         'permisos': user_perms,
     }
 
@@ -44,10 +51,10 @@ def login():
     user_data = {
         'id': str(user['_id']),
         'email': user.get('email'),
-        'username': user.get('username'),
-        'role': user.get('role'),
+        'username': user.get('username') or user.get('usuario'),
+        'role': user.get('role') or user.get('rol'),
         'permisos': user_perms,
-        'is_super_admin': user.get('role') == 'super_admin'
+        'is_super_admin': (user.get('role') or user.get('rol')) == 'super_admin'
     }
 
     return jsonify({'success': True, 'token': access_token, 'user': user_data}), 200
