@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from config import Config
 from database import Database
@@ -11,8 +11,26 @@ def create_app():
     # Configuración de la aplicación
     app.config.from_object(Config)
     
-    # Habilitar CORS
-    CORS(app)
+    # Habilitar CORS para todos los endpoints de la API
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    @app.before_request
+    def handle_options_requests():
+        """Responde a las peticiones OPTIONS para evitar errores 404"""
+        if request.method == 'OPTIONS':
+            response = make_response()
+            response.status_code = 204
+            return response
+
+    @app.after_request
+    def add_cors_headers(response):
+        """Agrega encabezados CORS a todas las respuestas"""
+        response.headers.setdefault('Access-Control-Allow-Origin', '*')
+        response.headers.setdefault('Access-Control-Allow-Headers',
+                                   'Content-Type,Authorization')
+        response.headers.setdefault('Access-Control-Allow-Methods',
+                                   'GET,POST,PUT,DELETE,OPTIONS')
+        return response
     
     # Inicializar base de datos
     db = Database()
