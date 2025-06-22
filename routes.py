@@ -1,6 +1,7 @@
 from flask import Blueprint
 from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
+from controllers.admin_controller import AdminController
 
 # ========== BLUEPRINT DE USUARIOS ==========
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
@@ -79,7 +80,21 @@ def search_by_ubicacion():
 def get_stats():
     """GET /api/empresas/estadisticas - Obtener estadísticas (solo super admin)"""
     return empresa_controller.get_empresa_stats()
+@empresa_bp.route('/<empresa_id>/activity', methods=['GET'])
+def empresa_activity(empresa_id):
+    return admin_controller.get_empresa_activity(empresa_id)
 
+# ========== BLUEPRINT DE ADMIN ==========
+admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+admin_controller = AdminController()
+
+@admin_bp.route('/activity', methods=['GET'])
+def get_admin_activity():
+    return admin_controller.get_activity()
+
+@admin_bp.route('/distribution', methods=['GET'])
+def get_admin_distribution():
+    return admin_controller.get_distribution()
 # ========== BLUEPRINT DE MULTI-TENANT (USUARIOS POR EMPRESA) ==========
 from controllers.multitenant_controller import MultiTenantController
 
@@ -116,4 +131,5 @@ def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
     app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(multitenant_bp)
