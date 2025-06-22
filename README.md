@@ -6,7 +6,9 @@ Esta API está construida con Flask y MongoDB.
 
 ### `POST /auth/login`
 
-Solicita iniciar sesión con un nombre de usuario o email y una contraseña.
+Solicita iniciar sesión con un nombre de usuario o email y una contraseña. El
+servidor devolverá un token JWT junto con los datos del usuario y la lista de
+permisos asociados a su rol.
 
 **Entrada JSON**
 ```json
@@ -26,7 +28,7 @@ Solicita iniciar sesión con un nombre de usuario o email y una contraseña.
     "email": "admin@sistema.com",
     "username": "superadmin",
     "role": "super_admin",
-    "permisos": [],
+    "permisos": ["crear", "leer", "actualizar", "eliminar"],
     "is_super_admin": true
   }
 }

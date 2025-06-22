@@ -2,6 +2,13 @@ from flask_jwt_extended import create_access_token
 import bcrypt
 from database import Database
 
+# Permisos por rol si el usuario no tiene lista propia
+ROLE_PERMISSIONS = {
+    'super_admin': ['crear', 'leer', 'actualizar', 'eliminar'],
+    'empresa': ['leer_empresa', 'modificar_empresa'],
+    'admin': ['ver_dashboard'],
+}
+
 class AuthService:
     def __init__(self):
         self.db = Database().get_database()
@@ -35,10 +42,10 @@ class AuthService:
             if not stored_hash or not bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
                 return {'success': False, 'errors': ['Credenciales inválidas']}
 
-            user_perms = user.get('permisos', [])
             role = user.get('role') or user.get('rol')
             if not role and collection == 'empresas':
                 role = 'empresa'
+            user_perms = user.get('permisos') or ROLE_PERMISSIONS.get(role, [])
             claims = {
                 'email': user.get('email'),
                 'username': user.get('username') or user.get('usuario'),
