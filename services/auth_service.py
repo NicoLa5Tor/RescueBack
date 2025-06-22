@@ -1,5 +1,5 @@
 from flask_jwt_extended import create_access_token
-from werkzeug.security import check_password_hash
+import bcrypt
 from database import Database
 
 class AuthService:
@@ -9,28 +9,36 @@ class AuthService:
     def login(self, usuario, password):
         """Valida credenciales y genera un JWT"""
         try:
-            user = self.db.users.find_one({
+            user = self.db.administradores.find_one({
                 '$or': [
                     {'email': usuario},
                     {'username': usuario},
                     {'usuario': usuario}
                 ]
             })
+            collection = 'administradores'
 
+            if not user:
+                user = self.db.empresas.find_one({'email': usuario})
+                if user:
+                    collection = 'empresas'
             if not user:
                 return {'success': False, 'errors': ['Credenciales inválidas']}
 
-            is_active = user.get('activo')
+            is_active = user.get('activo') if collection == 'administradores' else user.get('activa', True)
             if is_active is None:
                 is_active = user.get('is_active', True)
             if not is_active:
                 return {'success': False, 'errors': ['Credenciales inválidas']}
 
-            if not check_password_hash(user.get('password_hash', ''), password):
+            stored_hash = user.get('password_hash', '')
+            if not stored_hash or not bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
                 return {'success': False, 'errors': ['Credenciales inválidas']}
 
             user_perms = user.get('permisos', [])
             role = user.get('role') or user.get('rol')
+            if not role and collection == 'empresas':
+                role = 'empresa'
             claims = {
                 'email': user.get('email'),
                 'username': user.get('username') or user.get('usuario'),
