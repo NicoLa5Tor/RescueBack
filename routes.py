@@ -5,7 +5,7 @@ from controllers.admin_controller import AdminController
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token
 from werkzeug.security import check_password_hash
-from models.auth_user import AuthUser
+from database import Database
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -20,30 +20,34 @@ def login():
     if not email_or_username or not password:
         return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
-    user = AuthUser.query.filter(
-        (AuthUser.email == email_or_username) | (AuthUser.username == email_or_username)
-    ).first()
+    db = Database().get_database()
+    user = db.users.find_one({
+        '$or': [
+            {'email': email_or_username},
+            {'username': email_or_username}
+        ]
+    })
 
-    if not user or not user.is_active or not check_password_hash(user.password_hash, password):
+    if not user or not user.get('is_active', True) or not check_password_hash(user.get('password_hash', ''), password):
         return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
-    user_perms = getattr(user, 'permisos', [])
+    user_perms = user.get('permisos', [])
     claims = {
-        'email': user.email,
-        'username': user.username,
-        'role': user.role,
+        'email': user.get('email'),
+        'username': user.get('username'),
+        'role': user.get('role'),
         'permisos': user_perms,
     }
 
-    access_token = create_access_token(identity=user.id, additional_claims=claims)
+    access_token = create_access_token(identity=str(user['_id']), additional_claims=claims)
 
     user_data = {
-        'id': user.id,
-        'email': user.email,
-        'username': user.username,
-        'role': user.role,
+        'id': str(user['_id']),
+        'email': user.get('email'),
+        'username': user.get('username'),
+        'role': user.get('role'),
         'permisos': user_perms,
-        'is_super_admin': user.role == 'super_admin'
+        'is_super_admin': user.get('role') == 'super_admin'
     }
 
     return jsonify({'success': True, 'token': access_token, 'user': user_data}), 200
