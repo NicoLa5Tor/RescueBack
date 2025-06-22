@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from models.auth_user import db
 from config import Config
 from database import Database
 from routes import register_routes
@@ -13,6 +15,13 @@ def create_app():
     
     # Habilitar CORS para todos los endpoints de la API
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    # Inicializar extensiones
+    db.init_app(app)
+    JWTManager(app)
+
+    with app.app_context():
+        db.create_all()
 
     @app.before_request
     def handle_options_requests():

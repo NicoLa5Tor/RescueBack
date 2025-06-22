@@ -2,6 +2,16 @@ from flask import Blueprint
 from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
+from controllers.auth_controller import AuthController
+
+# ========== BLUEPRINT DE AUTENTICACIÓN ==========
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_controller = AuthController()
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """POST /auth/login - Iniciar sesión"""
+    return auth_controller.login()
 
 # ========== BLUEPRINT DE USUARIOS ==========
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
@@ -129,6 +139,7 @@ def delete_usuario_by_empresa(empresa_id, usuario_id):
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
+    app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(admin_bp)
