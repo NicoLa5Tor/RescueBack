@@ -8,7 +8,7 @@ Esta API está construida con Flask y MongoDB.
 
 Solicita iniciar sesión con un nombre de usuario o email y una contraseña. El
 servidor devolverá un token JWT junto con los datos del usuario y la lista de
-permisos asociados a su rol.
+endpoints a los que tiene acceso según su rol.
 
 **Entrada JSON**
 ```json
@@ -28,7 +28,12 @@ permisos asociados a su rol.
     "email": "admin@sistema.com",
     "username": "superadmin",
     "role": "super_admin",
-    "permisos": ["crear", "leer", "actualizar", "eliminar"],
+    "permisos": [
+      "/api/users",
+      "/api/empresas",
+      "/api/admin",
+      "/empresas"
+    ],
     "is_super_admin": true
   }
 }
@@ -165,5 +170,17 @@ Actualizar un usuario de una empresa.
 
 ### `DELETE /empresas/<empresa_id>/usuarios/<usuario_id>`
 Eliminar un usuario de una empresa.
+
+## Permisos por rol
+
+Los permisos determinan a qué endpoints puede acceder cada tipo de usuario. Si un
+usuario no cuenta con una lista personalizada, se aplican los siguientes valores
+por defecto:
+
+| Rol         | Endpoints permitidos                                                                       |
+|-------------|---------------------------------------------------------------------------------------------|
+| super_admin | `/api/users`, `/api/empresas`, `/api/admin`, `/empresas`                                    |
+| admin       | `/api/admin/activity`, `/api/admin/distribution`, `/api/empresas/<empresa_id>/activity`     |
+| empresa     | `/api/empresas`, `/empresas`                                                                |
 
 

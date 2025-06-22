@@ -2,11 +2,23 @@ from flask_jwt_extended import create_access_token
 import bcrypt
 from database import Database
 
-# Permisos por rol si el usuario no tiene lista propia
+# Endpoints permitidos por rol si el usuario no tiene lista propia
 ROLE_PERMISSIONS = {
-    'super_admin': ['crear', 'leer', 'actualizar', 'eliminar'],
-    'empresa': ['leer_empresa', 'modificar_empresa'],
-    'admin': ['ver_dashboard'],
+    'super_admin': [
+        '/api/users',
+        '/api/empresas',
+        '/api/admin',
+        '/empresas'
+    ],
+    'admin': [
+        '/api/admin/activity',
+        '/api/admin/distribution',
+        '/api/empresas/<empresa_id>/activity'
+    ],
+    'empresa': [
+        '/api/empresas',
+        '/empresas'
+    ],
 }
 
 class AuthService:
