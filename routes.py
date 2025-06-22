@@ -2,63 +2,16 @@ from flask import Blueprint
 from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
-from flask import request, jsonify
-from flask_jwt_extended import create_access_token
-from werkzeug.security import check_password_hash
-from database import Database
+from controllers.auth_controller import AuthController
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_controller = AuthController()
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """POST /auth/login - Iniciar sesión"""
-    data = request.get_json() or {}
-    login_value = data.get('usuario')
-    password = data.get('password')
-
-    # Debe enviarse el campo 'usuario' (email o nombre de usuario) y la contraseña
-    if not login_value or not password:
-        return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
-
-    db = Database().get_database()
-    user = db.users.find_one({
-        '$or': [
-            {'email': login_value},
-            {'username': login_value},
-            {'usuario': login_value}
-        ]
-    })
-
-    # El campo de activación puede ser 'activo' o 'is_active'
-    is_active = user.get('activo') if user else None
-    if is_active is None:
-        is_active = user.get('is_active', True) if user else None
-
-    if (not user or not is_active or
-            not check_password_hash(user.get('password_hash', ''), password)):
-        return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
-
-    user_perms = user.get('permisos', [])
-    claims = {
-        'email': user.get('email'),
-        'username': user.get('username') or user.get('usuario'),
-        'role': user.get('role') or user.get('rol'),
-        'permisos': user_perms,
-    }
-
-    access_token = create_access_token(identity=str(user['_id']), additional_claims=claims)
-
-    user_data = {
-        'id': str(user['_id']),
-        'email': user.get('email'),
-        'username': user.get('username') or user.get('usuario'),
-        'role': user.get('role') or user.get('rol'),
-        'permisos': user_perms,
-        'is_super_admin': (user.get('role') or user.get('rol')) == 'super_admin'
-    }
-
-    return jsonify({'success': True, 'token': access_token, 'user': user_data}), 200
+    return auth_controller.login()
 
 # ========== BLUEPRINT DE USUARIOS ==========
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
