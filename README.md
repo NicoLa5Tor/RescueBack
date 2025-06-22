@@ -156,6 +156,11 @@ Actividad de una empresa específica (token de admin).
 
 ## Multi-tenant `/empresas`
 
+Los usuarios creados en este apartado siempre deben pertenecer a una empresa
+previamente existente y **no** cuentan con permisos para iniciar sesión en la
+API. Su gestión se realiza únicamente a través de los endpoints listados a
+continuación.
+
 ### `POST /empresas/<empresa_id>/usuarios`
 Crear usuario para una empresa.
 
