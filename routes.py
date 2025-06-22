@@ -2,16 +2,51 @@ from flask import Blueprint
 from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
-from controllers.auth_controller import AuthController
+from flask import request, jsonify
+from flask_jwt_extended import create_access_token
+from werkzeug.security import check_password_hash
+from models.auth_user import AuthUser
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
-auth_controller = AuthController()
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """POST /auth/login - Iniciar sesión"""
-    return auth_controller.login()
+    data = request.get_json() or {}
+    email_or_username = data.get('email_or_username')
+    password = data.get('password')
+
+    if not email_or_username or not password:
+        return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
+
+    user = AuthUser.query.filter(
+        (AuthUser.email == email_or_username) | (AuthUser.username == email_or_username)
+    ).first()
+
+    if not user or not user.is_active or not check_password_hash(user.password_hash, password):
+        return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
+
+    user_perms = getattr(user, 'permisos', [])
+    claims = {
+        'email': user.email,
+        'username': user.username,
+        'role': user.role,
+        'permisos': user_perms,
+    }
+
+    access_token = create_access_token(identity=user.id, additional_claims=claims)
+
+    user_data = {
+        'id': user.id,
+        'email': user.email,
+        'username': user.username,
+        'role': user.role,
+        'permisos': user_perms,
+        'is_super_admin': user.role == 'super_admin'
+    }
+
+    return jsonify({'success': True, 'token': access_token, 'user': user_data}), 200
 
 # ========== BLUEPRINT DE USUARIOS ==========
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
