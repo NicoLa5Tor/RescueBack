@@ -1,53 +1,79 @@
 from functools import wraps
-from flask import request, jsonify, g
-from config import Config
+from flask import jsonify, g
+from functools import wraps
+from flask_jwt_extended import (
+    verify_jwt_in_request,
+    get_jwt,
+    get_jwt_identity,
+)
 
 
 def require_super_admin_token(f):
-    """Requiere token de super admin para acceder"""
+    """Valida que el JWT pertenezca a un super admin"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.headers.get("X-Super-Admin-Token")
-        if not token or token != Config.SUPER_ADMIN_TOKEN:
+        verify_jwt_in_request()
+        claims = get_jwt()
+        if claims.get("role") != "super_admin":
             return (
-                jsonify(
-                    {"success": False, "errors": ["Token de super admin inválido"]}
-                ),
+                jsonify({"success": False, "errors": ["Permiso de super admin requerido"]}),
                 401,
             )
-        g.super_admin_id = Config.SUPER_ADMIN_ID
+        g.super_admin_id = get_jwt_identity()
         return f(*args, **kwargs)
 
     return decorated_function
 
 
 def require_empresa_or_super_token(require_empresa_id=False):
-    """Permite token de empresa o de super admin"""
+    """Permite el acceso con token de empresa o de super admin"""
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            super_token = request.headers.get("X-Super-Admin-Token")
-            empresa_token = request.headers.get("X-Empresa-Token")
-            if super_token and super_token == Config.SUPER_ADMIN_TOKEN:
+            verify_jwt_in_request()
+            claims = get_jwt()
+            role = claims.get("role")
+            if role == "super_admin":
                 g.is_super_admin = True
-                return f(*args, **kwargs)
-            if empresa_token and empresa_token == Config.EMPRESA_TOKEN:
+                g.super_admin_id = get_jwt_identity()
+            elif role == "empresa":
                 g.is_super_admin = False
+                g.empresa_id = get_jwt_identity()
                 if require_empresa_id:
-                    empresa_id = request.headers.get("X-Empresa-ID")
-                    if not empresa_id or empresa_id != kwargs.get("empresa_id"):
+                    if kwargs.get("empresa_id") != str(g.empresa_id):
                         return (
-                            jsonify(
-                                {"success": False, "errors": ["ID de empresa inválido"]}
-                            ),
+                            jsonify({"success": False, "errors": ["ID de empresa inválido"]}),
                             401,
                         )
-                    g.empresa_id = empresa_id
-                return f(*args, **kwargs)
-            return jsonify({"success": False, "errors": ["Token inválido"]}), 401
+            else:
+                return (
+                    jsonify({"success": False, "errors": ["Permisos insuficientes"]}),
+                    401,
+                )
+            return f(*args, **kwargs)
 
         return decorated_function
 
     return decorator
+
+
+def require_admin_token(f):
+    """Permite solo tokens con rol admin o super_admin"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt()
+        role = claims.get("role")
+        if role not in ["admin", "super_admin"]:
+            return (
+                jsonify({"success": False, "errors": ["Permisos de administrador requeridos"]}),
+                401,
+            )
+        g.admin_id = get_jwt_identity()
+        g.is_super_admin = role == "super_admin"
+        return f(*args, **kwargs)
+
+    return decorated_function

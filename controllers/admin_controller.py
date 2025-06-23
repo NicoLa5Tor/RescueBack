@@ -1,26 +1,9 @@
-from flask import request, jsonify
-from functools import wraps
-from config import Config
+from flask import jsonify
 from services.dashboard_service import DashboardService
-from utils.permissions import require_empresa_or_super_token
-
-
-def require_admin_token(f):
-    """Decorator to ensure request contains valid admin or super token"""
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = request.headers.get("X-Admin-Token")
-        super_token = request.headers.get("X-Super-Admin-Token")
-        if token == Config.ADMIN_TOKEN or super_token == Config.SUPER_ADMIN_TOKEN:
-            return f(*args, **kwargs)
-        return (
-            jsonify({"success": False, "errors": ["Token de administrador inválido"]}),
-            401,
-        )
-
-    return decorated_function
-
+from utils.permissions import (
+    require_admin_token,
+    require_empresa_or_super_token,
+)
 
 class AdminController:
     def __init__(self):

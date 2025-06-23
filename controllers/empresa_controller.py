@@ -1,7 +1,7 @@
 from flask import request, jsonify, g
 from services.empresa_service import EmpresaService
 from utils.permissions import require_super_admin_token
-from config import Config
+from flask_jwt_extended import verify_jwt_in_request, get_jwt
 
 
 class EmpresaController:
@@ -82,9 +82,12 @@ class EmpresaController:
             )
 
             if include_inactive:
-                # Verificar autenticación de super admin si se solicitan inactivas
-                token = request.headers.get("X-Super-Admin-Token")
-                if not token or token != Config.SUPER_ADMIN_TOKEN:
+                try:
+                    verify_jwt_in_request()
+                    claims = get_jwt()
+                    if claims.get("role") != "super_admin":
+                        include_inactive = False
+                except Exception:
                     include_inactive = False
 
             result = self.empresa_service.get_all_empresas(include_inactive)
