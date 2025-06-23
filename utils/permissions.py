@@ -16,7 +16,7 @@ def require_super_admin_token(f):
                 ),
                 401,
             )
-        g.super_admin_id = request.headers.get("X-Super-Admin-ID")
+        g.super_admin_id = Config.SUPER_ADMIN_ID
         return f(*args, **kwargs)
 
     return decorated_function

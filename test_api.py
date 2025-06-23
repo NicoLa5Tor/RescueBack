@@ -11,10 +11,8 @@ from datetime import datetime
 class APITester:
     def __init__(self, base_url="http://localhost:5000"):
         self.base_url = base_url
-        self.super_admin_id = "507f1f77bcf86cd799439011"  # ID de ejemplo
         self.headers = {
-            "Content-Type": "application/json",
-            "X-Super-Admin-ID": self.super_admin_id
+            "Content-Type": "application/json"
         }
         self.created_ids = {"users": [], "empresas": []}
         
@@ -262,7 +260,6 @@ class APITester:
         print("🚀 INICIANDO TESTING COMPLETO DE LA API")
         print(f"📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"🌐 URL Base: {self.base_url}")
-        print(f"🔑 Super Admin ID: {self.super_admin_id}")
         
         # Verificar que el servidor esté disponible
         status, _ = self.make_request("GET", "/health")

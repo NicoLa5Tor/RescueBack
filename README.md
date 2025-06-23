@@ -235,7 +235,6 @@ Crear empresa (requiere super admin).
 ```bash
 curl -X POST http://localhost:5000/api/empresas/ \
   -H 'Content-Type: application/json' \
-  -H 'X-Super-Admin-ID: <id_admin>' \
   -H 'X-Super-Admin-Token: <token>' \
   -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá"}'
 ```
@@ -265,7 +264,6 @@ Actualiza empresa (super admin creador).
 ```bash
 curl -X PUT http://localhost:5000/api/empresas/<id> \
   -H 'Content-Type: application/json' \
-  -H 'X-Super-Admin-ID: <id_admin>' \
   -H 'X-Super-Admin-Token: <token>' \
   -d '{"nombre":"Nuevo nombre"}'
 ```
@@ -276,7 +274,6 @@ Elimina empresa (super admin creador).
 **Curl**
 ```bash
 curl -X DELETE http://localhost:5000/api/empresas/<id> \
-  -H 'X-Super-Admin-ID: <id_admin>'
   -H 'X-Super-Admin-Token: <token>'
 ```
 
@@ -285,7 +282,7 @@ Empresas creadas por el super admin autenticado.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/empresas/mis-empresas -H 'X-Super-Admin-ID: <id_admin>'
+curl http://localhost:5000/api/empresas/mis-empresas \
   -H 'X-Super-Admin-Token: <token>'
 ```
 
@@ -302,7 +299,7 @@ Estadísticas de empresas (token de admin).
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/empresas/estadisticas -H 'X-Super-Admin-ID: <id_admin>'
+curl http://localhost:5000/api/empresas/estadisticas \
   -H 'X-Super-Admin-Token: <token>'
 ```
 
