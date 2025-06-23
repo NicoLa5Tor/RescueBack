@@ -103,3 +103,13 @@ class UserRepository:
             return users
         except Exception as e:
             raise Exception(f"Error buscando usuarios por edad: {str(e)}")
+
+    def find_by_telefono(self, telefono):
+        """Busca un usuario por número de teléfono"""
+        try:
+            user_data = self.collection.find_one({"telefono": telefono})
+            if user_data:
+                return User.from_dict(user_data)
+            return None
+        except Exception as e:
+            raise Exception(f"Error buscando usuario por telefono: {str(e)}")

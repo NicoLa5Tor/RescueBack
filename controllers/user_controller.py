@@ -71,6 +71,32 @@ class UserController:
                 'success': False,
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
+
+    def get_user_by_phone(self):
+        """Endpoint para obtener un usuario por número de teléfono"""
+        try:
+            telefono = request.args.get('telefono')
+            if not telefono:
+                return jsonify({
+                    'success': False,
+                    'errors': ['El parámetro telefono es obligatorio']
+                }), 400
+
+            result = self.user_service.get_user_by_phone(telefono)
+
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'data': result['data']
+                }), 200
+            else:
+                return jsonify(result), 404
+
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
     
     def update_user(self, user_id):
         """Endpoint para actualizar un usuario"""

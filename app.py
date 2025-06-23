@@ -70,7 +70,8 @@ def create_app():
                 'get_user': 'GET /api/users/<id>',
                 'update_user': 'PUT /api/users/<id>',
                 'delete_user': 'DELETE /api/users/<id>',
-                'users_by_age': 'GET /api/users/age-range?min_age=18&max_age=30'
+                'users_by_age': 'GET /api/users/age-range?min_age=18&max_age=30',
+                'user_by_phone': 'GET /api/users/buscar-por-telefono?telefono=<numero>'
             }
         }), 200
     

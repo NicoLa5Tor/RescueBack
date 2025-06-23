@@ -187,6 +187,29 @@ Busca usuarios por rango de edad.
 curl "http://localhost:5000/api/users/age-range?min_age=18&max_age=30"
 ```
 
+### `GET /api/users/buscar-por-telefono?telefono=<numero>`
+Busca un usuario por su número de teléfono.
+
+**Curl**
+```bash
+curl "http://localhost:5000/api/users/buscar-por-telefono?telefono=3001234567"
+```
+**Respuesta**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "<id>",
+    "name": "Juan",
+    "email": "juan@example.com",
+    "age": 25,
+    "empresa_id": "<id_empresa>",
+    "telefono": "3001234567",
+    "whatsapp_verify": false
+  }
+}
+```
+
 ## Empresas `/api/empresas`
 
 ### `POST /api/empresas/`

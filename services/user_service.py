@@ -66,6 +66,26 @@ class UserService:
                 'success': False,
                 'errors': [str(e)]
             }
+
+    def get_user_by_phone(self, telefono):
+        """Obtiene un usuario por número de teléfono"""
+        try:
+            user = self.user_repository.find_by_telefono(telefono)
+            if user:
+                return {
+                    'success': True,
+                    'data': user.to_json()
+                }
+            else:
+                return {
+                    'success': False,
+                    'errors': ['Usuario no encontrado']
+                }
+        except Exception as e:
+            return {
+                'success': False,
+                'errors': [str(e)]
+            }
     
     def get_all_users(self):
         """Obtiene todos los usuarios"""
