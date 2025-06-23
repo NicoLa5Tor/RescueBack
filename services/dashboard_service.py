@@ -1,23 +1,19 @@
 from services.empresa_service import EmpresaService
+from services.activity_service import ActivityService
 
 class DashboardService:
     """Service for dashboard data."""
     def __init__(self):
         self.empresa_service = EmpresaService()
+        self.activity_service = ActivityService()
 
     def get_activity(self):
-        """Return sample global activity data"""
-        data = {
-            'labels': ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
-            'values': [65, 78, 90, 85, 92, 88, 95],
-            'label': 'Actividad'
-        }
-        return {'success': True, 'data': data}
+        """Return recent activity logs for all companies."""
+        return self.activity_service.get_all()
 
     def get_empresa_activity(self, empresa_id):
-        """Return sample activity data for a specific company"""
-        # Placeholder for future logic scoped to empresa_id
-        return self.get_activity()
+        """Return recent activity logs for a specific company."""
+        return self.activity_service.get_by_empresa(empresa_id)
 
     def get_distribution(self):
         """Return totals of registered companies for distribution chart"""

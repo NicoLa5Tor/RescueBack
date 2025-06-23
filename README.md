@@ -310,7 +310,7 @@ curl http://localhost:5000/api/empresas/estadisticas \
 ```
 
 ### `GET /api/empresas/<empresa_id>/activity`
-Actividad de una empresa específica (token de empresa o super admin).
+Registra y consulta la actividad de una empresa específica. Requiere token de empresa o de super admin.
 
 **Curl**
 ```bash
@@ -321,7 +321,7 @@ curl http://localhost:5000/api/empresas/<empresa_id>/activity \
 ## Administración `/api/admin`
 
 ### `GET /api/admin/activity`
-Actividad general (token de admin o super admin).
+Devuelve la actividad registrada de todas las empresas. Requiere token de administrador o super admin.
 
 **Curl**
 ```bash

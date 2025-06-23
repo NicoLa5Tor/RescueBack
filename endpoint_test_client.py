@@ -193,14 +193,14 @@ class EndpointTestClient:
         return self._request("GET", "/api/empresas/estadisticas")
 
     def get_empresa_activity(self, empresa_id: str) -> requests.Response:
-        """GET /api/empresas/<empresa_id>/activity"""
+        """GET /api/empresas/<empresa_id>/activity - Ver logs de esa empresa"""
         return self._request("GET", f"/api/empresas/{empresa_id}/activity")
 
     # ------------------------------------------------------------------
     # Endpoints de administración
     # ------------------------------------------------------------------
     def get_admin_activity(self) -> requests.Response:
-        """GET /api/admin/activity"""
+        """GET /api/admin/activity - Ver logs de todas las empresas"""
         return self._request("GET", "/api/admin/activity")
 
     def get_admin_distribution(self) -> requests.Response:

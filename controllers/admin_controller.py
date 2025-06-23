@@ -11,13 +11,13 @@ class AdminController:
 
     @require_admin_token
     def get_activity(self):
-        """Return sample activity data for dashboard"""
+        """Return logged activity for all companies."""
         result = self.dashboard_service.get_activity()
         return jsonify(result), 200 if result.get("success") else 500
 
     @require_empresa_or_super_token(require_empresa_id=True)
     def get_empresa_activity(self, empresa_id):
-        """Return activity data scoped to a company"""
+        """Return logged activity for a specific company."""
         result = self.dashboard_service.get_empresa_activity(empresa_id)
         return jsonify(result), 200 if result.get("success") else 500
 
