@@ -1,22 +1,40 @@
+from bson import ObjectId
 from models.user import User
 from repositories.user_repository import UserRepository
+from repositories.empresa_repository import EmpresaRepository
 
 class UserService:
     def __init__(self):
         self.user_repository = UserRepository()
+        self.empresa_repository = EmpresaRepository()
     
     def create_user(self, user_data):
         """Crea un nuevo usuario con validaciones"""
         try:
-            # Crear objeto User
-            user = User(
-                name=user_data.get('name'),
-                email=user_data.get('email'),
-                age=user_data.get('age'),
-                empresa_id=user_data.get('empresa_id'),
-                telefono=user_data.get('telefono'),
-                whatsapp_verify=user_data.get('whatsapp_verify', False)
-            )
+            # Crear objeto User y validar ID de empresa
+            try:
+                user = User(
+                    name=user_data.get('name'),
+                    email=user_data.get('email'),
+                    age=user_data.get('age'),
+                    empresa_id=user_data.get('empresa_id'),
+                    telefono=user_data.get('telefono'),
+                    whatsapp_verify=user_data.get('whatsapp_verify', False)
+                )
+            except Exception:
+                return {
+                    'success': False,
+                    'errors': ['El ID de la empresa no es válido']
+                }
+
+            # Verificar que la empresa exista
+            if user.empresa_id:
+                empresa = self.empresa_repository.find_by_id(user.empresa_id)
+                if not empresa:
+                    return {
+                        'success': False,
+                        'errors': ['La empresa especificada no existe']
+                    }
             
             # Validar datos
             validation_errors = user.validate()
@@ -114,12 +132,31 @@ class UserService:
                     'errors': ['Usuario no encontrado']
                 }
             
+            # Determinar el ID de la empresa a usar y verificarlo
+            new_empresa_id = user_data.get('empresa_id', existing_user.empresa_id)
+            if new_empresa_id is not None:
+                try:
+                    empresa_id_obj = ObjectId(str(new_empresa_id))
+                except Exception:
+                    return {
+                        'success': False,
+                        'errors': ['El ID de la empresa no es válido']
+                    }
+                empresa = self.empresa_repository.find_by_id(empresa_id_obj)
+                if not empresa:
+                    return {
+                        'success': False,
+                        'errors': ['La empresa especificada no existe']
+                    }
+            else:
+                empresa_id_obj = None
+
             # Crear objeto User con datos actualizados
             updated_user = User(
                 name=user_data.get('name', existing_user.name),
                 email=user_data.get('email', existing_user.email),
                 age=user_data.get('age', existing_user.age),
-                empresa_id=user_data.get('empresa_id', existing_user.empresa_id),
+                empresa_id=empresa_id_obj,
                 telefono=user_data.get('telefono', existing_user.telefono),
                 whatsapp_verify=user_data.get('whatsapp_verify', existing_user.whatsapp_verify),
                 _id=existing_user._id
@@ -205,4 +242,4 @@ class UserService:
             return {
                 'success': False,
                 'errors': [str(e)]
-            }
+            

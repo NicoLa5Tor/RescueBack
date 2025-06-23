@@ -70,7 +70,7 @@ Si las credenciales son inválidas retorna `401` con `{"success": false, "errors
 ## Usuarios `/api/users`
 
 ### `POST /api/users/`
-Crea un usuario. El usuario debe pertenecer a una empresa existente y proporcionar un número de teléfono. El campo `whatsapp_verify` siempre se crea en `false`.
+Crea un usuario. Debe pertenecer a una empresa existente (la API valida que `empresa_id` corresponda a una empresa real) y debe incluir un número de teléfono. El campo `whatsapp_verify` siempre se crea en `false`.
 
 **Entrada JSON**
 ```json
@@ -133,7 +133,7 @@ curl http://localhost:5000/api/users/<id>
 ```
 
 ### `PUT /api/users/<id>`
-Actualiza un usuario.
+Actualiza un usuario. Si se proporciona un nuevo `empresa_id`, la API verifica que esa empresa exista.
 
 **Entrada JSON** (cualquier campo de creación)
 ```json
