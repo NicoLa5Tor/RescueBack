@@ -104,6 +104,7 @@ Crea un usuario. Debe pertenecer a una empresa existente (la API valida que `emp
 ```bash
 curl -X POST http://localhost:5000/api/users/ \
   -H 'Content-Type: application/json' \
+  -H 'X-Super-Admin-Token: <token>' \
   -d '{"name":"Juan","email":"juan@example.com","age":25,"empresa_id":"<id_empresa>","telefono":"3001234567"}'
 ```
 
@@ -121,7 +122,8 @@ Obtiene todos los usuarios.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/users/
+curl http://localhost:5000/api/users/ \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/users/<id>`
@@ -129,7 +131,8 @@ Obtiene un usuario por ID.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/users/<id>
+curl http://localhost:5000/api/users/<id> \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `PUT /api/users/<id>`
@@ -160,6 +163,7 @@ Actualiza un usuario. Si se proporciona un nuevo `empresa_id`, la API verifica q
 ```bash
 curl -X PUT http://localhost:5000/api/users/<id> \
   -H 'Content-Type: application/json' \
+  -H 'X-Super-Admin-Token: <token>' \
   -d '{"name":"Nuevo Nombre"}'
 ```
 
@@ -176,7 +180,8 @@ Elimina un usuario.
 
 **Curl**
 ```bash
-curl -X DELETE http://localhost:5000/api/users/<id>
+curl -X DELETE http://localhost:5000/api/users/<id> \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/users/age-range?min_age=18&max_age=30`
@@ -184,7 +189,8 @@ Busca usuarios por rango de edad.
 
 **Curl**
 ```bash
-curl "http://localhost:5000/api/users/age-range?min_age=18&max_age=30"
+curl "http://localhost:5000/api/users/age-range?min_age=18&max_age=30" \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/users/buscar-por-telefono?telefono=<numero>`
@@ -192,7 +198,8 @@ Busca un usuario por su número de teléfono.
 
 **Curl**
 ```bash
-curl "http://localhost:5000/api/users/buscar-por-telefono?telefono=3001234567"
+curl "http://localhost:5000/api/users/buscar-por-telefono?telefono=3001234567" \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 **Respuesta**
 ```json
@@ -229,6 +236,7 @@ Crear empresa (requiere super admin).
 curl -X POST http://localhost:5000/api/empresas/ \
   -H 'Content-Type: application/json' \
   -H 'X-Super-Admin-ID: <id_admin>' \
+  -H 'X-Super-Admin-Token: <token>' \
   -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá"}'
 ```
 
@@ -237,7 +245,8 @@ Obtiene todas las empresas.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/empresas/
+curl http://localhost:5000/api/empresas/ \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/empresas/<id>`
@@ -245,7 +254,8 @@ Obtiene empresa por ID.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/empresas/<id>
+curl http://localhost:5000/api/empresas/<id> \
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `PUT /api/empresas/<id>`
@@ -256,6 +266,7 @@ Actualiza empresa (super admin creador).
 curl -X PUT http://localhost:5000/api/empresas/<id> \
   -H 'Content-Type: application/json' \
   -H 'X-Super-Admin-ID: <id_admin>' \
+  -H 'X-Super-Admin-Token: <token>' \
   -d '{"nombre":"Nuevo nombre"}'
 ```
 
@@ -266,6 +277,7 @@ Elimina empresa (super admin creador).
 ```bash
 curl -X DELETE http://localhost:5000/api/empresas/<id> \
   -H 'X-Super-Admin-ID: <id_admin>'
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/empresas/mis-empresas`
@@ -274,6 +286,7 @@ Empresas creadas por el super admin autenticado.
 **Curl**
 ```bash
 curl http://localhost:5000/api/empresas/mis-empresas -H 'X-Super-Admin-ID: <id_admin>'
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/empresas/buscar-por-ubicacion?ubicacion=<loc>`
@@ -290,6 +303,7 @@ Estadísticas de empresas (token de admin).
 **Curl**
 ```bash
 curl http://localhost:5000/api/empresas/estadisticas -H 'X-Super-Admin-ID: <id_admin>'
+  -H 'X-Super-Admin-Token: <token>'
 ```
 
 ### `GET /api/empresas/<empresa_id>/activity`
@@ -297,7 +311,9 @@ Actividad de una empresa específica (token de admin).
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/empresas/<empresa_id>/activity -H 'X-Admin-Token: <token>'
+curl http://localhost:5000/api/empresas/<empresa_id>/activity \
+  -H 'X-Empresa-Token: <token>' \
+  -H 'X-Empresa-ID: <empresa_id>'
 ```
 
 ## Administración `/api/admin`
