@@ -51,14 +51,18 @@ Si las credenciales son inválidas retorna `401` con `{"success": false, "errors
 ## Usuarios `/api/users`
 
 ### `POST /api/users/`
-Crea un usuario.
+Crea un usuario. El usuario debe pertenecer a una empresa existente y
+proporcionar un número de teléfono. El campo `whatsapp_verify` siempre se crea
+en `false` por defecto.
 
 **Entrada JSON** ejemplo:
 ```json
 {
   "name": "Juan",
   "email": "juan@example.com",
-  "age": 25
+  "age": 25,
+  "empresa_id": "<id_empresa>",
+  "telefono": "3001234567"
 }
 ```
 
@@ -71,7 +75,10 @@ Crea un usuario.
     "id": "<id>",
     "name": "Juan",
     "email": "juan@example.com",
-    "age": 25
+    "age": 25,
+    "empresa_id": "<id_empresa>",
+    "telefono": "3001234567",
+    "whatsapp_verify": false
   }
 }
 ```
@@ -80,7 +87,7 @@ Curl:
 ```bash
 curl -X POST http://localhost:5000/api/users/ \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Juan","email":"juan@example.com","age":25}'
+  -d '{"name":"Juan","email":"juan@example.com","age":25,"empresa_id":"<id_empresa>","telefono":"3001234567"}'
 ```
 
 ### `GET /api/users/`

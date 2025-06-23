@@ -12,7 +12,10 @@ class UserService:
             user = User(
                 name=user_data.get('name'),
                 email=user_data.get('email'),
-                age=user_data.get('age')
+                age=user_data.get('age'),
+                empresa_id=user_data.get('empresa_id'),
+                telefono=user_data.get('telefono'),
+                whatsapp_verify=user_data.get('whatsapp_verify', False)
             )
             
             # Validar datos
@@ -96,6 +99,9 @@ class UserService:
                 name=user_data.get('name', existing_user.name),
                 email=user_data.get('email', existing_user.email),
                 age=user_data.get('age', existing_user.age),
+                empresa_id=user_data.get('empresa_id', existing_user.empresa_id),
+                telefono=user_data.get('telefono', existing_user.telefono),
+                whatsapp_verify=user_data.get('whatsapp_verify', existing_user.whatsapp_verify),
                 _id=existing_user._id
             )
             
