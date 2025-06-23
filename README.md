@@ -223,14 +223,17 @@ curl "http://localhost:5000/api/users/buscar-por-telefono?telefono=3001234567" \
 ## Empresas `/api/empresas`
 
 ### `POST /api/empresas/`
-Crear empresa (requiere super admin).
+Crear empresa (requiere super admin). Las empresas actúan como usuarios con rol `empresa` y necesitan credenciales propias.
 
 **Entrada JSON**
 ```json
 {
   "nombre": "Mi Empresa",
   "descripcion": "Empresa de ejemplo",
-  "ubicacion": "Bogotá"
+  "ubicacion": "Bogotá",
+  "username": "miempresa",
+  "email": "empresa@example.com",
+  "password": "secreto"
 }
 ```
 
@@ -239,7 +242,7 @@ Crear empresa (requiere super admin).
 curl -X POST http://localhost:5000/api/empresas/ \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <token>' \
-  -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá"}'
+  -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá","username":"miempresa","email":"empresa@example.com","password":"secreto"}'
 ```
 
 ### `GET /api/empresas/`
@@ -261,14 +264,14 @@ curl http://localhost:5000/api/empresas/<id> \
 ```
 
 ### `PUT /api/empresas/<id>`
-Actualiza empresa (super admin creador).
+Actualiza empresa. El super admin que la creó o la propia empresa pueden modificarla.
 
 **Curl**
 ```bash
 curl -X PUT http://localhost:5000/api/empresas/<id> \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <token>' \
-  -d '{"nombre":"Nuevo nombre"}'
+  -d '{"descripcion":"Nueva desc","password":"nuevo"}'
 ```
 
 ### `DELETE /api/empresas/<id>`

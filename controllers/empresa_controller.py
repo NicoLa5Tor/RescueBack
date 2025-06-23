@@ -1,6 +1,6 @@
 from flask import request, jsonify, g
 from services.empresa_service import EmpresaService
-from utils.permissions import require_super_admin_token
+from utils.permissions import require_super_admin_token, require_empresa_or_super_token
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
 
 
@@ -149,9 +149,9 @@ class EmpresaController:
                 500,
             )
 
-    @require_super_admin_token
+    @require_empresa_or_super_token(require_empresa_id=True)
     def update_empresa(self, empresa_id):
-        """Endpoint para actualizar una empresa (solo el creador)"""
+        """Endpoint para actualizar una empresa"""
         try:
             data = request.get_json()
 
@@ -161,7 +161,7 @@ class EmpresaController:
                     400,
                 )
 
-            super_admin_id = g.super_admin_id
+            super_admin_id = g.super_admin_id if getattr(g, "is_super_admin", False) else None
             result = self.empresa_service.update_empresa(
                 empresa_id, data, super_admin_id
             )

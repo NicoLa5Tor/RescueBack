@@ -1,4 +1,5 @@
 from bson import ObjectId
+import bcrypt
 from models.empresa import Empresa
 from repositories.empresa_repository import EmpresaRepository
 
@@ -26,12 +27,20 @@ class EmpresaService:
                         'errors': ['El ID del super admin no es válido']
                     }
             
-            # Crear objeto Empresa
+            password = empresa_data.get('password')
+            if not password:
+                return {'success': False, 'errors': ['La contraseña es obligatoria']}
+
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
             empresa = Empresa(
                 nombre=empresa_data.get('nombre'),
                 descripcion=empresa_data.get('descripcion'),
                 ubicacion=empresa_data.get('ubicacion'),
-                creado_por=super_admin_id
+                creado_por=super_admin_id,
+                username=empresa_data.get('username'),
+                email=empresa_data.get('email'),
+                password_hash=password_hash
             )
             
             # Validar datos
@@ -42,12 +51,21 @@ class EmpresaService:
                     'errors': validation_errors
                 }
             
-            # Verificar si el nombre ya existe
-            existing_empresa = self.empresa_repository.find_by_nombre(empresa.nombre)
-            if existing_empresa:
+            # Verificar duplicados
+            if self.empresa_repository.find_by_nombre(empresa.nombre):
                 return {
                     'success': False,
                     'errors': ['Ya existe una empresa con ese nombre']
+                }
+            if self.empresa_repository.find_by_username(empresa.username):
+                return {
+                    'success': False,
+                    'errors': ['El nombre de usuario ya está en uso']
+                }
+            if self.empresa_repository.find_by_email(empresa.email):
+                return {
+                    'success': False,
+                    'errors': ['El correo ya está en uso']
                 }
             
             # Crear empresa
@@ -138,18 +156,28 @@ class EmpresaService:
                         'errors': ['No tienes permisos para modificar esta empresa']
                     }
             
+            # Preparar password
+            new_password = empresa_data.get('password')
+            password_hash = existing_empresa.password_hash
+            if new_password:
+                password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
             # Crear objeto Empresa con datos actualizados
             updated_empresa = Empresa(
                 nombre=empresa_data.get('nombre', existing_empresa.nombre),
                 descripcion=empresa_data.get('descripcion', existing_empresa.descripcion),
                 ubicacion=empresa_data.get('ubicacion', existing_empresa.ubicacion),
                 creado_por=existing_empresa.creado_por,
-                _id=existing_empresa._id
+                username=empresa_data.get('username', existing_empresa.username),
+                email=empresa_data.get('email', existing_empresa.email),
+                password_hash=password_hash,
+                _id=existing_empresa._id,
+                activa=existing_empresa.activa,
             )
-            
+
             # Mantener datos originales
             updated_empresa.fecha_creacion = existing_empresa.fecha_creacion
-            updated_empresa.activa = existing_empresa.activa
+            updated_empresa.last_login = existing_empresa.last_login
             
             # Validar datos
             validation_errors = updated_empresa.validate()
@@ -166,6 +194,20 @@ class EmpresaService:
                     return {
                         'success': False,
                         'errors': ['Ya existe una empresa con ese nombre']
+                    }
+
+            if updated_empresa.username != existing_empresa.username:
+                if self.empresa_repository.find_by_username(updated_empresa.username):
+                    return {
+                        'success': False,
+                        'errors': ['El nombre de usuario ya está en uso']
+                    }
+
+            if updated_empresa.email != existing_empresa.email:
+                if self.empresa_repository.find_by_email(updated_empresa.email):
+                    return {
+                        'success': False,
+                        'errors': ['El correo ya está en uso']
                     }
             
             # Actualizar empresa

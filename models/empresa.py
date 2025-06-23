@@ -2,15 +2,31 @@ from datetime import datetime
 from bson import ObjectId
 
 class Empresa:
-    def __init__(self, nombre=None, descripcion=None, ubicacion=None, creado_por=None, _id=None):
-        self._id = _id
+    def __init__(
+        self,
+        nombre=None,
+        descripcion=None,
+        ubicacion=None,
+        creado_por=None,
+        username=None,
+        email=None,
+        password_hash=None,
+        last_login=None,
+        activa=True,
+        _id=None,
+    ):
+        self._id = _id or ObjectId()
         self.nombre = nombre
         self.descripcion = descripcion
         self.ubicacion = ubicacion
         self.creado_por = creado_por
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.last_login = last_login
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
-        self.activa = True  # Campo adicional para soft delete
+        self.activa = activa  # Campo adicional para soft delete
     
     def to_dict(self):
         """Convierte el objeto Empresa a diccionario para MongoDB"""
@@ -19,6 +35,10 @@ class Empresa:
             'descripcion': self.descripcion,
             'ubicacion': self.ubicacion,
             'creado_por': self.creado_por,
+            'username': self.username,
+            'email': self.email,
+            'password_hash': self.password_hash,
+            'last_login': self.last_login,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activa': self.activa
@@ -36,6 +56,10 @@ class Empresa:
         empresa.descripcion = data.get('descripcion')
         empresa.ubicacion = data.get('ubicacion')
         empresa.creado_por = data.get('creado_por')
+        empresa.username = data.get('username')
+        empresa.email = data.get('email')
+        empresa.password_hash = data.get('password_hash')
+        empresa.last_login = data.get('last_login')
         empresa.fecha_creacion = data.get('fecha_creacion')
         empresa.fecha_actualizacion = data.get('fecha_actualizacion')
         empresa.activa = data.get('activa', True)
@@ -49,6 +73,9 @@ class Empresa:
             'descripcion': self.descripcion,
             'ubicacion': self.ubicacion,
             'creado_por': str(self.creado_por) if self.creado_por else None,
+            'username': self.username,
+            'email': self.email,
+            'last_login': self.last_login.isoformat() if isinstance(self.last_login, datetime) else self.last_login,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
             'activa': self.activa
@@ -87,7 +114,18 @@ class Empresa:
         
         if not self.creado_por:
             errors.append("El ID del super admin creador es obligatorio")
-        
+
+        if not self.username or len(self.username.strip()) == 0:
+            errors.append("El nombre de usuario es obligatorio")
+
+        if not self.email or len(self.email.strip()) == 0:
+            errors.append("El correo es obligatorio")
+        elif "@" not in self.email:
+            errors.append("El correo debe ser válido")
+
+        if not self.password_hash:
+            errors.append("La contraseña es obligatoria")
+
         return errors
     
     def update_timestamp(self):
@@ -102,3 +140,7 @@ class Empresa:
             self.descripcion = self.descripcion.strip()
         if self.ubicacion:
             self.ubicacion = self.ubicacion.strip()
+        if self.username:
+            self.username = self.username.strip()
+        if self.email:
+            self.email = self.email.strip()
