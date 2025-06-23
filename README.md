@@ -295,7 +295,7 @@ curl "http://localhost:5000/api/empresas/buscar-por-ubicacion?ubicacion=Bogotá"
 ```
 
 ### `GET /api/empresas/estadisticas`
-Estadísticas de empresas (token de admin).
+Estadísticas de empresas (requiere token de super admin).
 
 **Curl**
 ```bash
@@ -304,7 +304,7 @@ curl http://localhost:5000/api/empresas/estadisticas \
 ```
 
 ### `GET /api/empresas/<empresa_id>/activity`
-Actividad de una empresa específica (token de admin).
+Actividad de una empresa específica (token de empresa o super admin).
 
 **Curl**
 ```bash
@@ -316,7 +316,7 @@ curl http://localhost:5000/api/empresas/<empresa_id>/activity \
 ## Administración `/api/admin`
 
 ### `GET /api/admin/activity`
-Actividad general (token de admin).
+Actividad general (token de admin o super admin).
 
 **Curl**
 ```bash
@@ -324,7 +324,7 @@ curl http://localhost:5000/api/admin/activity -H 'X-Admin-Token: <token>'
 ```
 
 ### `GET /api/admin/distribution`
-Distribución de empresas (token de admin).
+Distribución de empresas (token de admin o super admin).
 
 **Curl**
 ```bash

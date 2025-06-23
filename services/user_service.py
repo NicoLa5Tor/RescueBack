@@ -242,4 +242,4 @@ class UserService:
             return {
                 'success': False,
                 'errors': [str(e)]
-            
+            }
