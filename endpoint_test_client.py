@@ -48,7 +48,17 @@ class EndpointTestClient:
     # Endpoints de autenticación y salud
     # ------------------------------------------------------------------
     def login(self, usuario: str, password: str) -> requests.Response:
-        """POST /auth/login"""
+        """POST /auth/login
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "usuario": "superadmin",
+            "password": "secreto"
+        }
+        ```
+        """
         return self._request("POST", "/auth/login", data={"usuario": usuario, "password": password})
 
     def health(self) -> requests.Response:
@@ -63,7 +73,20 @@ class EndpointTestClient:
     # Endpoints de usuarios
     # ------------------------------------------------------------------
     def create_user(self, data: Dict[str, Any]) -> requests.Response:
-        """POST /api/users"""
+        """POST /api/users
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "name": "Juan",
+            "email": "juan@example.com",
+            "age": 25,
+            "empresa_id": "<id_empresa>",
+            "telefono": "3001234567"
+        }
+        ```
+        """
         return self._request("POST", "/api/users", data=data)
 
     def get_users(self) -> requests.Response:
@@ -75,7 +98,21 @@ class EndpointTestClient:
         return self._request("GET", f"/api/users/{user_id}")
 
     def update_user(self, user_id: str, data: Dict[str, Any]) -> requests.Response:
-        """PUT /api/users/<user_id>"""
+        """PUT /api/users/<user_id>
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "name": "Nuevo Nombre",
+            "email": "nuevo@email.com",
+            "age": 30,
+            "empresa_id": "<id_empresa>",
+            "telefono": "3110000000",
+            "whatsapp_verify": true
+        }
+        ```
+        """
         return self._request("PUT", f"/api/users/{user_id}", data=data)
 
     def delete_user(self, user_id: str) -> requests.Response:
@@ -95,7 +132,21 @@ class EndpointTestClient:
     # Endpoints de empresas
     # ------------------------------------------------------------------
     def create_empresa(self, data: Dict[str, Any]) -> requests.Response:
-        """POST /api/empresas"""
+        """POST /api/empresas
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "nombre": "Mi Empresa",
+            "descripcion": "Empresa de ejemplo",
+            "ubicacion": "Bogotá",
+            "username": "miempresa",
+            "email": "empresa@example.com",
+            "password": "secreto"
+        }
+        ```
+        """
         return self._request("POST", "/api/empresas", data=data)
 
     def get_empresas(self, include_inactive: bool = False) -> requests.Response:
@@ -108,7 +159,21 @@ class EndpointTestClient:
         return self._request("GET", f"/api/empresas/{empresa_id}")
 
     def update_empresa(self, empresa_id: str, data: Dict[str, Any]) -> requests.Response:
-        """PUT /api/empresas/<empresa_id>"""
+        """PUT /api/empresas/<empresa_id>
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "nombre": "Nuevo Nombre",
+            "descripcion": "Nueva descripcion",
+            "ubicacion": "Medellín",
+            "username": "miempresa",
+            "email": "empresa@example.com",
+            "password": "nuevo"
+        }
+        ```
+        """
         return self._request("PUT", f"/api/empresas/{empresa_id}", data=data)
 
     def delete_empresa(self, empresa_id: str) -> requests.Response:
@@ -146,7 +211,18 @@ class EndpointTestClient:
     # Endpoints multi-tenant
     # ------------------------------------------------------------------
     def create_usuario_for_empresa(self, empresa_id: str, data: Dict[str, Any]) -> requests.Response:
-        """POST /empresas/<empresa_id>/usuarios"""
+        """POST /empresas/<empresa_id>/usuarios
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "nombre": "Ana",
+            "cedula": "123456",
+            "rol": "operador"
+        }
+        ```
+        """
         return self._request("POST", f"/empresas/{empresa_id}/usuarios", data=data)
 
     def get_usuarios_by_empresa(self, empresa_id: str) -> requests.Response:
@@ -159,7 +235,18 @@ class EndpointTestClient:
         return self._request("GET", endpoint)
 
     def update_usuario_by_empresa(self, empresa_id: str, usuario_id: str, data: Dict[str, Any]) -> requests.Response:
-        """PUT /empresas/<empresa_id>/usuarios/<usuario_id>"""
+        """PUT /empresas/<empresa_id>/usuarios/<usuario_id>
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "nombre": "Nuevo Nombre",
+            "cedula": "123456",
+            "rol": "operador"
+        }
+        ```
+        """
         endpoint = f"/empresas/{empresa_id}/usuarios/{usuario_id}"
         return self._request("PUT", endpoint, data=data)
 
