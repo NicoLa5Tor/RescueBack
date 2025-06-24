@@ -107,6 +107,10 @@ admin_controller = AdminController()
 def get_admin_activity():
     return admin_controller.get_activity()
 
+@admin_bp.route('/activity-admin', methods=['GET'])
+def get_admin_activity_only():
+    return admin_controller.get_activity_admin_only()
+
 @admin_bp.route('/distribution', methods=['GET'])
 def get_admin_distribution():
     return admin_controller.get_distribution()

@@ -203,6 +203,10 @@ class EndpointTestClient:
         """GET /api/admin/activity - Ver logs de todas las empresas"""
         return self._request("GET", "/api/admin/activity")
 
+    def get_admin_activity_only(self) -> requests.Response:
+        """GET /api/admin/activity-admin - Ver logs solo para admins"""
+        return self._request("GET", "/api/admin/activity-admin")
+
     def get_admin_distribution(self) -> requests.Response:
         """GET /api/admin/distribution"""
         return self._request("GET", "/api/admin/distribution")

@@ -77,3 +77,22 @@ def require_admin_token(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def require_only_admin_token(f):
+    """Permite acceso únicamente a usuarios con rol admin"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt()
+        if claims.get("role") != "admin":
+            return (
+                jsonify({"success": False, "errors": ["Permisos de administrador requeridos"]}),
+                401,
+            )
+        g.admin_id = get_jwt_identity()
+        g.is_super_admin = False
+        return f(*args, **kwargs)
+
+    return decorated_function

@@ -2,6 +2,7 @@ from flask import jsonify
 from services.dashboard_service import DashboardService
 from utils.permissions import (
     require_admin_token,
+    require_only_admin_token,
     require_empresa_or_super_token,
 )
 
@@ -12,6 +13,12 @@ class AdminController:
     @require_admin_token
     def get_activity(self):
         """Return logged activity for all companies."""
+        result = self.dashboard_service.get_activity()
+        return jsonify(result), 200 if result.get("success") else 500
+
+    @require_only_admin_token
+    def get_activity_admin_only(self):
+        """Return logged activity for all companies (solo admin)."""
         result = self.dashboard_service.get_activity()
         return jsonify(result), 200 if result.get("success") else 500
 

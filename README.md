@@ -329,6 +329,15 @@ curl http://localhost:5000/api/admin/activity \
   -H 'Authorization: Bearer <token>'
 ```
 
+### `GET /api/admin/activity-admin`
+Devuelve la actividad registrada de todas las empresas solo cuando el token pertenece a un administrador.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/admin/activity-admin \
+  -H 'Authorization: Bearer <token>'
+```
+
 ### `GET /api/admin/distribution`
 Distribución de empresas (token de admin o super admin).
 
@@ -392,5 +401,5 @@ Los permisos determinan a qué endpoints puede acceder cada tipo de usuario. Si 
 | Rol         | Endpoints permitidos |
 |-------------|--------------------------------------------------------------|
 | super_admin | `/api/users`, `/api/empresas`, `/api/admin`, `/empresas` |
-| admin       | `/api/admin/activity`, `/api/admin/distribution`, `/api/empresas/<empresa_id>/activity` |
+| admin       | `/api/admin/activity`, `/api/admin/activity-admin`, `/api/admin/distribution`, `/api/empresas/<empresa_id>/activity` |
 | empresa     | `/api/empresas`, `/empresas` |
