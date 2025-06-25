@@ -11,6 +11,7 @@ class Empresa:
         username=None,
         email=None,
         password_hash=None,
+        sedes=None,
         last_login=None,
         activa=True,
         _id=None,
@@ -23,6 +24,7 @@ class Empresa:
         self.username = username
         self.email = email
         self.password_hash = password_hash
+        self.sedes = sedes or []
         self.last_login = last_login
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
@@ -38,6 +40,7 @@ class Empresa:
             'username': self.username,
             'email': self.email,
             'password_hash': self.password_hash,
+            'sedes': self.sedes,
             'last_login': self.last_login,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
@@ -59,6 +62,7 @@ class Empresa:
         empresa.username = data.get('username')
         empresa.email = data.get('email')
         empresa.password_hash = data.get('password_hash')
+        empresa.sedes = data.get('sedes', [])
         empresa.last_login = data.get('last_login')
         empresa.fecha_creacion = data.get('fecha_creacion')
         empresa.fecha_actualizacion = data.get('fecha_actualizacion')
@@ -75,6 +79,7 @@ class Empresa:
             'creado_por': str(self.creado_por) if self.creado_por else None,
             'username': self.username,
             'email': self.email,
+            'sedes': self.sedes,
             'last_login': self.last_login.isoformat() if isinstance(self.last_login, datetime) else self.last_login,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
@@ -126,6 +131,15 @@ class Empresa:
         if not self.password_hash:
             errors.append("La contraseña es obligatoria")
 
+        if self.sedes is not None:
+            if not isinstance(self.sedes, list):
+                errors.append("Las sedes deben ser una lista")
+            else:
+                for sede in self.sedes:
+                    if not isinstance(sede, str) or len(sede.strip()) == 0:
+                        errors.append("Cada sede debe ser una cadena no vacía")
+                        break
+
         return errors
     
     def update_timestamp(self):
@@ -144,3 +158,5 @@ class Empresa:
             self.username = self.username.strip()
         if self.email:
             self.email = self.email.strip()
+        if self.sedes and isinstance(self.sedes, list):
+            self.sedes = [sede.strip() for sede in self.sedes if isinstance(sede, str)]

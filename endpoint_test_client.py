@@ -141,6 +141,7 @@ class EndpointTestClient:
             "nombre": "Mi Empresa",
             "descripcion": "Empresa de ejemplo",
             "ubicacion": "Bogotá",
+            "sedes": ["Principal"],
             "username": "miempresa",
             "email": "empresa@example.com",
             "password": "secreto"
@@ -168,6 +169,7 @@ class EndpointTestClient:
             "nombre": "Nuevo Nombre",
             "descripcion": "Nueva descripcion",
             "ubicacion": "Medellín",
+            "sedes": ["Sucursal 1"],
             "username": "miempresa",
             "email": "empresa@example.com",
             "password": "nuevo"

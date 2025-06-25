@@ -40,7 +40,8 @@ class EmpresaService:
                 creado_por=super_admin_id,
                 username=empresa_data.get('username'),
                 email=empresa_data.get('email'),
-                password_hash=password_hash
+                password_hash=password_hash,
+                sedes=empresa_data.get('sedes')
             )
             
             # Validar datos
@@ -171,6 +172,7 @@ class EmpresaService:
                 username=empresa_data.get('username', existing_empresa.username),
                 email=empresa_data.get('email', existing_empresa.email),
                 password_hash=password_hash,
+                sedes=empresa_data.get('sedes', existing_empresa.sedes),
                 _id=existing_empresa._id,
                 activa=existing_empresa.activa,
             )

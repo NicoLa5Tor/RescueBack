@@ -231,6 +231,7 @@ Crear empresa (requiere super admin). Las empresas actúan como usuarios con rol
   "nombre": "Mi Empresa",
   "descripcion": "Empresa de ejemplo",
   "ubicacion": "Bogotá",
+  "sedes": ["Principal"],
   "username": "miempresa",
   "email": "empresa@example.com",
   "password": "secreto"
@@ -242,7 +243,7 @@ Crear empresa (requiere super admin). Las empresas actúan como usuarios con rol
 curl -X POST http://localhost:5000/api/empresas/ \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <token>' \
-  -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá","username":"miempresa","email":"empresa@example.com","password":"secreto"}'
+  -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá","sedes":["Principal"],"username":"miempresa","email":"empresa@example.com","password":"secreto"}'
 ```
 
 ### `GET /api/empresas/`
@@ -271,7 +272,7 @@ Actualiza empresa. El super admin que la creó o la propia empresa pueden modifi
 curl -X PUT http://localhost:5000/api/empresas/<id> \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <token>' \
-  -d '{"descripcion":"Nueva desc","password":"nuevo"}'
+  -d '{"descripcion":"Nueva desc","password":"nuevo","sedes":["Sucursal 1","Sucursal 2"]}'
 ```
 
 ### `DELETE /api/empresas/<id>`
