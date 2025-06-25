@@ -212,6 +212,39 @@ class EndpointTestClient:
         return self._request("GET", "/api/admin/distribution")
 
     # ------------------------------------------------------------------
+    # Endpoints de botoneras
+    # ------------------------------------------------------------------
+    def create_botonera(self, data: Dict[str, Any]) -> requests.Response:
+        """POST /api/botoneras
+
+        Ejemplo de body
+        ----------------
+        ```json
+        {
+            "empresa_nombre": "Mi Empresa",
+            "color": "rojo"
+        }
+        ```
+        """
+        return self._request("POST", "/api/botoneras", data=data)
+
+    def get_botoneras(self) -> requests.Response:
+        """GET /api/botoneras"""
+        return self._request("GET", "/api/botoneras")
+
+    def get_botonera(self, botonera_id: str) -> requests.Response:
+        """GET /api/botoneras/<botonera_id>"""
+        return self._request("GET", f"/api/botoneras/{botonera_id}")
+
+    def update_botonera(self, botonera_id: str, data: Dict[str, Any]) -> requests.Response:
+        """PUT /api/botoneras/<botonera_id>"""
+        return self._request("PUT", f"/api/botoneras/{botonera_id}", data=data)
+
+    def delete_botonera(self, botonera_id: str) -> requests.Response:
+        """DELETE /api/botoneras/<botonera_id>"""
+        return self._request("DELETE", f"/api/botoneras/{botonera_id}")
+
+    # ------------------------------------------------------------------
     # Endpoints multi-tenant
     # ------------------------------------------------------------------
     def create_usuario_for_empresa(self, empresa_id: str, data: Dict[str, Any]) -> requests.Response:

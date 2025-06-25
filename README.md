@@ -394,6 +394,54 @@ Eliminar un usuario de una empresa.
 curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
 ```
 
+## Botoneras `/api/botoneras`
+
+Las botoneras almacenan configuraciones enviadas generalmente por una botonera física o aplicación. El JSON debe incluir al menos el `empresa_nombre` para asociarla con una empresa existente. Los demás campos se guardan en `datos`.
+
+### `POST /api/botoneras/`
+Crea una nueva botonera.
+
+**Curl**
+```bash
+curl -X POST http://localhost:5000/api/botoneras/ \
+  -H 'Content-Type: application/json' \
+  -d '{"empresa_nombre":"Mi Empresa","color":"rojo"}'
+```
+
+### `GET /api/botoneras/`
+Obtiene todas las botoneras activas.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/botoneras/
+```
+
+### `GET /api/botoneras/<id>`
+Obtiene una botonera por ID.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/botoneras/<id>
+```
+
+### `PUT /api/botoneras/<id>`
+Actualiza una botonera.
+
+**Curl**
+```bash
+curl -X PUT http://localhost:5000/api/botoneras/<id> \
+  -H 'Content-Type: application/json' \
+  -d '{"empresa_nombre":"Mi Empresa","nuevo":"valor"}'
+```
+
+### `DELETE /api/botoneras/<id>`
+Elimina lógicamente una botonera.
+
+**Curl**
+```bash
+curl -X DELETE http://localhost:5000/api/botoneras/<id>
+```
+
 ## Permisos por rol
 
 Los permisos determinan a qué endpoints puede acceder cada tipo de usuario. Si un usuario no cuenta con una lista personalizada, se aplican los siguientes valores por defecto:
