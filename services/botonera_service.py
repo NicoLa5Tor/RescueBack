@@ -55,6 +55,20 @@ class BotoneraService:
         except Exception as exc:
             return {'success': False, 'errors': [str(exc)]}
 
+    def get_botoneras_by_empresa(self, empresa_id):
+        try:
+            botoneras = self.botonera_repo.find_by_empresa(empresa_id)
+            empresa = self.empresa_repo.find_by_id(empresa_id)
+            nombre = empresa.nombre if empresa else None
+            resultados = []
+            for b in botoneras:
+                j = b.to_json()
+                j['empresa_nombre'] = nombre
+                resultados.append(j)
+            return {'success': True, 'data': resultados, 'count': len(resultados)}
+        except Exception as exc:
+            return {'success': False, 'errors': [str(exc)]}
+
     def update_botonera(self, botonera_id, data):
         try:
             existing = self.botonera_repo.find_by_id(botonera_id)

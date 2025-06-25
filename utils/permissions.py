@@ -96,3 +96,24 @@ def require_only_admin_token(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+def require_empresa_or_admin_token(f):
+    """Permite el acceso con token de empresa, admin o super_admin."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt()
+        role = claims.get("role")
+        if role == "empresa":
+            g.empresa_id = get_jwt_identity()
+            g.is_super_admin = False
+        elif role in ["admin", "super_admin"]:
+            g.admin_id = get_jwt_identity()
+            g.is_super_admin = role == "super_admin"
+        else:
+            return (
+                jsonify({"success": False, "errors": ["Permisos insuficientes"]}),
+                401,
+            )
+        return f(*args, **kwargs)
+    return decorated_function

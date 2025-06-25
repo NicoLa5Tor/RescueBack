@@ -232,6 +232,10 @@ class EndpointTestClient:
         """GET /api/botoneras"""
         return self._request("GET", "/api/botoneras")
 
+    def get_botoneras_by_empresa(self, empresa_id: str) -> requests.Response:
+        """GET /api/botoneras/empresa/<empresa_id>"""
+        return self._request("GET", f"/api/botoneras/empresa/{empresa_id}")
+
     def get_botonera(self, botonera_id: str) -> requests.Response:
         """GET /api/botoneras/<botonera_id>"""
         return self._request("GET", f"/api/botoneras/{botonera_id}")

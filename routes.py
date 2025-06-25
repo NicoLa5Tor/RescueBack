@@ -116,6 +116,10 @@ def create_botonera():
 def get_botoneras():
     return botonera_controller.get_botoneras()
 
+@botonera_bp.route('/empresa/<empresa_id>', methods=['GET'])
+def get_botoneras_by_empresa(empresa_id):
+    return botonera_controller.get_botoneras_by_empresa(empresa_id)
+
 @botonera_bp.route('/<botonera_id>', methods=['GET'])
 def get_botonera(botonera_id):
     return botonera_controller.get_botonera(botonera_id)

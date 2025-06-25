@@ -416,6 +416,14 @@ Obtiene todas las botoneras activas.
 curl http://localhost:5000/api/botoneras/
 ```
 
+### `GET /api/botoneras/empresa/<empresa_id>`
+Obtiene todas las botoneras de una empresa.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/botoneras/empresa/<empresa_id>
+```
+
 ### `GET /api/botoneras/<id>`
 Obtiene una botonera por ID.
 
