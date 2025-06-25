@@ -1,5 +1,6 @@
 from flask_jwt_extended import create_access_token
 import bcrypt
+from datetime import datetime
 from database import Database
 
 # Endpoints permitidos por rol si el usuario no tiene lista propia
@@ -38,7 +39,12 @@ class AuthService:
             collection = 'administradores'
 
             if not user:
-                user = self.db.empresas.find_one({'email': usuario})
+                user = self.db.empresas.find_one({
+                    '$or': [
+                        {'email': usuario},
+                        {'username': usuario}
+                    ]
+                })
                 if user:
                     collection = 'empresas'
             if not user:
@@ -65,6 +71,8 @@ class AuthService:
                 'permisos': user_perms,
             }
             token = create_access_token(identity=str(user['_id']), additional_claims=claims)
+            # Registrar último inicio de sesión
+            self.db[collection].update_one({'_id': user['_id']}, {'$set': {'last_login': datetime.utcnow()}})
             user_data = {
                 'id': str(user['_id']),
                 'email': user.get('email'),

@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify, request, make_response, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from config import Config
 from database import Database
 from routes import register_routes
+from services.activity_service import ActivityService
 
 def create_app():
     """Factory function para crear la aplicación Flask"""
@@ -26,9 +27,14 @@ def create_app():
             response.status_code = 204
             return response
 
+    activity_service = ActivityService()
+
     @app.after_request
-    def add_cors_headers(response):
-        """Agrega encabezados CORS a todas las respuestas"""
+    def after_request_handler(response):
+        """Agrega encabezados CORS y registra actividad"""
+        empresa_id = getattr(g, 'empresa_id', None)
+        if empresa_id:
+            activity_service.log(str(empresa_id), request.method, request.path)
         response.headers.setdefault('Access-Control-Allow-Origin', '*')
         response.headers.setdefault('Access-Control-Allow-Headers',
                                    'Content-Type,Authorization')
@@ -70,7 +76,8 @@ def create_app():
                 'get_user': 'GET /api/users/<id>',
                 'update_user': 'PUT /api/users/<id>',
                 'delete_user': 'DELETE /api/users/<id>',
-                'users_by_age': 'GET /api/users/age-range?min_age=18&max_age=30'
+                'users_by_age': 'GET /api/users/age-range?min_age=18&max_age=30',
+                'user_by_phone': 'GET /api/users/buscar-por-telefono?telefono=<numero>'
             }
         }), 200
     

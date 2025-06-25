@@ -47,6 +47,11 @@ def get_users_by_age():
     """GET /api/users/age-range?min_age=18&max_age=30 - Obtener usuarios por rango de edad"""
     return user_controller.get_users_by_age()
 
+@user_bp.route('/buscar-por-telefono', methods=['GET'])
+def get_user_by_phone():
+    """GET /api/users/buscar-por-telefono?telefono=<numero> - Obtener usuario por telefono"""
+    return user_controller.get_user_by_phone()
+
 # ========== BLUEPRINT DE EMPRESAS ==========
 empresa_bp = Blueprint('empresas', __name__, url_prefix='/api/empresas')
 empresa_controller = EmpresaController()
@@ -101,6 +106,10 @@ admin_controller = AdminController()
 @admin_bp.route('/activity', methods=['GET'])
 def get_admin_activity():
     return admin_controller.get_activity()
+
+@admin_bp.route('/activity-admin', methods=['GET'])
+def get_admin_activity_only():
+    return admin_controller.get_activity_admin_only()
 
 @admin_bp.route('/distribution', methods=['GET'])
 def get_admin_distribution():

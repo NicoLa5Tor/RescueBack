@@ -2,13 +2,37 @@
 
 Esta API está construida con Flask y MongoDB.
 
+## Endpoints de salud
+
+### `GET /health`
+Devuelve el estado de la API.
+
+**Respuesta**
+```json
+{
+  "status": "OK",
+  "message": "API funcionando correctamente",
+  "database": "Connected"
+}
+```
+
+**Curl**
+```bash
+curl http://localhost:5000/health
+```
+
+### `GET /`
+Información básica de la API.
+
+**Curl**
+```bash
+curl http://localhost:5000/
+```
+
 ## Autenticación
 
 ### `POST /auth/login`
-
-Solicita iniciar sesión con un nombre de usuario o email y una contraseña. El
-servidor devolverá un token JWT junto con los datos del usuario y la lista de
-endpoints a los que tiene acceso según su rol.
+Solicita iniciar sesión con un nombre de usuario o email y una contraseña. El servidor devuelve un token JWT y los datos del usuario.
 
 **Entrada JSON**
 ```json
@@ -28,12 +52,7 @@ endpoints a los que tiene acceso según su rol.
     "email": "admin@sistema.com",
     "username": "superadmin",
     "role": "super_admin",
-    "permisos": [
-      "/api/users",
-      "/api/empresas",
-      "/api/admin",
-      "/empresas"
-    ],
+    "permisos": ["/api/users","/api/empresas","/api/admin","/empresas"],
     "is_super_admin": true
   }
 }
@@ -46,19 +65,24 @@ curl -X POST http://localhost:5000/auth/login \
   -d '{"usuario":"superadmin","password":"secreto"}'
 ```
 
+El token devuelto debe enviarse en el encabezado `Authorization` usando el
+formato `Bearer <token>` en los demás endpoints protegidos.
+
 Si las credenciales son inválidas retorna `401` con `{"success": false, "errors": ["Credenciales inválidas"]}`.
 
 ## Usuarios `/api/users`
 
 ### `POST /api/users/`
-Crea un usuario.
+Crea un usuario. Debe pertenecer a una empresa existente (la API valida que `empresa_id` corresponda a una empresa real) y debe incluir un número de teléfono. El campo `whatsapp_verify` siempre se crea en `false`.
 
-**Entrada JSON** ejemplo:
+**Entrada JSON**
 ```json
 {
   "name": "Juan",
   "email": "juan@example.com",
-  "age": 25
+  "age": 25,
+  "empresa_id": "<id_empresa>",
+  "telefono": "3001234567"
 }
 ```
 
@@ -71,22 +95,26 @@ Crea un usuario.
     "id": "<id>",
     "name": "Juan",
     "email": "juan@example.com",
-    "age": 25
+    "age": 25,
+    "empresa_id": "<id_empresa>",
+    "telefono": "3001234567",
+    "whatsapp_verify": false
   }
 }
 ```
 
-Curl:
+**Curl**
 ```bash
 curl -X POST http://localhost:5000/api/users/ \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Juan","email":"juan@example.com","age":25}'
+  -H 'Authorization: Bearer <token>' \
+  -d '{"name":"Juan","email":"juan@example.com","age":25,"empresa_id":"<id_empresa>","telefono":"3001234567"}'
 ```
 
 ### `GET /api/users/`
 Obtiene todos los usuarios.
 
-Respuesta:
+**Respuesta**
 ```json
 {
   "success": true,
@@ -95,97 +123,283 @@ Respuesta:
 }
 ```
 
-Curl:
+**Curl**
 ```bash
-curl http://localhost:5000/api/users/
+curl http://localhost:5000/api/users/ \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ### `GET /api/users/<id>`
 Obtiene un usuario por ID.
 
-Curl:
+**Curl**
 ```bash
-curl http://localhost:5000/api/users/<id>
+curl http://localhost:5000/api/users/<id> \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ### `PUT /api/users/<id>`
-Actualiza un usuario.
+Actualiza un usuario. Si se proporciona un nuevo `empresa_id`, la API verifica que esa empresa exista.
+
+**Entrada JSON** (cualquier campo de creación)
+```json
+{
+  "name": "Nuevo Nombre",
+  "email": "nuevo@email.com",
+  "age": 30,
+  "empresa_id": "<id_empresa>",
+  "telefono": "3110000000",
+  "whatsapp_verify": true
+}
+```
+
+**Respuesta**
+```json
+{
+  "success": true,
+  "message": "Usuario actualizado correctamente",
+  "data": { ... }
+}
+```
+
+**Curl**
+```bash
+curl -X PUT http://localhost:5000/api/users/<id> \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
+  -d '{"name":"Nuevo Nombre"}'
+```
 
 ### `DELETE /api/users/<id>`
 Elimina un usuario.
 
+**Respuesta**
+```json
+{
+  "success": true,
+  "message": "Usuario eliminado correctamente"
+}
+```
+
+**Curl**
+```bash
+curl -X DELETE http://localhost:5000/api/users/<id> \
+  -H 'Authorization: Bearer <token>'
+```
+
 ### `GET /api/users/age-range?min_age=18&max_age=30`
 Busca usuarios por rango de edad.
+
+**Curl**
+```bash
+curl "http://localhost:5000/api/users/age-range?min_age=18&max_age=30" \
+  -H 'Authorization: Bearer <token>'
+```
+
+### `GET /api/users/buscar-por-telefono?telefono=<numero>`
+Busca un usuario por su número de teléfono.
+
+**Curl**
+```bash
+curl "http://localhost:5000/api/users/buscar-por-telefono?telefono=3001234567" \
+  -H 'Authorization: Bearer <token>'
+```
+**Respuesta**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "<id>",
+    "name": "Juan",
+    "email": "juan@example.com",
+    "age": 25,
+    "empresa_id": "<id_empresa>",
+    "telefono": "3001234567",
+    "whatsapp_verify": false
+  }
+}
+```
 
 ## Empresas `/api/empresas`
 
 ### `POST /api/empresas/`
-Crear empresa (requiere super admin).
+Crear empresa (requiere super admin). Las empresas actúan como usuarios con rol `empresa` y necesitan credenciales propias.
+
+**Entrada JSON**
+```json
+{
+  "nombre": "Mi Empresa",
+  "descripcion": "Empresa de ejemplo",
+  "ubicacion": "Bogotá",
+  "username": "miempresa",
+  "email": "empresa@example.com",
+  "password": "secreto"
+}
+```
+
+**Curl**
+```bash
+curl -X POST http://localhost:5000/api/empresas/ \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
+  -d '{"nombre":"Mi Empresa","descripcion":"Empresa de ejemplo","ubicacion":"Bogotá","username":"miempresa","email":"empresa@example.com","password":"secreto"}'
+```
 
 ### `GET /api/empresas/`
 Obtiene todas las empresas.
 
+**Curl**
+```bash
+curl http://localhost:5000/api/empresas/ \
+  -H 'Authorization: Bearer <token>'
+```
+
 ### `GET /api/empresas/<id>`
 Obtiene empresa por ID.
 
+**Curl**
+```bash
+curl http://localhost:5000/api/empresas/<id> \
+  -H 'Authorization: Bearer <token>'
+```
+
 ### `PUT /api/empresas/<id>`
-Actualiza empresa (super admin creador).
+Actualiza empresa. El super admin que la creó o la propia empresa pueden modificarla.
+
+**Curl**
+```bash
+curl -X PUT http://localhost:5000/api/empresas/<id> \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
+  -d '{"descripcion":"Nueva desc","password":"nuevo"}'
+```
 
 ### `DELETE /api/empresas/<id>`
 Elimina empresa (super admin creador).
 
+**Curl**
+```bash
+curl -X DELETE http://localhost:5000/api/empresas/<id> \
+  -H 'Authorization: Bearer <token>'
+```
+
 ### `GET /api/empresas/mis-empresas`
 Empresas creadas por el super admin autenticado.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/empresas/mis-empresas \
+  -H 'Authorization: Bearer <token>'
+```
 
 ### `GET /api/empresas/buscar-por-ubicacion?ubicacion=<loc>`
 Buscar por ubicación.
 
+**Curl**
+```bash
+curl "http://localhost:5000/api/empresas/buscar-por-ubicacion?ubicacion=Bogotá"
+```
+
 ### `GET /api/empresas/estadisticas`
-Estadísticas de empresas.
+Estadísticas de empresas (requiere token de super admin).
+
+**Curl**
+```bash
+curl http://localhost:5000/api/empresas/estadisticas \
+  -H 'Authorization: Bearer <token>'
+```
+
+### `GET /api/empresas/<empresa_id>/activity`
+Registra y consulta la actividad de una empresa específica. Requiere token de empresa o de super admin.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/empresas/<empresa_id>/activity \
+  -H 'Authorization: Bearer <token>'
+```
 
 ## Administración `/api/admin`
 
 ### `GET /api/admin/activity`
-Actividad general (token de admin).
+Devuelve la actividad registrada de todas las empresas. Requiere token de administrador o super admin.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/admin/activity \
+  -H 'Authorization: Bearer <token>'
+```
+
+### `GET /api/admin/activity-admin`
+Devuelve la actividad registrada de todas las empresas solo cuando el token pertenece a un administrador.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/admin/activity-admin \
+  -H 'Authorization: Bearer <token>'
+```
 
 ### `GET /api/admin/distribution`
-Distribución de empresas (token de admin).
+Distribución de empresas (token de admin o super admin).
 
-### `GET /api/empresas/<empresa_id>/activity`
-Actividad de una empresa específica (token de admin).
+**Curl**
+```bash
+curl http://localhost:5000/api/admin/distribution \
+  -H 'Authorization: Bearer <token>'
+```
 
 ## Multi-tenant `/empresas`
-
-Los usuarios creados en este apartado siempre deben pertenecer a una empresa
-previamente existente y **no** cuentan con permisos para iniciar sesión en la
-API. Su gestión se realiza únicamente a través de los endpoints listados a
-continuación.
+Los usuarios creados en este apartado pertenecen a una empresa y no pueden iniciar sesión en la API.
 
 ### `POST /empresas/<empresa_id>/usuarios`
 Crear usuario para una empresa.
 
+**Curl**
+```bash
+curl -X POST http://localhost:5000/empresas/<empresa_id>/usuarios \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Ana","cedula":"123456","rol":"operador"}'
+```
+
 ### `GET /empresas/<empresa_id>/usuarios`
 Listar usuarios de una empresa.
+
+**Curl**
+```bash
+curl http://localhost:5000/empresas/<empresa_id>/usuarios
+```
 
 ### `GET /empresas/<empresa_id>/usuarios/<usuario_id>`
 Obtener un usuario de una empresa.
 
+**Curl**
+```bash
+curl http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
+```
+
 ### `PUT /empresas/<empresa_id>/usuarios/<usuario_id>`
 Actualizar un usuario de una empresa.
+
+**Curl**
+```bash
+curl -X PUT http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id> \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Nuevo"}'
+```
 
 ### `DELETE /empresas/<empresa_id>/usuarios/<usuario_id>`
 Eliminar un usuario de una empresa.
 
+**Curl**
+```bash
+curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
+```
+
 ## Permisos por rol
 
-Los permisos determinan a qué endpoints puede acceder cada tipo de usuario. Si un
-usuario no cuenta con una lista personalizada, se aplican los siguientes valores
-por defecto:
+Los permisos determinan a qué endpoints puede acceder cada tipo de usuario. Si un usuario no cuenta con una lista personalizada, se aplican los siguientes valores por defecto:
 
-| Rol         | Endpoints permitidos                                                                       |
-|-------------|---------------------------------------------------------------------------------------------|
-| super_admin | `/api/users`, `/api/empresas`, `/api/admin`, `/empresas`                                    |
-| admin       | `/api/admin/activity`, `/api/admin/distribution`, `/api/empresas/<empresa_id>/activity`     |
-| empresa     | `/api/empresas`, `/empresas`                                                                |
-
-
+| Rol         | Endpoints permitidos |
+|-------------|--------------------------------------------------------------|
+| super_admin | `/api/users`, `/api/empresas`, `/api/admin`, `/empresas` |
+| admin       | `/api/admin/activity`, `/api/admin/activity-admin`, `/api/admin/distribution`, `/api/empresas/<empresa_id>/activity` |
+| empresa     | `/api/empresas`, `/empresas` |

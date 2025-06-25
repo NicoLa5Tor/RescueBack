@@ -7,7 +7,7 @@ class EmpresaRepository:
     def __init__(self):
         self.db = Database().get_database()
         self.collection = self.db.empresas
-        # Crear índice único para el nombre de la empresa
+        # Crear índices necesarios
         self._create_indexes()
     
     def _create_indexes(self):
@@ -15,10 +15,14 @@ class EmpresaRepository:
         try:
             # Índice único para el nombre (case-insensitive)
             self.collection.create_index(
-                [("nombre", 1)], 
+                [("nombre", 1)],
                 unique=True,
-                collation={'locale': 'es', 'strength': 2}  # Case-insensitive
+                collation={'locale': 'es', 'strength': 2}
             )
+            # Índice único para username
+            self.collection.create_index([("username", 1)], unique=True)
+            # Índice único para email
+            self.collection.create_index([("email", 1)], unique=True)
             # Índice para búsquedas por creado_por
             self.collection.create_index([("creado_por", 1)])
             # Índice para búsquedas por fecha_creacion
@@ -78,6 +82,22 @@ class EmpresaRepository:
             return None
         except Exception as e:
             raise Exception(f"Error buscando empresa por nombre: {str(e)}")
+
+    def find_by_username(self, username):
+        """Busca una empresa por username"""
+        try:
+            data = self.collection.find_one({"username": username, "activa": True})
+            return Empresa.from_dict(data) if data else None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por username: {str(e)}")
+
+    def find_by_email(self, email):
+        """Busca una empresa por email"""
+        try:
+            data = self.collection.find_one({"email": email, "activa": True})
+            return Empresa.from_dict(data) if data else None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por email: {str(e)}")
     
     def find_by_creador(self, creado_por):
         """Busca empresas creadas por un super admin específico"""
