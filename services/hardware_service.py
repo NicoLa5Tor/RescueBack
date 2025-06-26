@@ -1,24 +1,15 @@
-import json
 from bson import ObjectId
 from models.hardware import Hardware
 from repositories.hardware_repository import HardwareRepository
 from repositories.empresa_repository import EmpresaRepository
-from pathlib import Path
+from services.hardware_type_service import HardwareTypeService
 
 class HardwareService:
     def __init__(self):
         self.hardware_repo = HardwareRepository()
         self.empresa_repo = EmpresaRepository()
-        self.hardware_types = self._load_types()
+        self.type_service = HardwareTypeService()
 
-    def _load_types(self):
-        path = Path(__file__).resolve().parent.parent / 'models' / 'hardwaremodel.json'
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data.get('hardware_types', [])
-        except Exception:
-            return []
 
     def _get_empresa_id(self, empresa_nombre):
         empresa = self.empresa_repo.find_by_nombre(empresa_nombre)
@@ -41,7 +32,7 @@ class HardwareService:
                 return {'success': False, 'errors': ['El nombre del hardware es obligatorio']}
             if self.hardware_repo.find_by_nombre(nombre):
                 return {'success': False, 'errors': ['Ya existe un hardware con ese nombre']}
-            if tipo not in self.hardware_types:
+            if tipo not in self.type_service.get_type_names():
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
             hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=data)
             created = self.hardware_repo.create(hardware)
@@ -106,7 +97,7 @@ class HardwareService:
                 empresa_id = self._get_empresa_id(nombre_empresa)
                 if not empresa_id:
                     return {'success': False, 'errors': ['Empresa no encontrada']}
-            if tipo not in self.hardware_types:
+            if tipo not in self.type_service.get_type_names():
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=data, _id=existing._id, activa=existing.activa)
             updated.fecha_creacion = existing.fecha_creacion

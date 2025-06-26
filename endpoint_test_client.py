@@ -253,6 +253,29 @@ class EndpointTestClient:
         return self._request("DELETE", f"/api/hardware/{hardware_id}")
 
     # ------------------------------------------------------------------
+    # Endpoints de tipos de hardware
+    # ------------------------------------------------------------------
+    def create_hardware_type(self, data: Dict[str, Any]) -> requests.Response:
+        """POST /api/hardware-types"""
+        return self._request("POST", "/api/hardware-types", data=data)
+
+    def get_hardware_types(self) -> requests.Response:
+        """GET /api/hardware-types"""
+        return self._request("GET", "/api/hardware-types")
+
+    def get_hardware_type(self, type_id: str) -> requests.Response:
+        """GET /api/hardware-types/<id>"""
+        return self._request("GET", f"/api/hardware-types/{type_id}")
+
+    def update_hardware_type(self, type_id: str, data: Dict[str, Any]) -> requests.Response:
+        """PUT /api/hardware-types/<id>"""
+        return self._request("PUT", f"/api/hardware-types/{type_id}", data=data)
+
+    def delete_hardware_type(self, type_id: str) -> requests.Response:
+        """DELETE /api/hardware-types/<id>"""
+        return self._request("DELETE", f"/api/hardware-types/{type_id}")
+
+    # ------------------------------------------------------------------
     # Endpoints multi-tenant
     # ------------------------------------------------------------------
     def create_usuario_for_empresa(self, empresa_id: str, data: Dict[str, Any]) -> requests.Response:

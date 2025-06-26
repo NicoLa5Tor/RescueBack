@@ -398,7 +398,7 @@ curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
 ## Hardware `/api/hardware`
 
 Los dispositivos de hardware representan cualquier equipo físico, como botoneras o semáforos. Al crear uno se debe indicar `empresa_nombre`, `nombre` único, `tipo` y `sede`. Cualquier otro campo adicional se guarda en `datos`.
-Los tipos de hardware permitidos se definen en el archivo `models/hardwaremodel.json`.
+Los tipos de hardware permitidos se almacenan en la colección `hardware_types` y pueden administrarse mediante los endpoints `/api/hardware-types`.
 
 ### `POST /api/hardware/`
 Crea un nuevo hardware.
@@ -455,6 +455,59 @@ Elimina lógicamente un hardware.
 **Curl**
 ```bash
 curl -X DELETE http://localhost:5000/api/hardware/<id> \
+  -H 'Authorization: Bearer <token>'
+```
+
+## Tipos de Hardware `/api/hardware-types`
+
+Permite consultar y administrar la lista de dispositivos soportados. Por defecto existen los tipos `botonera` y `semaforo`.
+
+### `POST /api/hardware-types/`
+Agrega un nuevo tipo.
+
+**Curl**
+```bash
+curl -X POST http://localhost:5000/api/hardware-types/ \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
+  -d '{"nombre":"nuevo"}'
+```
+
+### `GET /api/hardware-types/`
+Obtiene todos los tipos disponibles.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/hardware-types/ \
+  -H 'Authorization: Bearer <token>'
+```
+
+### `GET /api/hardware-types/<id>`
+Obtiene un tipo por ID.
+
+**Curl**
+```bash
+curl http://localhost:5000/api/hardware-types/<id> \
+  -H 'Authorization: Bearer <token>'
+```
+
+### `PUT /api/hardware-types/<id>`
+Actualiza un tipo existente.
+
+**Curl**
+```bash
+curl -X PUT http://localhost:5000/api/hardware-types/<id> \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
+  -d '{"nombre":"otro"}'
+```
+
+### `DELETE /api/hardware-types/<id>`
+Elimina lógicamente un tipo.
+
+**Curl**
+```bash
+curl -X DELETE http://localhost:5000/api/hardware-types/<id> \
   -H 'Authorization: Bearer <token>'
 ```
 
