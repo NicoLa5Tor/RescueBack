@@ -214,41 +214,66 @@ class EndpointTestClient:
         return self._request("GET", "/api/admin/distribution")
 
     # ------------------------------------------------------------------
-    # Endpoints de botoneras
+    # Endpoints de hardware
     # ------------------------------------------------------------------
-    def create_botonera(self, data: Dict[str, Any]) -> requests.Response:
-        """POST /api/botoneras
+    def create_hardware(self, data: Dict[str, Any]) -> requests.Response:
+        """POST /api/hardware
 
         Ejemplo de body
         ----------------
         ```json
         {
             "empresa_nombre": "Mi Empresa",
-            "color": "rojo"
+            "nombre": "HW1",
+            "tipo": "botonera",
+            "sede": "principal"
         }
         ```
         """
-        return self._request("POST", "/api/botoneras", data=data)
+        return self._request("POST", "/api/hardware", data=data)
 
-    def get_botoneras(self) -> requests.Response:
-        """GET /api/botoneras"""
-        return self._request("GET", "/api/botoneras")
+    def get_hardware_list(self) -> requests.Response:
+        """GET /api/hardware"""
+        return self._request("GET", "/api/hardware")
 
-    def get_botoneras_by_empresa(self, empresa_id: str) -> requests.Response:
-        """GET /api/botoneras/empresa/<empresa_id>"""
-        return self._request("GET", f"/api/botoneras/empresa/{empresa_id}")
+    def get_hardware_by_empresa(self, empresa_id: str) -> requests.Response:
+        """GET /api/hardware/empresa/<empresa_id>"""
+        return self._request("GET", f"/api/hardware/empresa/{empresa_id}")
 
-    def get_botonera(self, botonera_id: str) -> requests.Response:
-        """GET /api/botoneras/<botonera_id>"""
-        return self._request("GET", f"/api/botoneras/{botonera_id}")
+    def get_hardware(self, hardware_id: str) -> requests.Response:
+        """GET /api/hardware/<hardware_id>"""
+        return self._request("GET", f"/api/hardware/{hardware_id}")
 
-    def update_botonera(self, botonera_id: str, data: Dict[str, Any]) -> requests.Response:
-        """PUT /api/botoneras/<botonera_id>"""
-        return self._request("PUT", f"/api/botoneras/{botonera_id}", data=data)
+    def update_hardware(self, hardware_id: str, data: Dict[str, Any]) -> requests.Response:
+        """PUT /api/hardware/<hardware_id>"""
+        return self._request("PUT", f"/api/hardware/{hardware_id}", data=data)
 
-    def delete_botonera(self, botonera_id: str) -> requests.Response:
-        """DELETE /api/botoneras/<botonera_id>"""
-        return self._request("DELETE", f"/api/botoneras/{botonera_id}")
+    def delete_hardware(self, hardware_id: str) -> requests.Response:
+        """DELETE /api/hardware/<hardware_id>"""
+        return self._request("DELETE", f"/api/hardware/{hardware_id}")
+
+    # ------------------------------------------------------------------
+    # Endpoints de tipos de hardware
+    # ------------------------------------------------------------------
+    def create_hardware_type(self, data: Dict[str, Any]) -> requests.Response:
+        """POST /api/hardware-types"""
+        return self._request("POST", "/api/hardware-types", data=data)
+
+    def get_hardware_types(self) -> requests.Response:
+        """GET /api/hardware-types"""
+        return self._request("GET", "/api/hardware-types")
+
+    def get_hardware_type(self, type_id: str) -> requests.Response:
+        """GET /api/hardware-types/<id>"""
+        return self._request("GET", f"/api/hardware-types/{type_id}")
+
+    def update_hardware_type(self, type_id: str, data: Dict[str, Any]) -> requests.Response:
+        """PUT /api/hardware-types/<id>"""
+        return self._request("PUT", f"/api/hardware-types/{type_id}", data=data)
+
+    def delete_hardware_type(self, type_id: str) -> requests.Response:
+        """DELETE /api/hardware-types/<id>"""
+        return self._request("DELETE", f"/api/hardware-types/{type_id}")
 
     # ------------------------------------------------------------------
     # Endpoints multi-tenant

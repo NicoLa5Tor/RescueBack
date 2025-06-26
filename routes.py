@@ -3,7 +3,8 @@ from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
 from controllers.auth_controller import AuthController
-from controllers.botonera_controller import BotoneraController
+from controllers.hardware_controller import HardwareController
+from controllers.hardware_type_controller import HardwareTypeController
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -104,33 +105,56 @@ def empresa_activity(empresa_id):
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 admin_controller = AdminController()
 
-# ========== BLUEPRINT DE BOTONERAS ==========
-botonera_bp = Blueprint('botoneras', __name__, url_prefix='/api/botoneras')
-botonera_controller = BotoneraController()
+# ========== BLUEPRINT DE HARDWARE ==========
+hardware_bp = Blueprint('hardware', __name__, url_prefix='/api/hardware')
+hardware_controller = HardwareController()
+hardware_type_bp = Blueprint('hardware_types', __name__, url_prefix='/api/hardware-types')
+hardware_type_controller = HardwareTypeController()
 
-@botonera_bp.route('/', methods=['POST'])
-def create_botonera():
-    return botonera_controller.create_botonera()
+@hardware_bp.route('/', methods=['POST'])
+def create_hardware():
+    return hardware_controller.create_hardware()
 
-@botonera_bp.route('/', methods=['GET'])
-def get_botoneras():
-    return botonera_controller.get_botoneras()
+@hardware_bp.route('/', methods=['GET'])
+def get_hardware_list():
+    return hardware_controller.get_hardware_list()
 
-@botonera_bp.route('/empresa/<empresa_id>', methods=['GET'])
-def get_botoneras_by_empresa(empresa_id):
-    return botonera_controller.get_botoneras_by_empresa(empresa_id)
+@hardware_bp.route('/empresa/<empresa_id>', methods=['GET'])
+def get_hardware_by_empresa(empresa_id):
+    return hardware_controller.get_hardware_by_empresa(empresa_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['GET'])
-def get_botonera(botonera_id):
-    return botonera_controller.get_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['GET'])
+def get_hardware(hardware_id):
+    return hardware_controller.get_hardware(hardware_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['PUT'])
-def update_botonera(botonera_id):
-    return botonera_controller.update_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['PUT'])
+def update_hardware(hardware_id):
+    return hardware_controller.update_hardware(hardware_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['DELETE'])
-def delete_botonera(botonera_id):
-    return botonera_controller.delete_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['DELETE'])
+def delete_hardware(hardware_id):
+    return hardware_controller.delete_hardware(hardware_id)
+
+# ========== BLUEPRINT DE TIPOS DE HARDWARE ==========
+@hardware_type_bp.route('/', methods=['POST'])
+def create_hardware_type():
+    return hardware_type_controller.create_type()
+
+@hardware_type_bp.route('/', methods=['GET'])
+def get_hardware_types():
+    return hardware_type_controller.get_types()
+
+@hardware_type_bp.route('/<type_id>', methods=['GET'])
+def get_hardware_type(type_id):
+    return hardware_type_controller.get_type(type_id)
+
+@hardware_type_bp.route('/<type_id>', methods=['PUT'])
+def update_hardware_type(type_id):
+    return hardware_type_controller.update_type(type_id)
+
+@hardware_type_bp.route('/<type_id>', methods=['DELETE'])
+def delete_hardware_type(type_id):
+    return hardware_type_controller.delete_type(type_id)
 
 @admin_bp.route('/activity', methods=['GET'])
 def get_admin_activity():
@@ -181,5 +205,6 @@ def register_routes(app):
     app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(botonera_bp)
+    app.register_blueprint(hardware_bp)
+    app.register_blueprint(hardware_type_bp)
     app.register_blueprint(multitenant_bp)

@@ -37,12 +37,14 @@ def getEmpresasActivity():
 #=================== activity main, actividad de las empresas solo por superadmin====#
 def getActividadEmpresas():
   print(obj.get_admin_activity().json())
-#=================== botonera ======================#
-def createBotonera():
-  data = {
-    "empresa_nombre" : "empresa",
-    "color" : "verde"
-  }
-  print(obj.create_botonera(data=data).json())
+#=================== hardware ======================#
+def createHardware():
+    data = {
+        "empresa_nombre": "empresa",
+        "nombre": "HW1",
+        "tipo": "botonera",
+        "sede": "principal"
+    }
+    print(obj.create_hardware(data=data).json())
 
-creatEmpresa()
+createHardware()
