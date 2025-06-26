@@ -11,11 +11,9 @@ class HardwareService:
         self.type_service = HardwareTypeService()
 
 
-    def _get_empresa_id(self, empresa_nombre):
-        empresa = self.empresa_repo.find_by_nombre(empresa_nombre)
-        if not empresa:
-            return None
-        return empresa._id
+    def _get_empresa(self, empresa_nombre):
+        """Obtiene la empresa a partir de su nombre."""
+        return self.empresa_repo.find_by_nombre(empresa_nombre)
 
     def create_hardware(self, data):
         try:
@@ -25,16 +23,20 @@ class HardwareService:
             nombre_empresa = data.pop('empresa_nombre', None)
             if not nombre_empresa:
                 return {'success': False, 'errors': ['El nombre de la empresa es obligatorio']}
-            empresa_id = self._get_empresa_id(nombre_empresa)
-            if not empresa_id:
+            empresa = self._get_empresa(nombre_empresa)
+            if not empresa:
                 return {'success': False, 'errors': ['Empresa no encontrada']}
+            if not sede:
+                return {'success': False, 'errors': ['La sede es obligatoria']}
+            if sede not in (empresa.sedes or []):
+                return {'success': False, 'errors': ['La sede no pertenece a la empresa']}
             if not nombre:
                 return {'success': False, 'errors': ['El nombre del hardware es obligatorio']}
             if self.hardware_repo.find_by_nombre(nombre):
                 return {'success': False, 'errors': ['Ya existe un hardware con ese nombre']}
             if tipo not in self.type_service.get_type_names():
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
-            hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=data)
+            hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa._id, sede=sede, datos=data)
             created = self.hardware_repo.create(hardware)
             result = created.to_json()
             result['empresa_nombre'] = nombre_empresa
@@ -90,13 +92,21 @@ class HardwareService:
             tipo = data.pop('tipo', existing.tipo)
             sede = data.pop('sede', existing.sede)
             nombre_empresa = data.pop('empresa_nombre', None)
+            empresa = None
             empresa_id = existing.empresa_id
             if nombre != existing.nombre and self.hardware_repo.find_by_nombre(nombre):
                 return {'success': False, 'errors': ['Ya existe un hardware con ese nombre']}
             if nombre_empresa:
-                empresa_id = self._get_empresa_id(nombre_empresa)
-                if not empresa_id:
+                empresa = self._get_empresa(nombre_empresa)
+                if not empresa:
                     return {'success': False, 'errors': ['Empresa no encontrada']}
+                empresa_id = empresa._id
+            else:
+                empresa = self.empresa_repo.find_by_id(existing.empresa_id) if existing.empresa_id else None
+            if not sede:
+                return {'success': False, 'errors': ['La sede es obligatoria']}
+            if empresa and sede not in (empresa.sedes or []):
+                return {'success': False, 'errors': ['La sede no pertenece a la empresa']}
             if tipo not in self.type_service.get_type_names():
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=data, _id=existing._id, activa=existing.activa)
