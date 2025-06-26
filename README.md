@@ -395,60 +395,60 @@ Eliminar un usuario de una empresa.
 curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
 ```
 
-## Botoneras `/api/botoneras`
+## Hardware `/api/hardware`
 
-Las botoneras almacenan configuraciones enviadas generalmente por una botonera física o aplicación. El JSON debe incluir al menos el `empresa_nombre` para asociarla con una empresa existente. Los demás campos se guardan en `datos`.
+Los dispositivos de hardware representan cualquier equipo físico, como botoneras o semáforos. Al crear uno se debe indicar `empresa_nombre`, `nombre` único, `tipo` y `sede`. Cualquier otro campo adicional se guarda en `datos`.
 
-### `POST /api/botoneras/`
-Crea una nueva botonera.
+### `POST /api/hardware/`
+Crea un nuevo hardware.
 
 **Curl**
 ```bash
-curl -X POST http://localhost:5000/api/botoneras/ \
+curl -X POST http://localhost:5000/api/hardware/ \
   -H 'Content-Type: application/json' \
-  -d '{"empresa_nombre":"Mi Empresa","color":"rojo"}'
+  -d '{"empresa_nombre":"Mi Empresa","nombre":"HW1","tipo":"botonera"}'
 ```
 
-### `GET /api/botoneras/`
-Obtiene todas las botoneras activas.
+### `GET /api/hardware/`
+Obtiene todos los dispositivos registrados.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/botoneras/
+curl http://localhost:5000/api/hardware/
 ```
 
-### `GET /api/botoneras/empresa/<empresa_id>`
-Obtiene todas las botoneras de una empresa.
+### `GET /api/hardware/empresa/<empresa_id>`
+Obtiene el hardware asociado a una empresa.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/botoneras/empresa/<empresa_id>
+curl http://localhost:5000/api/hardware/empresa/<empresa_id>
 ```
 
-### `GET /api/botoneras/<id>`
-Obtiene una botonera por ID.
+### `GET /api/hardware/<id>`
+Obtiene un dispositivo por ID.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/botoneras/<id>
+curl http://localhost:5000/api/hardware/<id>
 ```
 
-### `PUT /api/botoneras/<id>`
-Actualiza una botonera.
+### `PUT /api/hardware/<id>`
+Actualiza un hardware.
 
 **Curl**
 ```bash
-curl -X PUT http://localhost:5000/api/botoneras/<id> \
+curl -X PUT http://localhost:5000/api/hardware/<id> \
   -H 'Content-Type: application/json' \
-  -d '{"empresa_nombre":"Mi Empresa","nuevo":"valor"}'
+  -d '{"nombre":"Nuevo","tipo":"semaforo"}'
 ```
 
-### `DELETE /api/botoneras/<id>`
-Elimina lógicamente una botonera.
+### `DELETE /api/hardware/<id>`
+Elimina lógicamente un hardware.
 
 **Curl**
 ```bash
-curl -X DELETE http://localhost:5000/api/botoneras/<id>
+curl -X DELETE http://localhost:5000/api/hardware/<id>
 ```
 
 ## Permisos por rol

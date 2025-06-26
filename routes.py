@@ -3,7 +3,7 @@ from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
 from controllers.auth_controller import AuthController
-from controllers.botonera_controller import BotoneraController
+from controllers.hardware_controller import HardwareController
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -104,33 +104,33 @@ def empresa_activity(empresa_id):
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 admin_controller = AdminController()
 
-# ========== BLUEPRINT DE BOTONERAS ==========
-botonera_bp = Blueprint('botoneras', __name__, url_prefix='/api/botoneras')
-botonera_controller = BotoneraController()
+# ========== BLUEPRINT DE HARDWARE ==========
+hardware_bp = Blueprint('hardware', __name__, url_prefix='/api/hardware')
+hardware_controller = HardwareController()
 
-@botonera_bp.route('/', methods=['POST'])
-def create_botonera():
-    return botonera_controller.create_botonera()
+@hardware_bp.route('/', methods=['POST'])
+def create_hardware():
+    return hardware_controller.create_hardware()
 
-@botonera_bp.route('/', methods=['GET'])
-def get_botoneras():
-    return botonera_controller.get_botoneras()
+@hardware_bp.route('/', methods=['GET'])
+def get_hardware_list():
+    return hardware_controller.get_hardware_list()
 
-@botonera_bp.route('/empresa/<empresa_id>', methods=['GET'])
-def get_botoneras_by_empresa(empresa_id):
-    return botonera_controller.get_botoneras_by_empresa(empresa_id)
+@hardware_bp.route('/empresa/<empresa_id>', methods=['GET'])
+def get_hardware_by_empresa(empresa_id):
+    return hardware_controller.get_hardware_by_empresa(empresa_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['GET'])
-def get_botonera(botonera_id):
-    return botonera_controller.get_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['GET'])
+def get_hardware(hardware_id):
+    return hardware_controller.get_hardware(hardware_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['PUT'])
-def update_botonera(botonera_id):
-    return botonera_controller.update_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['PUT'])
+def update_hardware(hardware_id):
+    return hardware_controller.update_hardware(hardware_id)
 
-@botonera_bp.route('/<botonera_id>', methods=['DELETE'])
-def delete_botonera(botonera_id):
-    return botonera_controller.delete_botonera(botonera_id)
+@hardware_bp.route('/<hardware_id>', methods=['DELETE'])
+def delete_hardware(hardware_id):
+    return hardware_controller.delete_hardware(hardware_id)
 
 @admin_bp.route('/activity', methods=['GET'])
 def get_admin_activity():
@@ -181,5 +181,5 @@ def register_routes(app):
     app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(botonera_bp)
+    app.register_blueprint(hardware_bp)
     app.register_blueprint(multitenant_bp)
