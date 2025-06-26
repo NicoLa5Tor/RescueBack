@@ -39,11 +39,12 @@ def getActividadEmpresas():
   print(obj.get_admin_activity().json())
 #=================== hardware ======================#
 def createHardware():
-  data = {
-    "empresa_nombre" : "empresa",
-    "nombre" : "HW1",
-    "tipo" : "botonera"
-  }
-  print(obj.create_hardware(data=data).json())
+    data = {
+        "empresa_nombre": "empresa",
+        "nombre": "HW1",
+        "tipo": "botonera",
+        "sede": "principal"
+    }
+    print(obj.create_hardware(data=data).json())
 
-creatEmpresa()
+createHardware()

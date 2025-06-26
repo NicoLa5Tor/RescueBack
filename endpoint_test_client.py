@@ -224,7 +224,9 @@ class EndpointTestClient:
         ```json
         {
             "empresa_nombre": "Mi Empresa",
-            "color": "rojo"
+            "nombre": "HW1",
+            "tipo": "botonera",
+            "sede": "principal"
         }
         ```
         """

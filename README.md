@@ -398,6 +398,7 @@ curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
 ## Hardware `/api/hardware`
 
 Los dispositivos de hardware representan cualquier equipo físico, como botoneras o semáforos. Al crear uno se debe indicar `empresa_nombre`, `nombre` único, `tipo` y `sede`. Cualquier otro campo adicional se guarda en `datos`.
+Los tipos de hardware permitidos se definen en el archivo `models/hardwaremodel.json`.
 
 ### `POST /api/hardware/`
 Crea un nuevo hardware.
