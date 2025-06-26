@@ -407,6 +407,7 @@ Crea un nuevo hardware.
 ```bash
 curl -X POST http://localhost:5000/api/hardware/ \
   -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
   -d '{"empresa_nombre":"Mi Empresa","nombre":"HW1","tipo":"botonera"}'
 ```
 
@@ -415,7 +416,8 @@ Obtiene todos los dispositivos registrados.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/hardware/
+curl http://localhost:5000/api/hardware/ \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ### `GET /api/hardware/empresa/<empresa_id>`
@@ -423,7 +425,8 @@ Obtiene el hardware asociado a una empresa.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/hardware/empresa/<empresa_id>
+curl http://localhost:5000/api/hardware/empresa/<empresa_id> \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ### `GET /api/hardware/<id>`
@@ -431,7 +434,8 @@ Obtiene un dispositivo por ID.
 
 **Curl**
 ```bash
-curl http://localhost:5000/api/hardware/<id>
+curl http://localhost:5000/api/hardware/<id> \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ### `PUT /api/hardware/<id>`
@@ -441,6 +445,7 @@ Actualiza un hardware.
 ```bash
 curl -X PUT http://localhost:5000/api/hardware/<id> \
   -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' 
   -d '{"nombre":"Nuevo","tipo":"semaforo"}'
 ```
 
@@ -449,7 +454,8 @@ Elimina lógicamente un hardware.
 
 **Curl**
 ```bash
-curl -X DELETE http://localhost:5000/api/hardware/<id>
+curl -X DELETE http://localhost:5000/api/hardware/<id> \
+  -H 'Authorization: Bearer <token>'
 ```
 
 ## Permisos por rol
