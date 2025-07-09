@@ -12,8 +12,10 @@ class Empresa:
         email=None,
         password_hash=None,
         sedes=None,
+        roles=None,
         last_login=None,
         activa=True,
+        tipo_empresa_id=None,
         _id=None,
     ):
         self._id = _id or ObjectId()
@@ -25,7 +27,9 @@ class Empresa:
         self.email = email
         self.password_hash = password_hash
         self.sedes = sedes or []
+        self.roles = roles or []
         self.last_login = last_login
+        self.tipo_empresa_id = tipo_empresa_id
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
         self.activa = activa  # Campo adicional para soft delete
@@ -41,7 +45,9 @@ class Empresa:
             'email': self.email,
             'password_hash': self.password_hash,
             'sedes': self.sedes,
+            'roles': self.roles,
             'last_login': self.last_login,
+            'tipo_empresa_id': self.tipo_empresa_id,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activa': self.activa
@@ -63,7 +69,9 @@ class Empresa:
         empresa.email = data.get('email')
         empresa.password_hash = data.get('password_hash')
         empresa.sedes = data.get('sedes', [])
+        empresa.roles = data.get('roles', [])
         empresa.last_login = data.get('last_login')
+        empresa.tipo_empresa_id = data.get('tipo_empresa_id')
         empresa.fecha_creacion = data.get('fecha_creacion')
         empresa.fecha_actualizacion = data.get('fecha_actualizacion')
         empresa.activa = data.get('activa', True)
@@ -80,7 +88,9 @@ class Empresa:
             'username': self.username,
             'email': self.email,
             'sedes': self.sedes,
+            'roles': self.roles,
             'last_login': self.last_login.isoformat() if isinstance(self.last_login, datetime) else self.last_login,
+            'tipo_empresa_id': str(self.tipo_empresa_id) if self.tipo_empresa_id else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
             'activa': self.activa
@@ -140,6 +150,15 @@ class Empresa:
                         errors.append("Cada sede debe ser una cadena no vacía")
                         break
 
+        if self.roles is not None:
+            if not isinstance(self.roles, list):
+                errors.append("Los roles deben ser una lista")
+            else:
+                for rol in self.roles:
+                    if not isinstance(rol, str) or len(rol.strip()) == 0:
+                        errors.append("Cada rol debe ser una cadena no vacía")
+                        break
+
         return errors
     
     def update_timestamp(self):
@@ -160,3 +179,5 @@ class Empresa:
             self.email = self.email.strip()
         if self.sedes and isinstance(self.sedes, list):
             self.sedes = [sede.strip() for sede in self.sedes if isinstance(sede, str)]
+        if self.roles and isinstance(self.roles, list):
+            self.roles = [rol.strip() for rol in self.roles if isinstance(rol, str)]

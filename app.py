@@ -70,14 +70,12 @@ def create_app():
             'version': '1.0.0',
             'endpoints': {
                 'health': '/health',
-                'users': '/api/users',
-                'create_user': 'POST /api/users',
-                'get_users': 'GET /api/users',
-                'get_user': 'GET /api/users/<id>',
-                'update_user': 'PUT /api/users/<id>',
-                'delete_user': 'DELETE /api/users/<id>',
-                'users_by_age': 'GET /api/users/age-range?min_age=18&max_age=30',
-                'user_by_phone': 'GET /api/users/buscar-por-telefono?telefono=<numero>'
+                'empresas': '/api/empresas',
+                'create_empresa': 'POST /api/empresas',
+                'get_empresas': 'GET /api/empresas',
+                'hardware': '/api/hardware',
+                'usuarios_empresa': '/empresas/<empresa_id>/usuarios',
+                'auth_login': 'POST /auth/login'
             }
         }), 200
     
@@ -105,6 +103,6 @@ if __name__ == '__main__':
     app = create_app()
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=5002,
         debug=Config.DEBUG
     )

@@ -1,10 +1,11 @@
 from flask import Blueprint
-from controllers.user_controller import UserController
 from controllers.empresa_controller import EmpresaController
 from controllers.admin_controller import AdminController
 from controllers.auth_controller import AuthController
 from controllers.hardware_controller import HardwareController
 from controllers.hardware_type_controller import HardwareTypeController
+from controllers.tipo_empresa_controller import tipo_empresa_controller
+from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -14,45 +15,6 @@ auth_controller = AuthController()
 def login():
     """POST /auth/login - Iniciar sesión"""
     return auth_controller.login()
-
-# ========== BLUEPRINT DE USUARIOS ==========
-user_bp = Blueprint('users', __name__, url_prefix='/api/users')
-user_controller = UserController()
-
-@user_bp.route('/', methods=['POST'])
-def create_user():
-    """POST /api/users - Crear usuario"""
-    return user_controller.create_user()
-
-@user_bp.route('/', methods=['GET'])
-def get_all_users():
-    """GET /api/users - Obtener todos los usuarios"""
-    return user_controller.get_all_users()
-
-@user_bp.route('/<user_id>', methods=['GET'])
-def get_user(user_id):
-    """GET /api/users/<id> - Obtener usuario por ID"""
-    return user_controller.get_user(user_id)
-
-@user_bp.route('/<user_id>', methods=['PUT'])
-def update_user(user_id):
-    """PUT /api/users/<id> - Actualizar usuario"""
-    return user_controller.update_user(user_id)
-
-@user_bp.route('/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    """DELETE /api/users/<id> - Eliminar usuario"""
-    return user_controller.delete_user(user_id)
-
-@user_bp.route('/age-range', methods=['GET'])
-def get_users_by_age():
-    """GET /api/users/age-range?min_age=18&max_age=30 - Obtener usuarios por rango de edad"""
-    return user_controller.get_users_by_age()
-
-@user_bp.route('/buscar-por-telefono', methods=['GET'])
-def get_user_by_phone():
-    """GET /api/users/buscar-por-telefono?telefono=<numero> - Obtener usuario por telefono"""
-    return user_controller.get_user_by_phone()
 
 # ========== BLUEPRINT DE EMPRESAS ==========
 empresa_bp = Blueprint('empresas', __name__, url_prefix='/api/empresas')
@@ -65,8 +27,13 @@ def create_empresa():
 
 @empresa_bp.route('/', methods=['GET'])
 def get_all_empresas():
-    """GET /api/empresas - Obtener todas las empresas activas"""
+    """GET /api/empresas - Obtener todas las empresas activas (para formularios)"""
     return empresa_controller.get_all_empresas()
+
+@empresa_bp.route('/dashboard/all', methods=['GET'])
+def get_all_empresas_dashboard():
+    """GET /api/empresas/dashboard/all - Obtener TODAS las empresas (activas e inactivas) para dashboards"""
+    return empresa_controller.get_all_empresas_dashboard()
 
 @empresa_bp.route('/<empresa_id>', methods=['GET'])
 def get_empresa(empresa_id):
@@ -97,6 +64,17 @@ def search_by_ubicacion():
 def get_stats():
     """GET /api/empresas/estadisticas - Obtener estadísticas (solo super admin)"""
     return empresa_controller.get_empresa_stats()
+
+@empresa_bp.route('/<empresa_id>/including-inactive', methods=['GET'])
+def get_empresa_including_inactive(empresa_id):
+    """GET /api/empresas/<id>/including-inactive - Obtener empresa incluyendo inactivas (solo super admin)"""
+    return empresa_controller.get_empresa_including_inactive(empresa_id)
+
+@empresa_bp.route('/<empresa_id>/toggle-status', methods=['PATCH'])
+def toggle_empresa_status(empresa_id):
+    """PATCH /api/empresas/<id>/toggle-status - Activar/desactivar empresa (solo super admin)"""
+    return empresa_controller.toggle_empresa_status(empresa_id)
+
 @empresa_bp.route('/<empresa_id>/activity', methods=['GET'])
 def empresa_activity(empresa_id):
     return admin_controller.get_empresa_activity(empresa_id)
@@ -135,6 +113,21 @@ def update_hardware(hardware_id):
 def delete_hardware(hardware_id):
     return hardware_controller.delete_hardware(hardware_id)
 
+@hardware_bp.route('/<hardware_id>/toggle-status', methods=['PATCH'])
+def toggle_hardware_status(hardware_id):
+    """PATCH /api/hardware/<id>/toggle-status - Activar/desactivar hardware"""
+    return hardware_controller.toggle_hardware_status(hardware_id)
+
+@hardware_bp.route('/all-including-inactive', methods=['GET'])
+def get_all_hardware_including_inactive():
+    """GET /api/hardware/all-including-inactive - Obtener todos los hardware incluyendo inactivos"""
+    return hardware_controller.get_all_hardware_including_inactive()
+
+@hardware_bp.route('/empresa/<empresa_id>/including-inactive', methods=['GET'])
+def get_hardware_by_empresa_including_inactive(empresa_id):
+    """GET /api/hardware/empresa/<empresa_id>/including-inactive - Obtener hardware de empresa incluyendo inactivos"""
+    return hardware_controller.get_hardware_by_empresa_including_inactive(empresa_id)
+
 # ========== BLUEPRINT DE TIPOS DE HARDWARE ==========
 @hardware_type_bp.route('/', methods=['POST'])
 def create_hardware_type():
@@ -167,44 +160,103 @@ def get_admin_activity_only():
 @admin_bp.route('/distribution', methods=['GET'])
 def get_admin_distribution():
     return admin_controller.get_distribution()
+
+# ========== BLUEPRINT DE SUPER ADMIN DASHBOARD ==========
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
+dashboard_controller = SuperAdminDashboardController()
+
+@dashboard_bp.route('/stats', methods=['GET'])
+def get_dashboard_stats():
+    """GET /api/dashboard/stats - Estadísticas generales del sistema"""
+    return dashboard_controller.get_dashboard_stats()
+
+@dashboard_bp.route('/recent-companies', methods=['GET'])
+def get_recent_companies():
+    """GET /api/dashboard/recent-companies - Empresas recientes"""
+    return dashboard_controller.get_recent_companies()
+
+@dashboard_bp.route('/recent-users', methods=['GET'])
+def get_recent_users():
+    """GET /api/dashboard/recent-users - Usuarios recientes"""
+    return dashboard_controller.get_recent_users()
+
+@dashboard_bp.route('/activity-chart', methods=['GET'])
+def get_activity_chart():
+    """GET /api/dashboard/activity-chart - Datos para gráfico de actividad"""
+    return dashboard_controller.get_activity_chart()
+
+@dashboard_bp.route('/distribution-chart', methods=['GET'])
+def get_distribution_chart():
+    """GET /api/dashboard/distribution-chart - Datos para gráfico de distribución"""
+    return dashboard_controller.get_distribution_chart()
+
+@dashboard_bp.route('/hardware-stats', methods=['GET'])
+def get_hardware_stats():
+    """GET /api/dashboard/hardware-stats - Estadísticas de hardware"""
+    return dashboard_controller.get_hardware_stats()
+
+@dashboard_bp.route('/system-performance', methods=['GET'])
+def get_system_performance():
+    """GET /api/dashboard/system-performance - Rendimiento del sistema"""
+    return dashboard_controller.get_system_performance()
 # ========== BLUEPRINT DE MULTI-TENANT (USUARIOS POR EMPRESA) ==========
 from controllers.multitenant_controller import MultiTenantController
+from utils.permissions import require_empresa_or_admin_token
 
 multitenant_bp = Blueprint('multitenant', __name__, url_prefix='/empresas')
 multitenant_controller = MultiTenantController()
 
 @multitenant_bp.route('/<empresa_id>/usuarios', methods=['POST'])
+@require_empresa_or_admin_token
 def create_usuario_for_empresa(empresa_id):
     """POST /empresas/<empresa_id>/usuarios - Crear usuario para empresa específica"""
     return multitenant_controller.create_usuario_for_empresa(empresa_id)
 
 @multitenant_bp.route('/<empresa_id>/usuarios', methods=['GET'])
-def get_usuarios_by_empresa(empresa_id):
-    """GET /empresas/<empresa_id>/usuarios - Obtener usuarios de una empresa"""
+@require_empresa_or_admin_token
+def get_usuarios_for_empresa(empresa_id):
+    """GET /empresas/<empresa_id>/usuarios - Obtener usuarios para empresa específica"""
     return multitenant_controller.get_usuarios_by_empresa(empresa_id)
 
 @multitenant_bp.route('/<empresa_id>/usuarios/<usuario_id>', methods=['GET'])
+@require_empresa_or_admin_token
 def get_usuario_by_empresa(empresa_id, usuario_id):
     """GET /empresas/<empresa_id>/usuarios/<usuario_id> - Obtener usuario específico"""
     return multitenant_controller.get_usuario_by_empresa(empresa_id, usuario_id)
 
 @multitenant_bp.route('/<empresa_id>/usuarios/<usuario_id>', methods=['PUT'])
+@require_empresa_or_admin_token
 def update_usuario_by_empresa(empresa_id, usuario_id):
     """PUT /empresas/<empresa_id>/usuarios/<usuario_id> - Actualizar usuario"""
     return multitenant_controller.update_usuario_by_empresa(empresa_id, usuario_id)
 
 @multitenant_bp.route('/<empresa_id>/usuarios/<usuario_id>', methods=['DELETE'])
+@require_empresa_or_admin_token
 def delete_usuario_by_empresa(empresa_id, usuario_id):
     """DELETE /empresas/<empresa_id>/usuarios/<usuario_id> - Eliminar usuario"""
     return multitenant_controller.delete_usuario_by_empresa(empresa_id, usuario_id)
+
+@multitenant_bp.route('/<empresa_id>/usuarios/<usuario_id>/toggle-status', methods=['PATCH'])
+@require_empresa_or_admin_token
+def toggle_usuario_status(empresa_id, usuario_id):
+    """PATCH /empresas/<empresa_id>/usuarios/<usuario_id>/toggle-status - Activar/desactivar usuario"""
+    return multitenant_controller.toggle_usuario_status(empresa_id, usuario_id)
+
+@multitenant_bp.route('/<empresa_id>/usuarios/including-inactive', methods=['GET'])
+@require_empresa_or_admin_token
+def get_usuarios_by_empresa_including_inactive(empresa_id):
+    """GET /empresas/<empresa_id>/usuarios/including-inactive - Obtener usuarios incluyendo inactivos"""
+    
+    return multitenant_controller.get_usuarios_by_empresa_including_inactive(empresa_id)
 
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
     app.register_blueprint(auth_bp)
-    app.register_blueprint(user_bp)
     app.register_blueprint(empresa_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(hardware_bp)
     app.register_blueprint(hardware_type_bp)
     app.register_blueprint(multitenant_bp)
+    app.register_blueprint(tipo_empresa_controller, url_prefix='/api')

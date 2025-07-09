@@ -16,6 +16,8 @@ class AuthController:
                 return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
             result = self.auth_service.login(usuario, password)
+            print(f"Lo que viene de login es: {result}")
+
             if result['success']:
                 return jsonify({'success': True, 'token': result['token'], 'user': result['data']}), 200
             return jsonify({'success': False, 'errors': result.get('errors', ['Credenciales inválidas'])}), 401

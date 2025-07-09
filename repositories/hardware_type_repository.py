@@ -40,6 +40,20 @@ class HardwareTypeRepository:
         except Exception as exc:
             raise Exception(f'Error buscando tipo por nombre: {str(exc)}')
 
+    def find_by_nombre_excluding_id(self, nombre, exclude_id):
+        """Busca tipo de hardware por nombre excluyendo un ID específico"""
+        try:
+            if isinstance(exclude_id, str):
+                exclude_id = ObjectId(exclude_id)
+            data = self.collection.find_one({
+                'nombre': nombre, 
+                'activa': True,
+                '_id': {'$ne': exclude_id}
+            })
+            return HardwareType.from_dict(data) if data else None
+        except Exception as exc:
+            raise Exception(f'Error buscando tipo por nombre (excluyendo ID): {str(exc)}')
+
     def find_all(self):
         try:
             cursor = self.collection.find({'activa': True}).sort('fecha_creacion', -1)

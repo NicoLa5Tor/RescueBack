@@ -33,6 +33,18 @@ class EmpresaService:
 
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+            # Validar tipo_empresa_id si se proporciona
+            tipo_empresa_id = empresa_data.get('tipo_empresa_id')
+            if tipo_empresa_id:
+                try:
+                    if isinstance(tipo_empresa_id, str):
+                        tipo_empresa_id = ObjectId(tipo_empresa_id)
+                except Exception:
+                    return {
+                        'success': False,
+                        'errors': ['El ID del tipo de empresa no es válido']
+                    }
+
             empresa = Empresa(
                 nombre=empresa_data.get('nombre'),
                 descripcion=empresa_data.get('descripcion'),
@@ -41,7 +53,9 @@ class EmpresaService:
                 username=empresa_data.get('username'),
                 email=empresa_data.get('email'),
                 password_hash=password_hash,
-                sedes=empresa_data.get('sedes')
+                sedes=empresa_data.get('sedes'),
+                roles=empresa_data.get('roles', []),
+                tipo_empresa_id=tipo_empresa_id
             )
             
             # Validar datos
@@ -135,11 +149,31 @@ class EmpresaService:
                 'errors': [str(e)]
             }
     
+    def get_empresa_by_id_including_inactive(self, empresa_id):
+        """Obtiene una empresa por ID incluyendo inactivas (para admins)"""
+        try:
+            empresa = self.empresa_repository.find_by_id_including_inactive(empresa_id)
+            if empresa:
+                return {
+                    'success': True,
+                    'data': empresa.to_json()
+                }
+            else:
+                return {
+                    'success': False,
+                    'errors': ['Empresa no encontrada']
+                }
+        except Exception as e:
+            return {
+                'success': False,
+                'errors': [str(e)]
+            }
+    
     def update_empresa(self, empresa_id, empresa_data, super_admin_id=None):
         """Actualiza una empresa existente"""
         try:
-            # Verificar si la empresa existe
-            existing_empresa = self.empresa_repository.find_by_id(empresa_id)
+            # Verificar si la empresa existe (incluyendo inactivas)
+            existing_empresa = self.empresa_repository.find_by_id_including_inactive(empresa_id)
             if not existing_empresa:
                 return {
                     'success': False,
@@ -163,6 +197,17 @@ class EmpresaService:
             if new_password:
                 password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+            # Validar tipo_empresa_id si se proporciona para actualización
+            tipo_empresa_id = empresa_data.get('tipo_empresa_id', existing_empresa.tipo_empresa_id)
+            if tipo_empresa_id and isinstance(tipo_empresa_id, str):
+                try:
+                    tipo_empresa_id = ObjectId(tipo_empresa_id)
+                except Exception:
+                    return {
+                        'success': False,
+                        'errors': ['El ID del tipo de empresa no es válido']
+                    }
+
             # Crear objeto Empresa con datos actualizados
             updated_empresa = Empresa(
                 nombre=empresa_data.get('nombre', existing_empresa.nombre),
@@ -173,6 +218,8 @@ class EmpresaService:
                 email=empresa_data.get('email', existing_empresa.email),
                 password_hash=password_hash,
                 sedes=empresa_data.get('sedes', existing_empresa.sedes),
+                roles=empresa_data.get('roles', existing_empresa.roles),
+                tipo_empresa_id=tipo_empresa_id,
                 _id=existing_empresa._id,
                 activa=existing_empresa.activa,
             )
@@ -191,7 +238,9 @@ class EmpresaService:
             
             # Verificar si el nombre ya existe (solo si cambió)
             if updated_empresa.nombre.lower() != existing_empresa.nombre.lower():
-                nombre_exists = self.empresa_repository.find_by_nombre(updated_empresa.nombre)
+                nombre_exists = self.empresa_repository.find_by_nombre_excluding_id(
+                    updated_empresa.nombre, empresa_id
+                )
                 if nombre_exists:
                     return {
                         'success': False,
@@ -199,14 +248,20 @@ class EmpresaService:
                     }
 
             if updated_empresa.username != existing_empresa.username:
-                if self.empresa_repository.find_by_username(updated_empresa.username):
+                username_exists = self.empresa_repository.find_by_username_excluding_id(
+                    updated_empresa.username, empresa_id
+                )
+                if username_exists:
                     return {
                         'success': False,
                         'errors': ['El nombre de usuario ya está en uso']
                     }
 
             if updated_empresa.email != existing_empresa.email:
-                if self.empresa_repository.find_by_email(updated_empresa.email):
+                email_exists = self.empresa_repository.find_by_email_excluding_id(
+                    updated_empresa.email, empresa_id
+                )
+                if email_exists:
                     return {
                         'success': False,
                         'errors': ['El correo ya está en uso']
@@ -235,8 +290,8 @@ class EmpresaService:
     def delete_empresa(self, empresa_id, super_admin_id=None):
         """Elimina una empresa (soft delete)"""
         try:
-            # Verificar si la empresa existe
-            existing_empresa = self.empresa_repository.find_by_id(empresa_id)
+            # Verificar si la empresa existe (incluyendo inactivas)
+            existing_empresa = self.empresa_repository.find_by_id_including_inactive(empresa_id)
             if not existing_empresa:
                 return {
                     'success': False,
@@ -267,6 +322,50 @@ class EmpresaService:
                     'errors': ['Error eliminando empresa']
                 }
                 
+        except Exception as e:
+            return {
+                'success': False,
+                'errors': [str(e)]
+            }
+    
+    def toggle_empresa_status(self, empresa_id, activa, super_admin_id=None):
+        """Activar o desactivar empresa"""
+        try:
+            # Verificar si la empresa existe (incluyendo inactivas)
+            existing_empresa = self.empresa_repository.find_by_id_including_inactive(empresa_id)
+            if not existing_empresa:
+                return {
+                    'success': False,
+                    'errors': ['Empresa no encontrada']
+                }
+            
+            # Si se proporciona super_admin_id, verificar que sea el creador
+            if super_admin_id:
+                if isinstance(super_admin_id, str):
+                    super_admin_id = ObjectId(super_admin_id)
+                
+                if existing_empresa.creado_por != super_admin_id:
+                    return {
+                        'success': False,
+                        'errors': ['No tienes permisos para modificar esta empresa']
+                    }
+            
+            # Actualizar solo el campo activa
+            existing_empresa.activa = activa
+            existing_empresa.update_timestamp()
+            
+            updated = self.empresa_repository.update(empresa_id, existing_empresa)
+            if updated:
+                status_text = "activada" if activa else "desactivada"
+                return {
+                    'success': True, 
+                    'data': updated.to_json(),
+                    'message': f'Empresa {status_text} exitosamente'
+                }
+            return {
+                'success': False, 
+                'errors': ['Error al actualizar el estado de la empresa']
+            }
         except Exception as e:
             return {
                 'success': False,

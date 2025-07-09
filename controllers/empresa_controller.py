@@ -1,7 +1,11 @@
 from flask import request, jsonify, g
 from services.empresa_service import EmpresaService
-from utils.permissions import require_super_admin_token, require_empresa_or_super_token
+from utils.permissions import require_super_admin_token, require_empresa_or_admin_token
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
+import logging
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 
 class EmpresaController:
@@ -21,7 +25,7 @@ class EmpresaController:
                 )
 
             # Obtener el ID del super admin del contexto
-            super_admin_id = g.super_admin_id
+            super_admin_id = g.user_id
 
             result = self.empresa_service.create_empresa(data, super_admin_id)
 
@@ -74,23 +78,16 @@ class EmpresaController:
             )
 
     def get_all_empresas(self):
-        """Endpoint para obtener todas las empresas"""
+        """Endpoint para obtener todas las empresas activas (para formularios)"""
         try:
-            # Verificar si se quieren incluir empresas inactivas (solo super admin)
-            include_inactive = (
-                request.args.get("include_inactive", "false").lower() == "true"
-            )
-
-            if include_inactive:
-                try:
-                    verify_jwt_in_request()
-                    claims = get_jwt()
-                    if claims.get("role") != "super_admin":
-                        include_inactive = False
-                except Exception:
-                    include_inactive = False
-
-            result = self.empresa_service.get_all_empresas(include_inactive)
+            logger.info("=== GET ALL EMPRESAS (SOLO ACTIVAS) ===")
+            
+            # Solo empresas activas para formularios
+            result = self.empresa_service.get_all_empresas(include_inactive=False)
+            
+            logger.info(f"Empresas activas obtenidas: {result.get('count', 0)}")
+            if result["success"] and result["data"]:
+                logger.info(f"Primeras empresas: {[e.get('nombre', 'N/A') for e in result['data'][:3]]}")
 
             if result["success"]:
                 return (
@@ -107,6 +104,49 @@ class EmpresaController:
                 return jsonify(result), 500
 
         except Exception as e:
+            logger.error(f"Error en get_all_empresas: {str(e)}")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [f"Error interno del servidor: {str(e)}"],
+                    }
+                ),
+                500,
+            )
+
+    def get_all_empresas_dashboard(self):
+        """Endpoint para obtener TODAS las empresas (activas e inactivas) para dashboards"""
+        try:
+            logger.info("=== GET ALL EMPRESAS DASHBOARD (TODAS) ===")
+            
+            # Obtener TODAS las empresas (activas e inactivas) para dashboards
+            result = self.empresa_service.get_all_empresas(include_inactive=True)
+            print(f"Empresas son: {result}")
+            logger.info(f"Total empresas (activas e inactivas): {result.get('count', 0)}")
+            if result["success"] and result["data"]:
+                activas = [e for e in result["data"] if e.get("activa", True)]
+                inactivas = [e for e in result["data"] if not e.get("activa", True)]
+                logger.info(f"Empresas activas: {len(activas)}, inactivas: {len(inactivas)}")
+                logger.info(f"Primeras empresas: {[f'{e.get("nombre", "N/A")} (activa: {e.get("activa", True)})' for e in result['data'][:5]]}")
+
+            if result["success"]:
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "data": result["data"],
+                            "count": result["count"],
+                        }
+                    ),
+                    200,
+                )
+            else:
+                logger.error(f"Error en servicio: {result}")
+                return jsonify(result), 500
+
+        except Exception as e:
+            logger.error(f"Error en get_all_empresas_dashboard: {str(e)}")
             return (
                 jsonify(
                     {
@@ -121,7 +161,7 @@ class EmpresaController:
     def get_my_empresas(self):
         """Endpoint para obtener empresas creadas por el super admin autenticado"""
         try:
-            super_admin_id = g.super_admin_id
+            super_admin_id = g.user_id
             result = self.empresa_service.get_empresas_by_creador(super_admin_id)
 
             if result["success"]:
@@ -149,7 +189,7 @@ class EmpresaController:
                 500,
             )
 
-    @require_empresa_or_super_token(require_empresa_id=True)
+    @require_empresa_or_admin_token
     def update_empresa(self, empresa_id):
         """Endpoint para actualizar una empresa"""
         try:
@@ -161,7 +201,7 @@ class EmpresaController:
                     400,
                 )
 
-            super_admin_id = g.super_admin_id if getattr(g, "is_super_admin", False) else None
+            super_admin_id = g.user_id if g.role == "super_admin" else None
             result = self.empresa_service.update_empresa(
                 empresa_id, data, super_admin_id
             )
@@ -197,7 +237,7 @@ class EmpresaController:
     def delete_empresa(self, empresa_id):
         """Endpoint para eliminar una empresa (solo el creador)"""
         try:
-            super_admin_id = g.super_admin_id
+            super_admin_id = g.user_id
             result = self.empresa_service.delete_empresa(empresa_id, super_admin_id)
 
             if result["success"]:
@@ -269,6 +309,63 @@ class EmpresaController:
                 return jsonify({"success": True, "data": result["data"]}), 200
             else:
                 return jsonify(result), 500
+
+        except Exception as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [f"Error interno del servidor: {str(e)}"],
+                    }
+                ),
+                500,
+            )
+    
+    @require_super_admin_token
+    def get_empresa_including_inactive(self, empresa_id):
+        """Endpoint para obtener una empresa por ID incluyendo inactivas (solo super admin)"""
+        try:
+            result = self.empresa_service.get_empresa_by_id_including_inactive(empresa_id)
+
+            if result["success"]:
+                return jsonify({"success": True, "data": result["data"]}), 200
+            else:
+                return jsonify(result), 404
+
+        except Exception as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [f"Error interno del servidor: {str(e)}"],
+                    }
+                ),
+                500,
+            )
+    
+    @require_super_admin_token
+    def toggle_empresa_status(self, empresa_id):
+        """Endpoint para activar/desactivar empresa (solo super admin)"""
+        try:
+            data = request.get_json() or {}
+            activa = data.get('activa', True)
+            super_admin_id = g.user_id
+            
+            result = self.empresa_service.toggle_empresa_status(empresa_id, activa, super_admin_id)
+
+            if result["success"]:
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "message": result.get("message", "Estado de empresa actualizado"),
+                            "data": result["data"],
+                        }
+                    ),
+                    200,
+                )
+            else:
+                return jsonify(result), 400
 
         except Exception as e:
             return (

@@ -49,7 +49,7 @@ class MultiTenantController:
         """
         try:
             result = self.usuario_service.get_usuarios_by_empresa(empresa_id)
-            
+            print(f"los usuarios son: {result}")
             if result['success']:
                 return jsonify({
                     'success': True,
@@ -140,6 +140,62 @@ class MultiTenantController:
                 return jsonify({
                     'success': True,
                     'message': result['message']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def toggle_usuario_status(self, empresa_id, usuario_id):
+        """
+        Endpoint: PATCH /empresas/<empresa_id>/usuarios/<usuario_id>/toggle-status
+        Activa o desactiva un usuario específico de una empresa
+        """
+        try:
+            data = request.get_json() or {}
+            activo = data.get('activo', True)
+            
+            result = self.usuario_service.toggle_usuario_status(usuario_id, empresa_id, activo)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': result['message'],
+                    'data': result['data']
+                }), result['status_code']
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': result['errors']
+                }), result['status_code']
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'errors': [f'Error interno del servidor: {str(e)}']
+            }), 500
+    
+    def get_usuarios_by_empresa_including_inactive(self, empresa_id):
+        """
+        Endpoint: GET /empresas/<empresa_id>/usuarios/including-inactive
+        Obtiene todos los usuarios de una empresa incluyendo inactivos
+        """
+        try:
+            result = self.usuario_service.get_usuarios_by_empresa_including_inactive(empresa_id)
+            print(f"Los usuarios son: {result}")
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'data': result['data'],
+                    'count': result['count'],
+                    'empresa': result['empresa']
                 }), result['status_code']
             else:
                 return jsonify({

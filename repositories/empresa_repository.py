@@ -47,7 +47,7 @@ class EmpresaRepository:
             raise Exception(f"Error creando empresa: {str(e)}")
     
     def find_by_id(self, empresa_id):
-        """Busca una empresa por ID"""
+        """Busca una empresa por ID (solo activas)"""
         try:
             if isinstance(empresa_id, str):
                 empresa_id = ObjectId(empresa_id)
@@ -58,6 +58,19 @@ class EmpresaRepository:
             return None
         except Exception as e:
             raise Exception(f"Error buscando empresa por ID: {str(e)}")
+    
+    def find_by_id_including_inactive(self, empresa_id):
+        """Busca una empresa por ID incluyendo inactivas"""
+        try:
+            if isinstance(empresa_id, str):
+                empresa_id = ObjectId(empresa_id)
+            
+            empresa_data = self.collection.find_one({"_id": empresa_id})
+            if empresa_data:
+                return Empresa.from_dict(empresa_data)
+            return None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por ID (incluyendo inactivas): {str(e)}")
     
     def find_all(self, include_inactive=False):
         """Obtiene todas las empresas activas"""
@@ -82,6 +95,23 @@ class EmpresaRepository:
             return None
         except Exception as e:
             raise Exception(f"Error buscando empresa por nombre: {str(e)}")
+    
+    def find_by_nombre_excluding_id(self, nombre, exclude_id):
+        """Busca una empresa por nombre excluyendo un ID específico (para actualizaciones)"""
+        try:
+            if isinstance(exclude_id, str):
+                exclude_id = ObjectId(exclude_id)
+                
+            empresa_data = self.collection.find_one({
+                "nombre": {"$regex": f"^{nombre}$", "$options": "i"}, 
+                "activa": True,
+                "_id": {"$ne": exclude_id}
+            })
+            if empresa_data:
+                return Empresa.from_dict(empresa_data)
+            return None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por nombre (excluyendo ID): {str(e)}")
 
     def find_by_username(self, username):
         """Busca una empresa por username"""
@@ -90,6 +120,21 @@ class EmpresaRepository:
             return Empresa.from_dict(data) if data else None
         except Exception as e:
             raise Exception(f"Error buscando empresa por username: {str(e)}")
+    
+    def find_by_username_excluding_id(self, username, exclude_id):
+        """Busca una empresa por username excluyendo un ID específico (para actualizaciones)"""
+        try:
+            if isinstance(exclude_id, str):
+                exclude_id = ObjectId(exclude_id)
+                
+            data = self.collection.find_one({
+                "username": username, 
+                "activa": True,
+                "_id": {"$ne": exclude_id}
+            })
+            return Empresa.from_dict(data) if data else None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por username (excluyendo ID): {str(e)}")
 
     def find_by_email(self, email):
         """Busca una empresa por email"""
@@ -98,6 +143,21 @@ class EmpresaRepository:
             return Empresa.from_dict(data) if data else None
         except Exception as e:
             raise Exception(f"Error buscando empresa por email: {str(e)}")
+    
+    def find_by_email_excluding_id(self, email, exclude_id):
+        """Busca una empresa por email excluyendo un ID específico (para actualizaciones)"""
+        try:
+            if isinstance(exclude_id, str):
+                exclude_id = ObjectId(exclude_id)
+                
+            data = self.collection.find_one({
+                "email": email, 
+                "activa": True,
+                "_id": {"$ne": exclude_id}
+            })
+            return Empresa.from_dict(data) if data else None
+        except Exception as e:
+            raise Exception(f"Error buscando empresa por email (excluyendo ID): {str(e)}")
     
     def find_by_creador(self, creado_por):
         """Busca empresas creadas por un super admin específico"""
@@ -128,13 +188,14 @@ class EmpresaRepository:
             empresa_dict = empresa.to_dict()
             empresa_dict.pop('_id', None)  # Remover _id del dict para actualización
             
+            # Remover filtro de activa para permitir actualizar empresas inactivas
             result = self.collection.update_one(
-                {"_id": empresa_id, "activa": True},
+                {"_id": empresa_id},
                 {"$set": empresa_dict}
             )
             
             if result.matched_count > 0:
-                return self.find_by_id(empresa_id)
+                return self.find_by_id_including_inactive(empresa_id)
             return None
         except Exception as e:
             if "duplicate key error" in str(e).lower() or "11000" in str(e):
@@ -147,8 +208,9 @@ class EmpresaRepository:
             if isinstance(empresa_id, str):
                 empresa_id = ObjectId(empresa_id)
             
+            # Remover filtro de activa para permitir eliminar cualquier empresa
             result = self.collection.update_one(
-                {"_id": empresa_id, "activa": True},
+                {"_id": empresa_id},
                 {
                     "$set": {
                         "activa": False,

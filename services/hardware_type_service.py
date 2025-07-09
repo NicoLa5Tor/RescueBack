@@ -57,7 +57,7 @@ class HardwareTypeService:
                 return {'success': False, 'errors': ['Tipo no encontrado']}
             nombre = data.get('nombre', existing.nombre)
             descripcion = data.get('descripcion', existing.descripcion)
-            if nombre != existing.nombre and self.repo.find_by_nombre(nombre):
+            if nombre != existing.nombre and self.repo.find_by_nombre_excluding_id(nombre, type_id):
                 return {'success': False, 'errors': ['El tipo ya existe']}
             updated = HardwareType(nombre=nombre, descripcion=descripcion, _id=existing._id, activa=existing.activa)
             updated.fecha_creacion = existing.fecha_creacion
