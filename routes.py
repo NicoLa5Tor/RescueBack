@@ -201,6 +201,7 @@ def get_system_performance():
     return dashboard_controller.get_system_performance()
 # ========== BLUEPRINT DE MULTI-TENANT (USUARIOS POR EMPRESA) ==========
 from controllers.multitenant_controller import MultiTenantController
+from controllers.mqtt_alert_controller import MqttAlertController
 from utils.permissions import require_empresa_or_admin_token
 
 multitenant_bp = Blueprint('multitenant', __name__, url_prefix='/empresas')
@@ -249,6 +250,70 @@ def get_usuarios_by_empresa_including_inactive(empresa_id):
     
     return multitenant_controller.get_usuarios_by_empresa_including_inactive(empresa_id)
 
+# ========== BLUEPRINT DE ALERTAS MQTT ==========
+mqtt_alert_bp = Blueprint('mqtt_alerts', __name__, url_prefix='/api/mqtt-alerts')
+mqtt_alert_controller = MqttAlertController()
+
+# ========== BLUEPRINT DE AUTENTICACIÓN DE HARDWARE ==========
+from controllers.hardware_auth_controller import HardwareAuthController
+hardware_auth_bp = Blueprint('hardware_auth', __name__, url_prefix='/api/hardware-auth')
+hardware_auth_controller = HardwareAuthController()
+
+@hardware_auth_bp.route('/authenticate', methods=['POST'])
+def authenticate_hardware():
+    """POST /api/hardware-auth/authenticate - Autenticar hardware y generar token temporal"""
+    return hardware_auth_controller.authenticate_hardware()
+
+@hardware_auth_bp.route('/verify-token', methods=['POST'])
+def verify_token():
+    """POST /api/hardware-auth/verify-token - Verificar token de autenticación"""
+    return hardware_auth_controller.verify_token()
+
+@hardware_auth_bp.route('/sessions', methods=['GET'])
+def get_active_sessions():
+    """GET /api/hardware-auth/sessions - Obtener sesiones activas"""
+    return hardware_auth_controller.get_active_sessions()
+
+@hardware_auth_bp.route('/cleanup', methods=['DELETE'])
+def cleanup_expired_sessions():
+    """DELETE /api/hardware-auth/cleanup - Limpiar sesiones expiradas"""
+    return hardware_auth_controller.cleanup_expired_sessions()
+
+@hardware_auth_bp.route('/info', methods=['GET'])
+def get_hardware_auth_info():
+    """GET /api/hardware-auth/info - Información del sistema de autenticación"""
+    return hardware_auth_controller.get_hardware_auth_info()
+
+@mqtt_alert_bp.route('/process', methods=['POST'])
+def process_mqtt_message():
+    """POST /api/mqtt-alerts/process - Procesar mensaje MQTT"""
+    return mqtt_alert_controller.process_mqtt_message()
+
+@mqtt_alert_bp.route('/', methods=['GET'])
+def get_alerts():
+    """GET /api/mqtt-alerts - Obtener todas las alertas"""
+    return mqtt_alert_controller.get_alerts()
+
+@mqtt_alert_bp.route('/<alert_id>', methods=['GET'])
+def get_alert_by_id(alert_id):
+    """GET /api/mqtt-alerts/<alert_id> - Obtener alerta por ID"""
+    return mqtt_alert_controller.get_alert_by_id(alert_id)
+
+@mqtt_alert_bp.route('/verify-empresa-sede', methods=['GET'])
+def verify_empresa_sede():
+    """GET /api/mqtt-alerts/verify-empresa-sede?empresa_nombre=X&sede=Y - Verificar empresa y sede"""
+    return mqtt_alert_controller.verify_empresa_sede()
+
+@mqtt_alert_bp.route('/test-flow', methods=['GET'])
+def test_complete_flow():
+    """GET /api/mqtt-alerts/test-flow - Probar flujo completo con campo data"""
+    return mqtt_alert_controller.test_complete_flow()
+
+@mqtt_alert_bp.route('/verify-hardware', methods=['GET'])
+def verify_hardware():
+    """GET /api/mqtt-alerts/verify-hardware?hardware_nombre=X - Verificar hardware"""
+    return mqtt_alert_controller.verify_hardware()
+
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
@@ -259,4 +324,6 @@ def register_routes(app):
     app.register_blueprint(hardware_bp)
     app.register_blueprint(hardware_type_bp)
     app.register_blueprint(multitenant_bp)
+    app.register_blueprint(mqtt_alert_bp)
+    app.register_blueprint(hardware_auth_bp)
     app.register_blueprint(tipo_empresa_controller, url_prefix='/api')

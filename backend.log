@@ -1,5 +1,6 @@
-nohup: no se tendrá en cuenta la entrada
 Conectado a MongoDB: rescue
+Índices de usuarios creados correctamente
+Índices de usuarios creados correctamente
 Índices de usuarios creados correctamente
  * Serving Flask app 'app'
  * Debug mode: on
@@ -10,91 +11,4 @@ Conectado a MongoDB: rescue
 [33mPress CTRL+C to quit[0m
  * Restarting with stat
  * Debugger is active!
- * Debugger PIN: 673-094-121
-127.0.0.1 - - [06/Jul/2025 16:20:07] "GET /api/tipos_empresa HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:20:07] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:20:42] "[31m[1mPOST /auth/login HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:22:03] "POST /auth/login HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:22:20] "POST /auth/login HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:22:20] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:22:20] "[31m[1mPATCH /api/tipos_empresa/686ac7806282bc82ec3064e3/toggle-status HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:22:20] "PATCH /api/tipos_empresa/686ac7806282bc82ec3064e3/toggle-status HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:22:20] "PATCH /api/tipos_empresa/686ac7806282bc82ec3064e3/toggle-status HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:36] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:36] "POST /auth/login HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:36] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "[32mGET /api/empresas HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /api/empresas/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:38] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "[32mGET /api/empresas HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "GET /api/empresas/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:39] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:41] "GET /api/tipos_empresa/activos HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:41] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:49] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:49] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:56] "GET /api/tipos_empresa/activos HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:23:56] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:28:20] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:30] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[31m[1mGET /api/hardware/ HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[31m[1mGET /api/hardware-types/ HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[32mGET /api/empresas HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[31m[1mGET /api/hardware-types/ HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "GET /api/empresas/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "[31m[1mGET /api/hardware/ HTTP/1.1[0m" 401 -
-127.0.0.1 - - [06/Jul/2025 16:30:33] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:37] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:37] "POST /auth/login HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:37] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "[32mGET /api/empresas HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /api/empresas/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:39] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "[32mGET /api/hardware-types HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "[32mGET /api/hardware HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "[32mGET /api/empresas HTTP/1.1[0m" 308 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "GET /api/hardware-types/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "GET /api/empresas/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:40] "GET /api/hardware/ HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:42] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:30:42] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:34:57] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:21] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:24] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:24] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:45] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:46] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:35:46] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:36:14] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:36:16] "GET /api/tipos_empresa/dashboard/all HTTP/1.1" 200 -
-127.0.0.1 - - [06/Jul/2025 16:36:16] "GET /api/tipos_empresa/estadisticas HTTP/1.1" 200 -
+ * Debugger PIN: 580-755-795

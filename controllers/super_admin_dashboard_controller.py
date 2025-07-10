@@ -17,6 +17,7 @@ class SuperAdminDashboardController:
         """GET /api/dashboard/stats - Estadísticas generales del sistema"""
         try:
             result = self.dashboard_service.get_dashboard_stats()
+            print(f"los stats son: {result}")
             if result['success']:
                 return success_response(result['data'])
             else:

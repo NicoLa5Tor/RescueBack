@@ -38,7 +38,11 @@ class HardwareService:
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
             # Si los datos vienen con un campo 'datos', extraerlo; si no, usar data directamente
             datos_finales = data.get('datos', data) if 'datos' in data else data
+            
+            # Crear instancia de hardware y generar topic automáticamente
             hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa._id, sede=sede, datos=datos_finales)
+            hardware.topic = hardware.generate_topic(nombre_empresa, sede, tipo, nombre)
+            
             created = self.hardware_repo.create(hardware)
             result = created.to_json()
             result['empresa_nombre'] = nombre_empresa
@@ -166,8 +170,16 @@ class HardwareService:
                 return {'success': False, 'errors': ['Tipo de hardware no soportado']}
             # Si los datos vienen con un campo 'datos', extraerlo; si no, usar data directamente
             datos_finales = data.get('datos', data) if 'datos' in data else data
+            
+            # Crear instancia actualizada y regenerar topic automáticamente
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=datos_finales, _id=existing._id, activa=existing.activa)
             updated.fecha_creacion = existing.fecha_creacion
+            
+            # Regenerar topic con los nuevos datos
+            empresa_nombre_final = nombre_empresa if nombre_empresa else (empresa.nombre if empresa else None)
+            if empresa_nombre_final:
+                updated.topic = updated.generate_topic(empresa_nombre_final, sede, tipo, nombre)
+            
             result = self.hardware_repo.update(hardware_id, updated)
             if result:
                 res = result.to_json()
