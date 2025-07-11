@@ -6,7 +6,7 @@ from controllers.hardware_controller import HardwareController
 from controllers.hardware_type_controller import HardwareTypeController
 from controllers.tipo_empresa_controller import tipo_empresa_controller
 from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
-from auth.decorators import require_empresa_or_admin_token
+from utils.permissions import require_empresa_or_admin_token
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
