@@ -153,3 +153,13 @@ class HardwareController:
             return jsonify(result), status
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
+    
+    @require_empresa_or_admin_token
+    def get_hardware_direccion_url(self, hardware_id):
+        """Obtener solo la URL de dirección de un hardware específico"""
+        try:
+            result = self.service.get_hardware_direccion_url(hardware_id)
+            status = 200 if result.get('success') else 404
+            return jsonify(result), status
+        except Exception as exc:
+            return jsonify({'success': False, 'errors': [str(exc)]}), 500

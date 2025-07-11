@@ -238,3 +238,22 @@ class HardwareService:
             return {'success': False, 'errors': ['Error al actualizar el estado del hardware']}
         except Exception as exc:
             return {'success': False, 'errors': [str(exc)]}
+    
+    def get_hardware_direccion_url(self, hardware_id):
+        """Obtiene solo la URL de dirección de un hardware específico"""
+        try:
+            hardware = self.hardware_repo.find_by_id_including_inactive(hardware_id)
+            if not hardware:
+                return {'success': False, 'errors': ['Hardware no encontrado']}
+            
+            # Retornar solo la información de dirección
+            direccion_data = {
+                'id': str(hardware._id),
+                'nombre': hardware.nombre,
+                'direccion': hardware.direccion,
+                'direccion_url': hardware.direccion_url
+            }
+            
+            return {'success': True, 'data': direccion_data}
+        except Exception as exc:
+            return {'success': False, 'errors': [str(exc)]}

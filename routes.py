@@ -6,6 +6,7 @@ from controllers.hardware_controller import HardwareController
 from controllers.hardware_type_controller import HardwareTypeController
 from controllers.tipo_empresa_controller import tipo_empresa_controller
 from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
+from auth.decorators import require_empresa_or_admin_token
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -109,6 +110,12 @@ def get_hardware_by_empresa(empresa_id):
 @hardware_bp.route('/<hardware_id>', methods=['GET'])
 def get_hardware(hardware_id):
     return hardware_controller.get_hardware(hardware_id)
+
+@hardware_bp.route('/<hardware_id>/direccion-url', methods=['GET'])
+@require_empresa_or_admin_token
+def get_hardware_direccion_url(hardware_id):
+    """GET /api/hardware/<id>/direccion-url - Obtener URL de la dirección del hardware"""
+    return hardware_controller.get_hardware_direccion_url(hardware_id)
 
 @hardware_bp.route('/<hardware_id>', methods=['PUT'])
 def update_hardware(hardware_id):
