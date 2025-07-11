@@ -11,7 +11,8 @@ class Hardware:
         self.sede = sede
         self.datos = datos or {}
         self.direccion = None  # Nueva propiedad de dirección
-        self.direccion_url = None  # Nueva propiedad de URL de dirección
+        self.direccion_url = None  # Nueva propiedad de URL de dirección (Google Maps)
+        self.direccion_open_maps = None  # Nueva propiedad de URL de dirección (OpenStreetMap)
         self.topic = topic  # Campo topic generado automáticamente
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
@@ -25,7 +26,8 @@ class Hardware:
             'sede': self.sede,
             'datos': self.datos,
             'direccion': self.direccion,  # Nueva dirección
-            'direccion_url': self.direccion_url,  # Nueva URL de dirección
+            'direccion_url': self.direccion_url,  # Nueva URL de dirección (Google Maps)
+            'direccion_open_maps': self.direccion_open_maps,  # Nueva URL de dirección (OpenStreetMap)
             'topic': self.topic,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
@@ -45,7 +47,8 @@ class Hardware:
         hw.sede = data.get('sede')
         hw.datos = data.get('datos', {})
         hw.direccion = data.get('direccion')  # Nueva dirección
-        hw.direccion_url = data.get('direccion_url')  # Nueva URL de dirección
+        hw.direccion_url = data.get('direccion_url')  # Nueva URL de dirección (Google Maps)
+        hw.direccion_open_maps = data.get('direccion_open_maps')  # Nueva URL de dirección (OpenStreetMap)
         hw.topic = data.get('topic')
         hw.fecha_creacion = data.get('fecha_creacion')
         hw.fecha_actualizacion = data.get('fecha_actualizacion')
@@ -61,7 +64,8 @@ class Hardware:
             'sede': self.sede,
             'datos': self.datos,
             'direccion': self.direccion,  # Nueva dirección
-            'direccion_url': self.direccion_url,  # Nueva URL de dirección
+            'direccion_url': self.direccion_url,  # Nueva URL de dirección (Google Maps)
+            'direccion_open_maps': self.direccion_open_maps,  # Nueva URL de dirección (OpenStreetMap)
             'topic': self.topic,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,

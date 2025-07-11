@@ -3,7 +3,7 @@ from models.hardware import Hardware
 from repositories.hardware_repository import HardwareRepository
 from repositories.empresa_repository import EmpresaRepository
 from services.hardware_type_service import HardwareTypeService
-from utils.maps_utils import direccion_google_maps
+from utils.geocoding import procesar_direccion_para_hardware
 
 class HardwareService:
     def __init__(self):
@@ -16,11 +16,11 @@ class HardwareService:
         """Obtiene la empresa a partir de su nombre."""
         return self.empresa_repo.find_by_nombre(empresa_nombre)
     
-    def _generate_direccion_url(self, direccion):
-        """Genera la URL de Google Maps para la dirección."""
+    def _procesar_direccion(self, direccion):
+        """Procesa una dirección y devuelve URL, coordenadas y posible error."""
         if not direccion:
-            return None
-        return direccion_google_maps(direccion)
+            return None, None, "La dirección es obligatoria"
+        return procesar_direccion_para_hardware(direccion)
 
     def create_hardware(self, data):
         try:
@@ -49,10 +49,16 @@ class HardwareService:
             # Si los datos vienen con un campo 'datos', extraerlo; si no, usar data directamente
             datos_finales = data.get('datos', data) if 'datos' in data else data
             
+            # Procesar dirección y geocodificar
+            direccion_url, coordenadas, direccion_error = self._procesar_direccion(direccion)
+            if direccion_error:
+                return {'success': False, 'errors': [direccion_error]}
+            
             # Crear instancia de hardware y generar topic automáticamente
             hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa._id, sede=sede, datos=datos_finales)
             hardware.direccion = direccion
-            hardware.direccion_url = self._generate_direccion_url(direccion)
+            hardware.direccion_url = direccion_url
+            hardware.coordenadas = coordenadas  # Nuevo campo para coordenadas
             hardware.topic = hardware.generate_topic(nombre_empresa, sede, tipo, nombre)
             
             created = self.hardware_repo.create(hardware)
@@ -186,10 +192,23 @@ class HardwareService:
             # Si los datos vienen con un campo 'datos', extraerlo; si no, usar data directamente
             datos_finales = data.get('datos', data) if 'datos' in data else data
             
+            # Procesar dirección solo si cambió
+            direccion_url = existing.direccion_url
+            coordenadas = getattr(existing, 'coordenadas', None)
+            
+            if direccion != getattr(existing, 'direccion', None):
+                print(f'🗺️ Dirección cambió, geocodificando nueva dirección: {direccion}')
+                direccion_url, coordenadas, direccion_error = self._procesar_direccion(direccion)
+                if direccion_error:
+                    return {'success': False, 'errors': [direccion_error]}
+            else:
+                print(f'🔄 Dirección sin cambios, manteniendo URL existente')
+            
             # Crear instancia actualizada y regenerar topic automáticamente
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=datos_finales, _id=existing._id, activa=existing.activa)
             updated.direccion = direccion
-            updated.direccion_url = self._generate_direccion_url(direccion)
+            updated.direccion_url = direccion_url
+            updated.coordenadas = coordenadas
             updated.fecha_creacion = existing.fecha_creacion
             
             # Regenerar topic con los nuevos datos
@@ -255,7 +274,8 @@ class HardwareService:
                 'id': str(hardware._id),
                 'nombre': hardware.nombre,
                 'direccion': hardware.direccion,
-                'direccion_url': hardware.direccion_url
+                'direccion_url': hardware.direccion_url,
+                'direccion_open_maps': getattr(hardware, 'direccion_open_maps', None)
             }
             
             return {'success': True, 'data': direccion_data}

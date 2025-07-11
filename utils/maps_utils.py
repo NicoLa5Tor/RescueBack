@@ -18,6 +18,23 @@ def direccion_google_maps(nombre_o_direccion):
     url = f"https://www.google.com/maps?q={consulta_codificada}"
     return url
 
+def direccion_openstreetmap(direccion):
+    """
+    Devuelve la URL para buscar la dirección o lugar en OpenStreetMap.
+    
+    Args:
+        direccion (str): Dirección o lugar a buscar
+        
+    Returns:
+        str: URL de OpenStreetMap para la búsqueda
+    """
+    if not direccion or not direccion.strip():
+        return ""
+    
+    direccion_codificada = urllib.parse.quote_plus(direccion.strip())
+    url = f"https://www.openstreetmap.org/search?query={direccion_codificada}"
+    return url
+
 # Ejemplos de uso:
 # print(direccion_google_maps("Universidad de Cundinamarca, Facatativá"))
 # print(direccion_google_maps("Restaurante Donde Pablo, Facatativá"))  
