@@ -80,7 +80,7 @@ def generar_url_google_maps(lat: str, lon: str, zoom: int = 15) -> str:
     Returns:
         str: URL de Google Maps
     """
-    return f"https://www.google.com/maps/@{lat},{lon},{zoom}z"
+    return f"https://www.google.com/maps/place/{lat},{lon}"
 
 def procesar_direccion_para_hardware(direccion: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
