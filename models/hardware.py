@@ -10,6 +10,8 @@ class Hardware:
         self.empresa_id = ObjectId(empresa_id) if empresa_id else None
         self.sede = sede
         self.datos = datos or {}
+        self.direccion = None  # Nueva propiedad de dirección
+        self.direccion_url = None  # Nueva propiedad de URL de dirección
         self.topic = topic  # Campo topic generado automáticamente
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
@@ -22,6 +24,8 @@ class Hardware:
             'empresa_id': self.empresa_id,
             'sede': self.sede,
             'datos': self.datos,
+            'direccion': self.direccion,  # Nueva dirección
+            'direccion_url': self.direccion_url,  # Nueva URL de dirección
             'topic': self.topic,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
@@ -40,6 +44,8 @@ class Hardware:
         hw.empresa_id = data.get('empresa_id')
         hw.sede = data.get('sede')
         hw.datos = data.get('datos', {})
+        hw.direccion = data.get('direccion')  # Nueva dirección
+        hw.direccion_url = data.get('direccion_url')  # Nueva URL de dirección
         hw.topic = data.get('topic')
         hw.fecha_creacion = data.get('fecha_creacion')
         hw.fecha_actualizacion = data.get('fecha_actualizacion')
@@ -54,6 +60,8 @@ class Hardware:
             'empresa_id': str(self.empresa_id) if self.empresa_id else None,
             'sede': self.sede,
             'datos': self.datos,
+            'direccion': self.direccion,  # Nueva dirección
+            'direccion_url': self.direccion_url,  # Nueva URL de dirección
             'topic': self.topic,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,

@@ -3,6 +3,7 @@ from models.hardware import Hardware
 from repositories.hardware_repository import HardwareRepository
 from repositories.empresa_repository import EmpresaRepository
 from services.hardware_type_service import HardwareTypeService
+from utils.maps_utils import direccion_google_maps
 
 class HardwareService:
     def __init__(self):
@@ -14,12 +15,19 @@ class HardwareService:
     def _get_empresa(self, empresa_nombre):
         """Obtiene la empresa a partir de su nombre."""
         return self.empresa_repo.find_by_nombre(empresa_nombre)
+    
+    def _generate_direccion_url(self, direccion):
+        """Genera la URL de Google Maps para la dirección."""
+        if not direccion:
+            return None
+        return direccion_google_maps(direccion)
 
     def create_hardware(self, data):
         try:
             nombre = data.pop('nombre', None)
             tipo = data.pop('tipo', None)
             sede = data.pop('sede', None)
+            direccion = data.pop('direccion', None)  # Nueva dirección
             nombre_empresa = data.pop('empresa_nombre', None)
             if not nombre_empresa:
                 return {'success': False, 'errors': ['El nombre de la empresa es obligatorio']}
@@ -41,6 +49,8 @@ class HardwareService:
             
             # Crear instancia de hardware y generar topic automáticamente
             hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa._id, sede=sede, datos=datos_finales)
+            hardware.direccion = direccion
+            hardware.direccion_url = self._generate_direccion_url(direccion)
             hardware.topic = hardware.generate_topic(nombre_empresa, sede, tipo, nombre)
             
             created = self.hardware_repo.create(hardware)
@@ -147,6 +157,7 @@ class HardwareService:
             nombre = data.pop('nombre', existing.nombre)
             tipo = data.pop('tipo', existing.tipo)
             sede = data.pop('sede', existing.sede)
+            direccion = data.pop('direccion', existing.direccion)  # Nueva dirección
             nombre_empresa = data.pop('empresa_nombre', None)
             empresa = None
             empresa_id = existing.empresa_id
@@ -173,6 +184,8 @@ class HardwareService:
             
             # Crear instancia actualizada y regenerar topic automáticamente
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=datos_finales, _id=existing._id, activa=existing.activa)
+            updated.direccion = direccion
+            updated.direccion_url = self._generate_direccion_url(direccion)
             updated.fecha_creacion = existing.fecha_creacion
             
             # Regenerar topic con los nuevos datos

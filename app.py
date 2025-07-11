@@ -13,11 +13,39 @@ def create_app():
     # Configuración de la aplicación
     app.config.from_object(Config)
     
-    # Habilitar CORS para todos los endpoints de la API
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    # Habilitar CORS para todos los endpoints con soporte para cookies
+    CORS(app, 
+         resources={r"/*": {"origins": [
+             "http://localhost:5000", "http://127.0.0.1:5000",
+             "http://localhost:5004", "http://127.0.0.1:5004",
+             "http://localhost:5050", "http://127.0.0.1:5050"
+         ]}},
+         supports_credentials=True)
 
     # Inicializar JWT
-    JWTManager(app)
+    jwt = JWTManager(app)
+    
+    # Configurar manejo de errores JWT
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({
+            'success': False,
+            'errors': ['Token expirado']
+        }), 401
+    
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        return jsonify({
+            'success': False,
+            'errors': ['Token inválido']
+        }), 422
+    
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        return jsonify({
+            'success': False,
+            'errors': ['Token faltante']
+        }), 401
 
     @app.before_request
     def handle_options_requests():
@@ -35,7 +63,18 @@ def create_app():
         empresa_id = getattr(g, 'empresa_id', None)
         if empresa_id:
             activity_service.log(str(empresa_id), request.method, request.path)
-        response.headers.setdefault('Access-Control-Allow-Origin', '*')
+        
+        # Configurar CORS para cookies
+        origin = request.headers.get('Origin')
+        allowed_origins = [
+            'http://localhost:5000', 'http://127.0.0.1:5000',
+            'http://localhost:5004', 'http://127.0.0.1:5004', 
+            'http://localhost:5050', 'http://127.0.0.1:5050'
+        ]
+        if origin in allowed_origins:
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+        
         response.headers.setdefault('Access-Control-Allow-Headers',
                                    'Content-Type,Authorization')
         response.headers.setdefault('Access-Control-Allow-Methods',
@@ -60,6 +99,24 @@ def create_app():
             'status': 'OK',
             'message': 'API funcionando correctamente',
             'database': 'Connected' if db.test_connection() else 'Disconnected'
+        }), 200
+    
+    # Endpoint temporal para debug de cookies
+    @app.route('/debug-cookies', methods=['GET'])
+    def debug_cookies():
+        cookies = dict(request.cookies)
+        headers = dict(request.headers)
+        auth_token = request.cookies.get('auth_token')
+        
+        print(f"\ud83d\udd0d DEBUG COOKIES:")
+        print(f"  - All cookies: {cookies}")
+        print(f"  - auth_token cookie: {auth_token}")
+        print(f"  - Authorization header: {headers.get('Authorization')}")
+        
+        return jsonify({
+            'cookies': cookies,
+            'auth_token': auth_token,
+            'headers': headers
         }), 200
     
     # Ruta raíz

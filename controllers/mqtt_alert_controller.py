@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from services.mqtt_alert_service import MqttAlertService
 from services.hardware_auth_service import HardwareAuthService
-from utils.auth_utils import get_auth_header
+from utils.auth_utils import get_auth_header, get_auth_cookie
 
 class MqttAlertController:
     """Controlador para gestionar las alertas MQTT"""
@@ -13,12 +13,12 @@ class MqttAlertController:
     def process_mqtt_message(self):
         """Procesar mensaje MQTT recibido con autenticación de hardware"""
         try:
-            token = get_auth_header(request)
+            token = get_auth_cookie(request) or get_auth_header(request)
             if not token:
                 return jsonify({
                     'success': False,
                     'error': 'Token de autenticación requerido',
-                    'message': 'Se requiere token de autenticación en el header Authorization'
+                    'message': 'Se requiere token de autenticación en cookie o header Authorization'
                 }), 401
             
             token_result = self.hardware_auth_service.verify_token(token)

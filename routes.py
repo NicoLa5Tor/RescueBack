@@ -16,6 +16,11 @@ def login():
     """POST /auth/login - Iniciar sesión"""
     return auth_controller.login()
 
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """POST /auth/logout - Cerrar sesión"""
+    return auth_controller.logout()
+
 # ========== BLUEPRINT DE EMPRESAS ==========
 empresa_bp = Blueprint('empresas', __name__, url_prefix='/api/empresas')
 empresa_controller = EmpresaController()
@@ -283,6 +288,11 @@ def cleanup_expired_sessions():
 def get_hardware_auth_info():
     """GET /api/hardware-auth/info - Información del sistema de autenticación"""
     return hardware_auth_controller.get_hardware_auth_info()
+
+@hardware_auth_bp.route('/logout', methods=['POST'])
+def logout_hardware():
+    """POST /api/hardware-auth/logout - Cerrar sesión y limpiar cookie"""
+    return hardware_auth_controller.logout_hardware()
 
 @mqtt_alert_bp.route('/process', methods=['POST'])
 def process_mqtt_message():

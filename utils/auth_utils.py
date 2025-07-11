@@ -43,6 +43,25 @@ def create_bearer_token(token: str) -> str:
     return f"Bearer {token}"
 
 
+def get_auth_cookie(request: Request, cookie_name: str = 'hardware_auth_token') -> Optional[str]:
+    """
+    Extrae el token JWT de una cookie.
+    
+    Args:
+        request: Objeto Request de Flask
+        cookie_name: Nombre de la cookie que contiene el token
+        
+    Returns:
+        Token JWT si existe, None si no existe o es inválido
+    """
+    token = request.cookies.get(cookie_name)
+    
+    if not token or not token.strip():
+        return None
+    
+    return token.strip()
+
+
 def validate_token_format(token: str) -> bool:
     """
     Valida que el token tenga el formato JWT básico.

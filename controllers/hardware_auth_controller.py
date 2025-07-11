@@ -1,6 +1,6 @@
-from flask import jsonify, request
+from flask import jsonify, request, make_response
 from services.hardware_auth_service import HardwareAuthService
-from utils.auth_utils import get_auth_header
+from utils.auth_utils import get_auth_cookie, get_auth_header
 from typing import Dict, Any
 
 
@@ -70,7 +70,26 @@ class HardwareAuthController:
             
             # Determinar código de respuesta HTTP
             if result['success']:
-                return jsonify(result), 200
+                # Crear respuesta exitosa con cookie segura
+                token = result['data']['token']
+                response_data = result.copy()
+                # Remover el token del JSON response
+                del response_data['data']['token']
+                response_data['data']['message'] = 'Token enviado en cookie segura'
+                
+                response = make_response(jsonify(response_data), 200)
+                
+                # Configurar cookie segura con HttpOnly y Secure
+                response.set_cookie(
+                    'hardware_auth_token',
+                    token,
+                    max_age=self.hardware_auth_service.token_expiry_minutes * 60,  # 5 minutos en segundos
+                    httponly=True,
+                    secure=True,  # Solo HTTPS en producción
+                    samesite='Strict'
+                )
+                
+                return response
             else:
                 # Determinar código específico basado en el error
                 if 'no encontrada' in result['message'] or 'no existe' in result['message']:
@@ -102,14 +121,14 @@ class HardwareAuthController:
             500: Error interno del servidor
         """
         try:
-            # Obtener token del header Authorization
-            token = get_auth_header(request)
+            # Obtener token de la cookie o del header Authorization (fallback)
+            token = get_auth_cookie(request) or get_auth_header(request)
             
             if not token:
                 return jsonify({
                     'success': False,
                     'error': 'Token faltante',
-                    'message': 'Se requiere token en el header Authorization'
+                    'message': 'Se requiere token en cookie o header Authorization'
                 }), 400
             
             # Verificar token
@@ -208,10 +227,45 @@ class HardwareAuthController:
                         '3. Sistema valida sede existe en la empresa',
                         '4. Sistema valida hardware existe, está activo y pertenece a la empresa',
                         '5. Sistema genera token temporal JWT válido por 5 minutos',
-                        '6. Hardware usa token para autorizar envío de alertas'
+                        '6. Token se envía en cookie segura HttpOnly',
+                        '7. Hardware usa token para autorizar envío de alertas'
                     ]
                 }
             }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': 'Error interno del servidor',
+                'message': f'Ha ocurrido un error inesperado: {str(e)}'
+            }), 500
+    
+    def logout_hardware(self):
+        """
+        POST /api/hardware-auth/logout
+        Cierra sesión y limpia la cookie de autenticación.
+        
+        Returns:
+            200: Logout exitoso
+            500: Error interno del servidor
+        """
+        try:
+            response = make_response(jsonify({
+                'success': True,
+                'message': 'Sesión cerrada exitosamente'
+            }), 200)
+            
+            # Limpiar cookie estableciendo expiración en el pasado
+            response.set_cookie(
+                'hardware_auth_token',
+                '',
+                max_age=0,
+                httponly=True,
+                secure=True,
+                samesite='Strict'
+            )
+            
+            return response
             
         except Exception as e:
             return jsonify({

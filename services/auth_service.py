@@ -64,11 +64,9 @@ class AuthService:
             if not role and collection == 'empresas':
                 role = 'empresa'
             user_perms = user.get('permisos') or ROLE_PERMISSIONS.get(role, [])
+            # JWT con información mínima por seguridad
             claims = {
-                'email': user.get('email'),
-                'username': user.get('username') or user.get('usuario'),
-                'role': role,
-                'permisos': user_perms,
+                'role': role,  # Solo el rol, nada más
             }
             token = create_access_token(identity=str(user['_id']), additional_claims=claims)
             # Registrar último inicio de sesión
