@@ -40,6 +40,8 @@ class HardwareService:
                 return {'success': False, 'errors': ['La sede no pertenece a la empresa']}
             if not nombre:
                 return {'success': False, 'errors': ['El nombre del hardware es obligatorio']}
+            if not direccion:
+                return {'success': False, 'errors': ['La dirección es obligatoria']}
             if self.hardware_repo.find_by_nombre(nombre):
                 return {'success': False, 'errors': ['Ya existe un hardware con ese nombre']}
             if tipo not in self.type_service.get_type_names():
@@ -175,6 +177,8 @@ class HardwareService:
                 empresa = self.empresa_repo.find_by_id(existing.empresa_id) if existing.empresa_id else None
             if not sede:
                 return {'success': False, 'errors': ['La sede es obligatoria']}
+            if not direccion:
+                return {'success': False, 'errors': ['La dirección es obligatoria']}
             if empresa and sede not in (empresa.sedes or []):
                 return {'success': False, 'errors': ['La sede no pertenece a la empresa']}
             if tipo not in self.type_service.get_type_names():
