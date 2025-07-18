@@ -2,9 +2,11 @@ from services.empresa_service import EmpresaService
 from services.usuario_service import UsuarioService
 from services.activity_service import ActivityService
 from services.hardware_service import HardwareService
-from repositories.usuario_repository import UsuarioRepository
+from services.tipo_empresa_service import TipoEmpresaService
 from repositories.empresa_repository import EmpresaRepository
+from repositories.usuario_repository import UsuarioRepository
 from repositories.hardware_repository import HardwareRepository
+from repositories.activity_repository import ActivityRepository
 from datetime import datetime, timedelta
 import random
 
@@ -16,9 +18,11 @@ class SuperAdminDashboardService:
         self.usuario_service = UsuarioService()
         self.activity_service = ActivityService()
         self.hardware_service = HardwareService()
+        self.tipo_empresa_service = TipoEmpresaService()
         self.empresa_repository = EmpresaRepository()
         self.usuario_repository = UsuarioRepository()
         self.hardware_repository = HardwareRepository()
+        self.activity_repository = ActivityRepository()
 
     def get_dashboard_stats(self):
         """Obtiene estadísticas generales del dashboard"""
@@ -174,63 +178,126 @@ class SuperAdminDashboardService:
             return {'success': False, 'errors': [str(e)]}
 
     def get_activity_chart_data(self, period='30d', limit=8):
-        """Obtiene datos para gráfico de actividad"""
+        """Obtiene datos REALES para gráfico de actividad basados en activity logs"""
         try:
+            # Convertir período a días
+            period_days = {
+                '24h': 1,
+                '7d': 7,
+                '30d': 30
+            }.get(period, 30)
+            
+            # Obtener empresas activas
             empresas_result = self.empresa_service.get_all_empresas(include_inactive=False)
             
-            if empresas_result['success']:
-                empresas = empresas_result['data'][:limit]
+            if not empresas_result['success']:
+                return {'success': False, 'errors': ['Error al obtener empresas']}
+            
+            # Obtener estadísticas de actividad por empresa
+            activity_stats = self.activity_repository.get_activity_stats_by_empresa(period_days)
+            
+            # Crear diccionario de actividad por empresa_id - SOLO para empresas activas
+            empresas_activas = empresas_result['data']
+            empresas_activas_ids = {empresa['_id'] for empresa in empresas_activas}
+            
+            activity_by_empresa = {}
+            for stat in activity_stats:
+                empresa_id = str(stat['_id'])
+                # Solo incluir actividad si la empresa está activa
+                if empresa_id in empresas_activas_ids:
+                    activity_by_empresa[empresa_id] = stat['count']
+                else:
+                    print(f"⚠️ Skipping activity for inactive empresa: {empresa_id}")
+            
+            # Preparar datos para el gráfico - ORDENAR POR ACTIVIDAD
+            empresas = empresas_result['data']
+            
+            # Crear lista de empresas con su actividad
+            empresas_with_activity = []
+            for empresa in empresas:
+                empresa_id = empresa['_id']
+                activity_count = activity_by_empresa.get(empresa_id, 0)
+                empresas_with_activity.append({
+                    'empresa': empresa,
+                    'activity_count': activity_count
+                })
+            
+            # Ordenar por actividad (mayor a menor) y tomar el TOP
+            empresas_with_activity.sort(key=lambda x: x['activity_count'], reverse=True)
+            top_empresas = empresas_with_activity[:limit]
+            
+            # Generar labels y data para el gráfico
+            labels = []
+            data = []
+            
+            for item in top_empresas:
+                empresa = item['empresa']
+                activity_count = item['activity_count']
+                labels.append(empresa['nombre'])
+                data.append(activity_count)
                 
-                labels = [empresa['nombre'] for empresa in empresas]
-                data = [random.randint(10, 100) for _ in empresas]
-                
-                chart_data = {
-                    'labels': labels,
-                    'datasets': [{
-                        'label': 'Actividad Mensual',
-                        'data': data,
-                        'backgroundColor': [
-                            '#8b5cf6', '#f472b6', '#60a5fa', '#34d399', 
-                            '#fbbf24', '#ef4444', '#06b6d4', '#84cc16'
-                        ],
-                        'borderWidth': 2
-                    }]
+            # Debug: mostrar el ranking
+            print(f"🏆 TOP {limit} empresas por actividad:")
+            for i, item in enumerate(top_empresas, 1):
+                empresa_nombre = item['empresa']['nombre']
+                activity_count = item['activity_count']
+                print(f"   {i}. {empresa_nombre}: {activity_count} logs")
+            
+            # Si no hay empresas, devolver estructura vacía
+            if not labels:
+                return {
+                    'success': True,
+                    'data': {
+                        'labels': ['Sin empresas'],
+                        'datasets': [{
+                            'label': f'Actividad ({period})',
+                            'data': [0],
+                            'backgroundColor': ['#9CA3AF'],
+                            'borderWidth': 2
+                        }]
+                    }
                 }
-                
-                return {'success': True, 'data': chart_data}
-            else:
-                return {'success': False, 'errors': ['Error al obtener datos de actividad']}
-        except Exception as e:
-            return {'success': False, 'errors': [str(e)]}
-
-    def get_distribution_chart_data(self):
-        """Obtiene datos para gráfico de distribución"""
-        try:
-            # Generar distribución por industria (mock data)
-            industries = {
-                'Tecnología': random.randint(15, 25),
-                'Servicios': random.randint(10, 20),
-                'Manufactura': random.randint(8, 15),
-                'Retail': random.randint(5, 12),
-                'Salud': random.randint(3, 8),
-                'Educación': random.randint(2, 6),
-                'Finanzas': random.randint(4, 10)
-            }
             
             chart_data = {
-                'labels': list(industries.keys()),
+                'labels': labels,
                 'datasets': [{
-                    'data': list(industries.values()),
+                    'label': f'Actividad ({period})',
+                    'data': data,
                     'backgroundColor': [
                         '#8b5cf6', '#f472b6', '#60a5fa', '#34d399', 
-                        '#fbbf24', '#ef4444', '#06b6d4'
-                    ],
-                    'borderWidth': 2,
-                    'borderColor': '#ffffff'
+                        '#fbbf24', '#ef4444', '#06b6d4', '#84cc16'
+                    ][:len(data)],  # Solo usar los colores necesarios
+                    'borderWidth': 2
                 }]
             }
             
             return {'success': True, 'data': chart_data}
+        except Exception as e:
+            return {'success': False, 'errors': [str(e)]}
+
+    def get_distribution_chart_data(self):
+        """Obtiene datos REALES para gráfico de distribución basados en tipos de empresa"""
+        try:
+            # Obtener distribución real de empresas por tipo
+            distribution_result = self.tipo_empresa_service.get_empresas_distribution_by_tipo()
+            
+            if distribution_result['success']:
+                return distribution_result
+            else:
+                # Si hay error, devolver datos de fallback
+                return {
+                    'success': True,
+                    'data': {
+                        'labels': ['Sin datos'],
+                        'datasets': [{
+                            'data': [0],
+                            'backgroundColor': ['#9CA3AF'],
+                            'borderWidth': 2,
+                            'borderColor': '#ffffff'
+                        }]
+                    }
+                }
+                
         except Exception as e:
             return {'success': False, 'errors': [str(e)]}
 

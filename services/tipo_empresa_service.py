@@ -140,3 +140,66 @@ class TipoEmpresaService:
     def get_total_empresas_categorizadas(self):
         """Obtiene el total de empresas que tienen tipo asignado"""
         return self.repository.get_total_empresas_categorizadas()
+    
+    def get_empresas_distribution_by_tipo(self):
+        """Obtiene la distribución de empresas activas por tipo de empresa para gráficos"""
+        try:
+            # Obtener la distribución desde el repositorio
+            result = self.repository.get_total_empresas_categorizadas()
+            
+            if not result['success']:
+                return result
+            
+            data = result['data']
+            distribution = data.get('distribucion_por_tipo', [])
+            
+            # Si no hay empresas categorizadas, devolver estructura vacía
+            if not distribution:
+                return {
+                    'success': True,
+                    'data': {
+                        'labels': ['Sin categorizar'],
+                        'datasets': [{
+                            'data': [data.get('total_sin_categorizar', 0)],
+                            'backgroundColor': ['#9CA3AF'],
+                            'borderWidth': 2,
+                            'borderColor': '#ffffff'
+                        }]
+                    }
+                }
+            
+            # Preparar datos para Chart.js
+            labels = [item['tipo_nombre'] for item in distribution]
+            values = [item['empresas_count'] for item in distribution]
+            
+            # Incluir empresas sin categorizar si las hay
+            empresas_sin_categorizar = data.get('total_sin_categorizar', 0)
+            if empresas_sin_categorizar > 0:
+                labels.append('Sin categorizar')
+                values.append(empresas_sin_categorizar)
+            
+            # Colores predefinidos para los gráficos
+            colors = [
+                '#8b5cf6', '#f472b6', '#60a5fa', '#34d399', 
+                '#fbbf24', '#ef4444', '#06b6d4', '#84cc16',
+                '#f97316', '#ec4899', '#10b981', '#3b82f6',
+                '#9CA3AF'  # Color para "Sin categorizar"
+            ]
+            
+            chart_data = {
+                'labels': labels,
+                'datasets': [{
+                    'data': values,
+                    'backgroundColor': colors[:len(values)],
+                    'borderWidth': 2,
+                    'borderColor': '#ffffff'
+                }]
+            }
+            
+            return {
+                'success': True,
+                'data': chart_data
+            }
+            
+        except Exception as e:
+            return {'success': False, 'errors': [f'Error al obtener distribución por tipo: {str(e)}']}

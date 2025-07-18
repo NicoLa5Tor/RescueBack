@@ -4,43 +4,38 @@ from bson import ObjectId
 class MqttAlert:
     """Modelo para almacenar alertas recibidas por MQTT"""
     
-    def __init__(self, empresa_nombre=None, sede=None, tipo_alerta=None, 
-                 datos_hardware=None, mensaje_original=None, autorizado=False, 
-                 estado_activo=True, usuario_autorizador=None, fecha_autorizacion=None,
-                 usuarios_notificados=None, data=None, hardware_nombre=None, _id=None):
+    def __init__(self, empresa_nombre=None, sede=None, data=None, hardware_nombre=None, 
+                 hardware_id=None, numeros_telefonicos=None, topic=None, 
+                 topics_otros_hardware=None, fecha_desactivacion=None, activo=True, _id=None):
         self._id = _id or ObjectId()
         self.empresa_nombre = empresa_nombre
         self.sede = sede
-        self.tipo_alerta = tipo_alerta  # semaforo, alarma, etc.
-        self.datos_hardware = datos_hardware or {}  # datos del hardware que envió la alerta
-        self.mensaje_original = mensaje_original  # mensaje MQTT original
-        self.autorizado = autorizado  # False por defecto, True cuando se autorice
-        self.estado_activo = estado_activo  # True = alerta activa, False = alerta desactivada
-        self.usuario_autorizador = usuario_autorizador  # ID del usuario que autorizó
-        self.fecha_autorizacion = fecha_autorizacion  # cuando se autorizó
-        self.usuarios_notificados = usuarios_notificados or []  # lista de usuarios notificados
-        self.data = data or {}  # datos adicionales como rutas, metadatos, etc.
+        self.data = data or {}  # datos de la alerta
         self.hardware_nombre = hardware_nombre  # nombre del hardware que envió la alerta
+        self.hardware_id = ObjectId(hardware_id) if hardware_id else None  # ID del hardware que envió la alerta
+        self.numeros_telefonicos = numeros_telefonicos or []  # números telefónicos de usuarios relacionados
+        self.topic = topic  # topic del hardware
+        self.topics_otros_hardware = topics_otros_hardware or []  # topics de otros hardware de la misma empresa y sede
+        self.activo = activo  # estado activo/inactivo de la alerta
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
+        self.fecha_desactivacion = fecha_desactivacion  # cuando se desactivó la alerta
         
     def to_dict(self):
         """Convierte el objeto a diccionario para MongoDB"""
         alert_dict = {
             'empresa_nombre': self.empresa_nombre,
             'sede': self.sede,
-            'tipo_alerta': self.tipo_alerta,
-            'datos_hardware': self.datos_hardware,
-            'mensaje_original': self.mensaje_original,
-            'autorizado': self.autorizado,
-            'estado_activo': self.estado_activo,
-            'usuario_autorizador': self.usuario_autorizador,
-            'fecha_autorizacion': self.fecha_autorizacion,
-            'usuarios_notificados': self.usuarios_notificados,
             'data': self.data,
             'hardware_nombre': self.hardware_nombre,
+            'hardware_id': self.hardware_id,
+            'numeros_telefonicos': self.numeros_telefonicos,
+            'topic': self.topic,
+            'topics_otros_hardware': self.topics_otros_hardware,
+            'activo': self.activo,
             'fecha_creacion': self.fecha_creacion,
-            'fecha_actualizacion': self.fecha_actualizacion
+            'fecha_actualizacion': self.fecha_actualizacion,
+            'fecha_desactivacion': self.fecha_desactivacion
         }
         if self._id:
             alert_dict['_id'] = self._id
@@ -53,18 +48,16 @@ class MqttAlert:
         alert._id = data.get('_id')
         alert.empresa_nombre = data.get('empresa_nombre')
         alert.sede = data.get('sede')
-        alert.tipo_alerta = data.get('tipo_alerta')
-        alert.datos_hardware = data.get('datos_hardware', {})
-        alert.mensaje_original = data.get('mensaje_original')
-        alert.autorizado = data.get('autorizado', False)
-        alert.estado_activo = data.get('estado_activo', True)
-        alert.usuario_autorizador = data.get('usuario_autorizador')
-        alert.fecha_autorizacion = data.get('fecha_autorizacion')
-        alert.usuarios_notificados = data.get('usuarios_notificados', [])
         alert.data = data.get('data', {})
         alert.hardware_nombre = data.get('hardware_nombre')
+        alert.hardware_id = data.get('hardware_id')
+        alert.numeros_telefonicos = data.get('numeros_telefonicos', [])
+        alert.topic = data.get('topic')
+        alert.topics_otros_hardware = data.get('topics_otros_hardware', [])
+        alert.activo = data.get('activo', True)
         alert.fecha_creacion = data.get('fecha_creacion')
         alert.fecha_actualizacion = data.get('fecha_actualizacion')
+        alert.fecha_desactivacion = data.get('fecha_desactivacion')
         return alert
     
     def to_json(self):
@@ -73,42 +66,36 @@ class MqttAlert:
             '_id': str(self._id) if self._id else None,
             'empresa_nombre': self.empresa_nombre,
             'sede': self.sede,
-            'tipo_alerta': self.tipo_alerta,
-            'datos_hardware': self.datos_hardware,
-            'mensaje_original': self.mensaje_original,
-            'autorizado': self.autorizado,
-            'estado_activo': self.estado_activo,
-            'usuario_autorizador': str(self.usuario_autorizador) if self.usuario_autorizador else None,
-            'fecha_autorizacion': self.fecha_autorizacion.isoformat() if self.fecha_autorizacion else None,
-            'usuarios_notificados': self.usuarios_notificados,
             'data': self.data,
             'hardware_nombre': self.hardware_nombre,
+            'hardware_id': str(self.hardware_id) if self.hardware_id else None,
+            'numeros_telefonicos': self.numeros_telefonicos,
+            'topic': self.topic,
+            'topics_otros_hardware': self.topics_otros_hardware,
+            'activo': self.activo,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
-            'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None
+            'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
+            'fecha_desactivacion': self.fecha_desactivacion.isoformat() if self.fecha_desactivacion else None
         }
-    
-    def authorize(self, usuario_id):
-        """Autoriza la alerta"""
-        self.autorizado = True
-        self.usuario_autorizador = ObjectId(usuario_id) if usuario_id else None
-        self.fecha_autorizacion = datetime.utcnow()
-        self.update_timestamp()
     
     def deactivate(self):
         """Desactiva la alerta"""
-        self.estado_activo = False
+        self.activo = False
+        self.fecha_desactivacion = datetime.utcnow()
         self.update_timestamp()
     
     def activate(self):
         """Activa la alerta"""
-        self.estado_activo = True
+        self.activo = True
+        self.fecha_desactivacion = None
         self.update_timestamp()
     
-    def add_notified_user(self, usuario_info):
-        """Agrega un usuario notificado"""
-        if usuario_info not in self.usuarios_notificados:
-            self.usuarios_notificados.append(usuario_info)
-            self.update_timestamp()
+    def toggle_status(self):
+        """Alterna el estado activo/inactivo"""
+        if self.activo:
+            self.deactivate()
+        else:
+            self.activate()
     
     def update_timestamp(self):
         """Actualiza el timestamp de modificación"""
@@ -124,12 +111,6 @@ class MqttAlert:
         if not self.sede or len(self.sede.strip()) == 0:
             errors.append("La sede es obligatoria")
         
-        if not self.tipo_alerta or len(self.tipo_alerta.strip()) == 0:
-            errors.append("El tipo de alerta es obligatorio")
-        
-        if not self.mensaje_original:
-            errors.append("El mensaje original es obligatorio")
-        
         return errors
     
     def normalize_data(self):
@@ -138,5 +119,3 @@ class MqttAlert:
             self.empresa_nombre = self.empresa_nombre.strip()
         if self.sede:
             self.sede = self.sede.strip()
-        if self.tipo_alerta:
-            self.tipo_alerta = self.tipo_alerta.strip().lower()

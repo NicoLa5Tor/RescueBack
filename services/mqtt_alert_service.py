@@ -1,4 +1,5 @@
 from repositories.mqtt_alert_repository import MqttAlertRepository
+from repositories.usuario_repository import UsuarioRepository
 from models.mqtt_alert import MqttAlert
 from datetime import datetime
 import json
@@ -8,6 +9,7 @@ class MqttAlertService:
     
     def __init__(self):
         self.alert_repo = MqttAlertRepository()
+        self.usuario_repo = UsuarioRepository()
     
     def process_mqtt_message(self, mqtt_data):
         """Procesa un mensaje MQTT y crea alertas"""
@@ -121,6 +123,11 @@ class MqttAlertService:
                 }
             }
             
+            # Obtener hardware_id si está disponible en auth_info
+            hardware_id = None
+            if isinstance(mensaje_original, dict) and 'auth_info' in mensaje_original:
+                hardware_id = mensaje_original['auth_info'].get('hardware_id')
+            
             # Crear la alerta
             alert = MqttAlert(
                 empresa_nombre=empresa_nombre_final,
@@ -132,7 +139,8 @@ class MqttAlertService:
                 estado_activo=estado_activo,
                 usuarios_notificados=usuarios_notificados,
                 data=data_adicional,
-                hardware_nombre=hardware_nombre
+                hardware_nombre=hardware_nombre,
+                hardware_id=hardware_id  # ID del hardware desde el token
             )
             # Validar datos
             errors = alert.validate()

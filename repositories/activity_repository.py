@@ -35,3 +35,45 @@ class ActivityRepository:
     def get_by_empresa(self, empresa_id: str, limit: int = 100):
         cursor = self.collection.find({"empresa_id": ObjectId(empresa_id)}).sort("timestamp", -1).limit(limit)
         return [self._format(d) for d in cursor]
+    
+    def count_activity_by_empresa(self, empresa_id: str, period_days: int = 30) -> int:
+        """Cuenta la actividad de una empresa en un período específico."""
+        from datetime import datetime, timedelta
+        
+        # Calcular fecha límite
+        start_date = datetime.utcnow() - timedelta(days=period_days)
+        
+        count = self.collection.count_documents({
+            "empresa_id": ObjectId(empresa_id),
+            "timestamp": {"$gte": start_date}
+        })
+        return count
+    
+    def get_activity_stats_by_empresa(self, period_days: int = 30):
+        """Obtiene estadísticas de actividad agrupadas por empresa."""
+        from datetime import datetime, timedelta
+        
+        # Calcular fecha límite
+        start_date = datetime.utcnow() - timedelta(days=period_days)
+        
+        pipeline = [
+            {
+                "$match": {
+                    "timestamp": {"$gte": start_date},
+                    "empresa_id": {"$ne": None}
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$empresa_id",
+                    "count": {"$sum": 1},
+                    "last_activity": {"$max": "$timestamp"}
+                }
+            },
+            {
+                "$sort": {"count": -1}
+            }
+        ]
+        
+        result = list(self.collection.aggregate(pipeline))
+        return result

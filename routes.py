@@ -262,7 +262,7 @@ def get_usuarios_by_empresa_including_inactive(empresa_id):
     
     return multitenant_controller.get_usuarios_by_empresa_including_inactive(empresa_id)
 
-# ========== BLUEPRINT DE ALERTAS MQTT ==========
+# ========== BLUEPRINT DE ALERTAS MQTT - COMENTADO PARA REHACER ==========
 mqtt_alert_bp = Blueprint('mqtt_alerts', __name__, url_prefix='/api/mqtt-alerts')
 mqtt_alert_controller = MqttAlertController()
 
@@ -273,63 +273,117 @@ hardware_auth_controller = HardwareAuthController()
 
 @hardware_auth_bp.route('/authenticate', methods=['POST'])
 def authenticate_hardware():
-    """POST /api/hardware-auth/authenticate - Autenticar hardware y generar token temporal"""
+    """POST /api/hardware-auth/authenticate - SOLO autenticación de hardware"""
     return hardware_auth_controller.authenticate_hardware()
 
-@hardware_auth_bp.route('/verify-token', methods=['POST'])
-def verify_token():
-    """POST /api/hardware-auth/verify-token - Verificar token de autenticación"""
-    return hardware_auth_controller.verify_token()
+# ========== RUTAS MQTT ALERTS CRUD ==========
+from decorators.hardware_auth_decorator import require_hardware_token
 
-@hardware_auth_bp.route('/sessions', methods=['GET'])
-def get_active_sessions():
-    """GET /api/hardware-auth/sessions - Obtener sesiones activas"""
-    return hardware_auth_controller.get_active_sessions()
-
-@hardware_auth_bp.route('/cleanup', methods=['DELETE'])
-def cleanup_expired_sessions():
-    """DELETE /api/hardware-auth/cleanup - Limpiar sesiones expiradas"""
-    return hardware_auth_controller.cleanup_expired_sessions()
-
-@hardware_auth_bp.route('/info', methods=['GET'])
-def get_hardware_auth_info():
-    """GET /api/hardware-auth/info - Información del sistema de autenticación"""
-    return hardware_auth_controller.get_hardware_auth_info()
-
-@hardware_auth_bp.route('/logout', methods=['POST'])
-def logout_hardware():
-    """POST /api/hardware-auth/logout - Cerrar sesión y limpiar cookie"""
-    return hardware_auth_controller.logout_hardware()
-
+# Ruta para procesar mensajes MQTT (SOLO token de hardware)
 @mqtt_alert_bp.route('/process', methods=['POST'])
+@require_hardware_token  # Solo token de hardware
 def process_mqtt_message():
-    """POST /api/mqtt-alerts/process - Procesar mensaje MQTT"""
+    """POST /api/mqtt-alerts/process - Procesar mensaje MQTT (Solo token de hardware)"""
     return mqtt_alert_controller.process_mqtt_message()
 
+# Ruta para crear alertas manualmente (SOLO token de hardware)
+@mqtt_alert_bp.route('/', methods=['POST'])
+@require_hardware_token  # Solo token de hardware
+def create_alert():
+    """POST /api/mqtt-alerts - Crear nueva alerta (Solo token de hardware)"""
+    return mqtt_alert_controller.create_alert()
+
+# Rutas de lectura (requieren autenticación general)
 @mqtt_alert_bp.route('/', methods=['GET'])
+@require_empresa_or_admin_token
 def get_alerts():
     """GET /api/mqtt-alerts - Obtener todas las alertas"""
     return mqtt_alert_controller.get_alerts()
 
 @mqtt_alert_bp.route('/<alert_id>', methods=['GET'])
+@require_empresa_or_admin_token
 def get_alert_by_id(alert_id):
     """GET /api/mqtt-alerts/<alert_id> - Obtener alerta por ID"""
     return mqtt_alert_controller.get_alert_by_id(alert_id)
 
+# Rutas de actualización y eliminación (requieren autenticación general)
+@mqtt_alert_bp.route('/<alert_id>', methods=['PUT'])
+@require_empresa_or_admin_token
+def update_alert(alert_id):
+    """PUT /api/mqtt-alerts/<alert_id> - Actualizar alerta"""
+    return mqtt_alert_controller.update_alert(alert_id)
+
+@mqtt_alert_bp.route('/<alert_id>', methods=['DELETE'])
+@require_empresa_or_admin_token
+def delete_alert(alert_id):
+    """DELETE /api/mqtt-alerts/<alert_id> - Eliminar alerta"""
+    return mqtt_alert_controller.delete_alert(alert_id)
+
+# Rutas especiales
+@mqtt_alert_bp.route('/<alert_id>/authorize', methods=['PATCH'])
+@require_empresa_or_admin_token
+def authorize_alert(alert_id):
+    """PATCH /api/mqtt-alerts/<alert_id>/authorize - Autorizar alerta"""
+    return mqtt_alert_controller.authorize_alert(alert_id)
+
+@mqtt_alert_bp.route('/<alert_id>/toggle-status', methods=['PATCH'])
+@require_empresa_or_admin_token
+def toggle_alert_status(alert_id):
+    """PATCH /api/mqtt-alerts/<alert_id>/toggle-status - Alternar estado activo"""
+    return mqtt_alert_controller.toggle_alert_status(alert_id)
+
+# Rutas de consulta específicas
+@mqtt_alert_bp.route('/empresa/<empresa_id>', methods=['GET'])
+@require_empresa_or_admin_token
+def get_alerts_by_empresa(empresa_id):
+    """GET /api/mqtt-alerts/empresa/<empresa_id> - Obtener alertas por empresa"""
+    return mqtt_alert_controller.get_alerts_by_empresa(empresa_id)
+
+@mqtt_alert_bp.route('/active', methods=['GET'])
+@require_empresa_or_admin_token
+def get_active_alerts():
+    """GET /api/mqtt-alerts/active - Obtener alertas activas"""
+    return mqtt_alert_controller.get_active_alerts()
+
+@mqtt_alert_bp.route('/unauthorized', methods=['GET'])
+@require_empresa_or_admin_token
+def get_unauthorized_alerts():
+    """GET /api/mqtt-alerts/unauthorized - Obtener alertas no autorizadas"""
+    return mqtt_alert_controller.get_unauthorized_alerts()
+
+@mqtt_alert_bp.route('/stats', methods=['GET'])
+@require_empresa_or_admin_token
+def get_alerts_stats():
+    """GET /api/mqtt-alerts/stats - Obtener estadísticas de alertas"""
+    return mqtt_alert_controller.get_alerts_stats()
+
+# Rutas de utilidad y verificación
 @mqtt_alert_bp.route('/verify-empresa-sede', methods=['GET'])
+@require_empresa_or_admin_token
 def verify_empresa_sede():
     """GET /api/mqtt-alerts/verify-empresa-sede?empresa_nombre=X&sede=Y - Verificar empresa y sede"""
     return mqtt_alert_controller.verify_empresa_sede()
 
 @mqtt_alert_bp.route('/test-flow', methods=['GET'])
 def test_complete_flow():
-    """GET /api/mqtt-alerts/test-flow - Probar flujo completo con campo data"""
+    """GET /api/mqtt-alerts/test-flow - Probar flujo completo con campo data (Público para pruebas)"""
     return mqtt_alert_controller.test_complete_flow()
 
 @mqtt_alert_bp.route('/verify-hardware', methods=['GET'])
+@require_empresa_or_admin_token
 def verify_hardware():
     """GET /api/mqtt-alerts/verify-hardware?hardware_nombre=X - Verificar hardware"""
     return mqtt_alert_controller.verify_hardware()
+
+# ========== BLUEPRINT DE BÚSQUEDA POR TELÉFONO ==========
+from controllers.phone_lookup_controller import PhoneLookupController
+phone_lookup_bp = Blueprint('phone_lookup', __name__, url_prefix='/api/phone-lookup')
+phone_lookup_controller = PhoneLookupController()
+
+@phone_lookup_bp.route('/', methods=['GET'])
+def lookup_by_phone():
+    """GET /api/phone-lookup?telefono=NUMERO - Buscar información por número de teléfono"""
+    return phone_lookup_controller.lookup_by_phone()
 
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
@@ -341,6 +395,7 @@ def register_routes(app):
     app.register_blueprint(hardware_bp)
     app.register_blueprint(hardware_type_bp)
     app.register_blueprint(multitenant_bp)
-    app.register_blueprint(mqtt_alert_bp)
+    app.register_blueprint(mqtt_alert_bp)  # Rehabilitado para manejar alertas MQTT
     app.register_blueprint(hardware_auth_bp)
+    app.register_blueprint(phone_lookup_bp)  # Búsqueda por teléfono
     app.register_blueprint(tipo_empresa_controller, url_prefix='/api')

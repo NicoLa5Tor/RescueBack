@@ -317,3 +317,29 @@ class MqttAlertRepository:
                 'usuarios': [],
                 'hardware_data': None
             }
+    
+    def get_alerts_by_hardware_id(self, hardware_id, page=1, limit=50):
+        """Obtiene alertas por ID de hardware"""
+        try:
+            skip = (page - 1) * limit
+            query = {'hardware_id': ObjectId(hardware_id)}
+            alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
+            total = self.collection.count_documents(query)
+            return alerts, total
+        except Exception as e:
+            print(f"Error obteniendo alertas por hardware_id: {e}")
+            return [], 0
+    
+    def get_alerts_by_hardware_name(self, hardware_nombre, page=1, limit=50):
+        """Obtiene alertas por nombre de hardware"""
+        try:
+            skip = (page - 1) * limit
+            query = {'hardware_nombre': hardware_nombre}
+            alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
+            total = self.collection.count_documents(query)
+            return alerts, total
+        except Exception as e:
+            print(f"Error obteniendo alertas por hardware_nombre: {e}")
+            return [], 0
