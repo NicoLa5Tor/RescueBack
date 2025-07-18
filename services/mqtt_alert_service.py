@@ -128,19 +128,21 @@ class MqttAlertService:
             if isinstance(mensaje_original, dict) and 'auth_info' in mensaje_original:
                 hardware_id = mensaje_original['auth_info'].get('hardware_id')
             
-            # Crear la alerta
-            alert = MqttAlert(
+            # Agregar información adicional a los datos
+            data_adicional['datos_hardware'] = datos_hardware
+            data_adicional['mensaje_original'] = mensaje_original
+            data_adicional['usuarios_notificados'] = usuarios_notificados
+            data_adicional['autorizado'] = autorizado
+            data_adicional['estado_activo'] = estado_activo
+            
+            # Crear la alerta usando el método de fábrica
+            alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa_nombre_final,
                 sede=sede_final,
-                tipo_alerta=tipo_alerta,
-                datos_hardware=datos_hardware,
-                mensaje_original=mensaje_original,
-                autorizado=autorizado,
-                estado_activo=estado_activo,
-                usuarios_notificados=usuarios_notificados,
-                data=data_adicional,
                 hardware_nombre=hardware_nombre,
-                hardware_id=hardware_id  # ID del hardware desde el token
+                hardware_id=hardware_id,
+                tipo_alerta=tipo_alerta,
+                data=data_adicional
             )
             # Validar datos
             errors = alert.validate()

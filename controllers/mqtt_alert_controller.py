@@ -3,6 +3,7 @@ from services.mqtt_alert_service import MqttAlertService
 from services.hardware_auth_service import HardwareAuthService
 from utils.auth_utils import get_auth_header, get_auth_cookie
 from models.mqtt_alert import MqttAlert
+from datetime import datetime
 
 class MqttAlertController:
     """Controlador para gestionar las alertas MQTT"""
@@ -253,12 +254,13 @@ class MqttAlertController:
                     if hw.topic:
                         topics_otros_hardware.append(hw.topic)
             
-            # Crear alerta con la información del hardware
-            alert = MqttAlert(
+            # Crear alerta con la información del hardware usando el método de fábrica
+            alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa.nombre,
                 sede=hardware.sede,
                 hardware_nombre=hardware.nombre,
                 hardware_id=hardware_id,
+                tipo_alerta=alert_data.get('tipo_alerta'),
                 data=alert_data,
                 numeros_telefonicos=numeros_telefonicos,
                 topic=hardware.topic,
@@ -500,6 +502,222 @@ class MqttAlertController:
             result = self.service.get_alerts_stats()
             return jsonify(result), 200
             
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': 'Error interno del servidor',
+                'message': str(e)
+            }), 500
+    
+    def create_user_alert(self):
+        """Crear alerta de usuario con ID de usuario - SIN AUTENTICACIÓN"""
+        try:
+            if not request.is_json:
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato inválido',
+                    'message': 'El contenido debe ser JSON'
+                }), 400
+            
+            data = request.get_json()
+            
+            # Validar campos requeridos
+            usuario_id = data.get('usuario_id')
+            tipo_alerta = data.get('tipo_alerta')
+            descripcion = data.get('descripcion')
+            
+            if not usuario_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'El ID de usuario es obligatorio'
+                }), 400
+            
+            if not tipo_alerta:
+                return jsonify({
+                    'success': False,
+                    'error': 'El tipo de alerta es obligatorio'
+                }), 400
+            
+            if not descripcion:
+                return jsonify({
+                    'success': False,
+                    'error': 'La descripción es obligatoria'
+                }), 400
+            
+            # Buscar usuario por ID
+            from repositories.usuario_repository import UsuarioRepository
+            usuario_repo = UsuarioRepository()
+            usuario = usuario_repo.find_by_id(usuario_id)
+            
+            if not usuario:
+                return jsonify({
+                    'success': False,
+                    'error': 'Usuario no encontrado',
+                    'message': f'No existe un usuario con el ID {usuario_id}'
+                }), 404
+            
+            # Obtener empresa del usuario
+            from repositories.empresa_repository import EmpresaRepository
+            empresa_repo = EmpresaRepository()
+            empresa = empresa_repo.find_by_id(usuario.empresa_id)
+            
+            if not empresa:
+                return jsonify({
+                    'success': False,
+                    'error': 'Empresa no encontrada para el usuario'
+                }), 404
+            
+            # Obtener sede del usuario (por defecto usar la sede del usuario o 'Principal')
+            sede = getattr(usuario, 'sede', 'Principal')
+            
+            # Obtener prioridad (opcional)
+            prioridad = data.get('prioridad', 'media')
+            
+            # Buscar hardware de la misma empresa y sede para obtener topics
+            from repositories.hardware_repository import HardwareRepository
+            hardware_repo = HardwareRepository()
+            hardware_empresa = hardware_repo.find_with_filters({
+                'empresa_id': empresa._id,
+                'sede': sede,
+                'activo': True
+            })
+            
+            # Obtener topics de hardware activo (excluir botoneras)
+            topics = []
+            for hw in hardware_empresa:
+                if hw.topic and hw.tipo.upper() != 'BOTONERA':
+                    topics.append(hw.topic)
+            
+            # Obtener números telefónicos de usuarios de la misma empresa y sede
+            usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
+                empresa.nombre, sede
+            )
+            
+            # Extraer números telefónicos
+            numeros_telefonicos = []
+            for usr in usuarios_relacionados:
+                if usr.get('telefono'):
+                    numeros_telefonicos.append({
+                        'numero': usr['telefono'],
+                        'nombre': usr.get('nombre', '')
+                    })
+            
+            # Preparar datos adicionales
+            data_adicional = {
+                'origen': 'usuario_movil',
+                'usuario_id_origen': usuario_id,
+                'usuario_nombre': usuario.nombre,
+                'empresa_nombre': empresa.nombre,
+                'sede_usuario': sede,
+                'timestamp_creacion': datetime.utcnow().isoformat(),
+                'metadatos': {
+                    'tipo_procesamiento': 'manual',
+                    'plataforma': 'mobile_app',
+                    'nivel_prioridad': prioridad
+                }
+            }
+            
+            # Crear alerta usando el método de fábrica para usuarios
+            alert = MqttAlert.create_from_user(
+                empresa_nombre=empresa.nombre,
+                sede=sede,
+                usuario_id=str(usuario._id),
+                tipo_alerta=tipo_alerta,
+                descripcion=descripcion,
+                prioridad=prioridad,
+                data=data_adicional,
+                numeros_telefonicos=numeros_telefonicos
+            )
+            
+            # Validar alerta
+            errors = alert.validate()
+            if errors:
+                return jsonify({
+                    'success': False,
+                    'error': 'Datos inválidos',
+                    'validation_errors': errors
+                }), 400
+            
+            # Guardar en base de datos
+            created_alert = self.service.alert_repo.create_alert(alert)
+            
+            # Respuesta exitosa
+            return jsonify({
+                'success': True,
+                'message': 'Alerta de usuario creada exitosamente',
+                'alert_id': str(created_alert._id),
+                'topics': topics,
+                'numeros_telefonicos': numeros_telefonicos,
+                'usuario': {
+                    'id': str(usuario._id),
+                    'nombre': usuario.nombre,
+                    'telefono': usuario.telefono,
+                    'empresa': empresa.nombre,
+                    'sede': sede
+                },
+                'alerta': {
+                    'tipo_alerta': tipo_alerta,
+                    'descripcion': descripcion,
+                    'prioridad': prioridad,
+                    'origen_tipo': 'usuario',
+                    'activo': True,
+                    'fecha_creacion': created_alert.fecha_creacion.isoformat()
+                }
+            }), 201
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': 'Error interno del servidor',
+                'message': str(e)
+            }), 500
+
+    def deactivate_alert(self, alert_id):
+        """Desactiva una alerta por ID y teléfono de usuario"""
+        try:
+            data = request.get_json()
+            telefono = data.get('telefono')
+            
+            if not telefono:
+                return jsonify({
+                    'success': False,
+                    'error': 'El número de teléfono es obligatorio'
+                }), 400
+
+            from repositories.usuario_repository import UsuarioRepository
+            usuario_repo = UsuarioRepository()
+            usuario = usuario_repo.find_by_telefono(telefono)
+
+            if not usuario:
+                return jsonify({
+                    'success': False,
+                    'error': 'Usuario no encontrado'
+                }), 404
+
+            alert = self.service.alert_repo.get_alert_by_id(alert_id)
+
+            if not alert:
+                return jsonify({
+                    'success': False,
+                    'error': 'Alerta no encontrada'
+                }), 404
+
+            alert.deactivate()
+
+            success = self.service.alert_repo.update_alert(alert_id, alert)
+
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': 'Alerta desactivada exitosamente',
+                    'topics': alert.topics_otros_hardware
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No se pudo desactivar la alerta'
+                }), 500
+
         except Exception as e:
             return jsonify({
                 'success': False,

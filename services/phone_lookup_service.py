@@ -59,6 +59,7 @@ class PhoneLookupService:
             return {
                 'success': True,
                 'data': {
+                    'id': str(usuario._id),
                     'nombre': usuario.nombre,
                     'empresa': empresa.nombre,
                     'sede': usuario.sede,

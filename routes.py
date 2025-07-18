@@ -375,6 +375,18 @@ def verify_hardware():
     """GET /api/mqtt-alerts/verify-hardware?hardware_nombre=X - Verificar hardware"""
     return mqtt_alert_controller.verify_hardware()
 
+# Ruta para crear alerta de usuario SIN AUTENTICACIÓN
+@mqtt_alert_bp.route('/user-alert', methods=['POST'])
+def create_user_alert():
+    """POST /api/mqtt-alerts/user-alert - Crear alerta de usuario con solo teléfono (SIN AUTENTICACIÓN)"""
+    return mqtt_alert_controller.create_user_alert()
+
+# Ruta para desactivar alerta de usuario SIN AUTENTICACIÓN
+@mqtt_alert_bp.route('/user-alert/<alert_id>/deactivate', methods=['PUT'])
+def deactivate_user_alert(alert_id):
+    """PUT /api/mqtt-alerts/user-alert/<alert_id>/deactivate - Desactivar alerta con teléfono (SIN AUTENTICACIÓN)"""
+    return mqtt_alert_controller.deactivate_alert(alert_id)
+
 # ========== BLUEPRINT DE BÚSQUEDA POR TELÉFONO ==========
 from controllers.phone_lookup_controller import PhoneLookupController
 phone_lookup_bp = Blueprint('phone_lookup', __name__, url_prefix='/api/phone-lookup')
