@@ -673,44 +673,79 @@ class MqttAlertController:
             }), 500
 
     def deactivate_alert(self, alert_id):
-        """Desactiva una alerta por ID y teléfono de usuario"""
+        """Desactiva una alerta por ID, requiere desactivado_por_id y desactivado_por_tipo"""
         try:
             data = request.get_json()
-            telefono = data.get('telefono')
             
-            if not telefono:
+            # Validar campos requeridos
+            desactivado_por_id = data.get('desactivado_por_id')
+            desactivado_por_tipo = data.get('desactivado_por_tipo')
+            
+            if not desactivado_por_id:
                 return jsonify({
                     'success': False,
-                    'error': 'El número de teléfono es obligatorio'
+                    'error': 'El ID de quien desactiva es obligatorio'
                 }), 400
-
-            from repositories.usuario_repository import UsuarioRepository
-            usuario_repo = UsuarioRepository()
-            usuario = usuario_repo.find_by_telefono(telefono)
-
-            if not usuario:
+            
+            if not desactivado_por_tipo:
                 return jsonify({
                     'success': False,
-                    'error': 'Usuario no encontrado'
-                }), 404
-
+                    'error': 'El tipo de quien desactiva es obligatorio'
+                }), 400
+            
+            # Validar tipo permitido
+            tipos_permitidos = ['usuario', 'hardware', 'administrador', 'super_admin']
+            if desactivado_por_tipo not in tipos_permitidos:
+                return jsonify({
+                    'success': False,
+                    'error': f'Tipo no válido. Tipos permitidos: {tipos_permitidos}'
+                }), 400
+            
+            # Validar que quien desactiva existe (opcional: verificar según tipo)
+            if desactivado_por_tipo == 'usuario':
+                from repositories.usuario_repository import UsuarioRepository
+                usuario_repo = UsuarioRepository()
+                usuario = usuario_repo.find_by_id(desactivado_por_id)
+                if not usuario:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Usuario no encontrado'
+                    }), 404
+            elif desactivado_por_tipo == 'hardware':
+                from repositories.hardware_repository import HardwareRepository
+                hardware_repo = HardwareRepository()
+                hardware = hardware_repo.find_by_id(desactivado_por_id)
+                if not hardware:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Hardware no encontrado'
+                    }), 404
+            # Para administrador y super_admin podrías agregar más validaciones si es necesario
+            
+            # Buscar la alerta
             alert = self.service.alert_repo.get_alert_by_id(alert_id)
-
             if not alert:
                 return jsonify({
                     'success': False,
                     'error': 'Alerta no encontrada'
                 }), 404
-
-            alert.deactivate()
-
+            
+            # Desactivar con información de quien desactiva
+            alert.deactivate(desactivado_por_id=desactivado_por_id, desactivado_por_tipo=desactivado_por_tipo)
+            
+            # Actualizar en base de datos
             success = self.service.alert_repo.update_alert(alert_id, alert)
-
+            
             if success:
                 return jsonify({
                     'success': True,
                     'message': 'Alerta desactivada exitosamente',
-                    'topics': alert.topics_otros_hardware
+                    'topics': alert.topics_otros_hardware,
+                    'desactivado_por': {
+                        'id': desactivado_por_id,
+                        'tipo': desactivado_por_tipo,
+                        'fecha_desactivacion': alert.fecha_desactivacion.isoformat()
+                    }
                 }), 200
             else:
                 return jsonify({
