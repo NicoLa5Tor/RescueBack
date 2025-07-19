@@ -254,6 +254,12 @@ class MqttAlertController:
                     if hw.topic:
                         topics_otros_hardware.append(hw.topic)
             
+            # Determinar prioridad de la alerta basada en los datos
+            prioridad_alerta = self.service._determine_priority(
+                alert_data.get('tipo_alerta', 'media'), 
+                alert_data
+            )
+            
             # Crear alerta con la información del hardware usando el método de fábrica
             alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa.nombre,
@@ -264,7 +270,8 @@ class MqttAlertController:
                 data=alert_data,
                 numeros_telefonicos=numeros_telefonicos,
                 topic=hardware.topic,
-                topics_otros_hardware=topics_otros_hardware
+                topics_otros_hardware=topics_otros_hardware,
+                prioridad=prioridad_alerta
             )
             
             # Crear en base de datos
@@ -283,6 +290,12 @@ class MqttAlertController:
                 'activo': created_alert.activo,
                 'fecha_creacion': created_alert.fecha_creacion.isoformat(),
                 'fecha_desactivacion': None,
+                'prioridad': prioridad_alerta,
+                'hardware_ubicacion': {
+                    'direccion': hardware.direccion,
+                    'direccion_url': hardware.direccion_url,
+                    'direccion_open_maps': getattr(hardware, 'direccion_open_maps', None)
+                },
                 'token_status': 'invalidated'  # Indicar que el token ya no es válido
             }
             
@@ -582,11 +595,21 @@ class MqttAlertController:
                 'activo': True
             })
             
-            # Obtener topics de hardware activo (excluir botoneras)
+            # Obtener topics de hardware activo (excluir botoneras) y ubicaciones
             topics = []
+            hardware_ubicaciones = []
             for hw in hardware_empresa:
                 if hw.topic and hw.tipo.upper() != 'BOTONERA':
                     topics.append(hw.topic)
+                    # Agregar información de ubicación del hardware
+                    hardware_ubicaciones.append({
+                        'hardware_nombre': hw.nombre,
+                        'hardware_id': str(hw._id),
+                        'direccion': hw.direccion,
+                        'direccion_url': hw.direccion_url,
+                        'direccion_open_maps': getattr(hw, 'direccion_open_maps', None),
+                        'topic': hw.topic
+                    })
             
             # Obtener números telefónicos de usuarios de la misma empresa y sede
             usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
@@ -648,6 +671,7 @@ class MqttAlertController:
                 'alert_id': str(created_alert._id),
                 'topics': topics,
                 'numeros_telefonicos': numeros_telefonicos,
+                'hardware_ubicaciones': hardware_ubicaciones,
                 'usuario': {
                     'id': str(usuario._id),
                     'nombre': usuario.nombre,

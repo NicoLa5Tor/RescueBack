@@ -82,29 +82,44 @@ def generar_url_google_maps(lat: str, lon: str, zoom: int = 15) -> str:
     """
     return f"https://www.google.com/maps/place/{lat},{lon}"
 
-def procesar_direccion_para_hardware(direccion: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def generar_url_openstreetmap(lat: str, lon: str, zoom: int = 15) -> str:
     """
-    Procesa una dirección y devuelve las coordenadas, URL de Google Maps y posible error.
+    Genera una URL de OpenStreetMap para las coordenadas dadas.
+    
+    Args:
+        lat (str): Latitud
+        lon (str): Longitud  
+        zoom (int): Nivel de zoom (default: 15)
+        
+    Returns:
+        str: URL de OpenStreetMap
+    """
+    return f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom={zoom}"
+
+def procesar_direccion_para_hardware(direccion: str) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
+    """
+    Procesa una dirección y devuelve las coordenadas, URLs de Google Maps y OpenStreetMap, y posible error.
     
     Args:
         direccion (str): La dirección a procesar
         
     Returns:
-        Tuple[Optional[str], Optional[str], Optional[str]]: (direccion_url, coordenadas_string, error_msg)
+        Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]: (direccion_url_google, direccion_url_openstreetmap, coordenadas_string, error_msg)
     """
     if not direccion or direccion.strip() == '':
-        return None, None, "La dirección no puede estar vacía"
+        return None, None, None, "La dirección no puede estar vacía"
         
     lat, lon = obtener_lat_lon(direccion)
     
     if lat and lon:
-        # Generar URL de Google Maps
-        direccion_url = generar_url_google_maps(lat, lon)
+        # Generar URLs de Google Maps y OpenStreetMap
+        direccion_url_google = generar_url_google_maps(lat, lon)
+        direccion_url_openstreetmap = generar_url_openstreetmap(lat, lon)
         # Guardar coordenadas como string para referencia
         coordenadas = f"{lat},{lon}"
-        return direccion_url, coordenadas, None
+        return direccion_url_google, direccion_url_openstreetmap, coordenadas, None
     
-    return None, None, f"No se pudo geocodificar la dirección: '{direccion}'. Verifica que la dirección esté bien escrita e incluya ciudad/región."
+    return None, None, None, f"No se pudo geocodificar la dirección: '{direccion}'. Verifica que la dirección esté bien escrita e incluya ciudad/región."
 
 # Función de ejemplo/test
 if __name__ == "__main__":

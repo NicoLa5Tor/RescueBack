@@ -135,6 +135,9 @@ class MqttAlertService:
             data_adicional['autorizado'] = autorizado
             data_adicional['estado_activo'] = estado_activo
             
+            # Determinar prioridad de la alerta
+            prioridad_alerta = self._determine_priority(tipo_alerta, datos_hardware)
+            
             # Crear la alerta usando el método de fábrica
             alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa_nombre_final,
@@ -142,7 +145,8 @@ class MqttAlertService:
                 hardware_nombre=hardware_nombre,
                 hardware_id=hardware_id,
                 tipo_alerta=tipo_alerta,
-                data=data_adicional
+                data=data_adicional,
+                prioridad=prioridad_alerta
             )
             # Validar datos
             errors = alert.validate()

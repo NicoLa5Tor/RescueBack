@@ -397,7 +397,7 @@ curl -X DELETE http://localhost:5000/empresas/<empresa_id>/usuarios/<usuario_id>
 
 ## Hardware `/api/hardware`
 
-Los dispositivos de hardware representan cualquier equipo físico, como botoneras o semáforos. Al crear uno se debe indicar `empresa_nombre`, `nombre` único, `tipo` y `sede`. La sede es obligatoria y debe existir dentro de las sedes de la empresa. Cualquier otro campo adicional se guarda en `datos`.
+Los dispositivos de hardware representan cualquier equipo físico, como botoneras, semáforos o televisores. Al crear uno se debe indicar `empresa_nombre`, `nombre` único, `tipo` y `sede`. La sede es obligatoria y debe existir dentro de las sedes de la empresa. Cualquier otro campo adicional se guarda en `datos`.
 Los tipos de hardware permitidos se almacenan en la colección `hardware_types` y pueden administrarse mediante los endpoints `/api/hardware-types`.
 
 ### `POST /api/hardware/`
@@ -460,7 +460,7 @@ curl -X DELETE http://localhost:5000/api/hardware/<id> \
 
 ## Tipos de Hardware `/api/hardware-types`
 
-Permite consultar y administrar la lista de dispositivos soportados. Por defecto existen los tipos `botonera` y `semaforo`.
+Permite consultar y administrar la lista de dispositivos soportados. Por defecto existen los tipos `botonera`, `semaforo` y `televisor`.
 
 ### `POST /api/hardware-types/`
 Agrega un nuevo tipo.

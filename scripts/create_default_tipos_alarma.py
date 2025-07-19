@@ -24,126 +24,226 @@ def create_default_tipos_alarma():
     empresas = empresa_repo.find_all()
     
     # Definir tipos de alarma por defecto
+    # tipos_alarma_default = [
+    #     {
+    #         'nombre': 'Incendio',
+    #         'descripcion': 'Alerta de incendio detectado en las instalaciones',
+    #         'tipo_alerta': 'ROJO',
+    #         'color_alerta': '#FF0000',
+    #         'recomendaciones': [
+    #             'Evacuar inmediatamente la zona afectada',
+    #             'Activar el sistema de extinción automática',
+    #             'Llamar a los bomberos (911)',
+    #             'Dirigirse al punto de encuentro designado',
+    #             'No usar ascensores',
+    #             'Seguir las rutas de evacuación señalizadas'
+    #         ],
+    #         'implementos_necesarios': [
+    #             'Extintores tipo ABC',
+    #             'Mangueras contra incendios',
+    #             'Equipos de respiración autónoma',
+    #             'Hachas contra incendios',
+    #             'Detectores de humo',
+    #             'Alarmas sonoras',
+    #             'Señalización de evacuación'
+    #         ],
+    #         'imagen_base64': 'https://assets.codeium.com/9e/6e/9e6e5a1f-9b8d-4c1f-9b8d-4c1f9b8d4c1f.png'  # URL de incendio
+    #     },
+    #     {
+    #         'nombre': 'Intrusión',
+    #         'descripcion': 'Alerta de intrusión o acceso no autorizado',
+    #         'tipo_alerta': 'AMARILLO',
+    #         'color_alerta': '#FFFF00',
+    #         'recomendaciones': [
+    #             'Verificar identidad del personal',
+    #             'Revisar cámaras de seguridad',
+    #             'Notificar a seguridad inmediatamente',
+    #             'Activar protocolos de seguridad',
+    #             'Documentar el incidente',
+    #             'Contactar a las autoridades si es necesario'
+    #         ],
+    #         'implementos_necesarios': [
+    #             'Cámaras de seguridad',
+    #             'Sensores de movimiento',
+    #             'Tarjetas de acceso',
+    #             'Walkie-talkies',
+    #             'Llaves maestras',
+    #             'Sistemas de alarma',
+    #             'Iluminación de emergencia'
+    #         ],
+    #         'imagen_base64': 'https://assets.codeium.com/2a/3b/2a3b4c5d-6e7f-8g9h-0i1j-2k3l4m5n6o7p.png'  # URL de intrusión
+    #     },
+    #     {
+    #         'nombre': 'Fuga de Gas',
+    #         'descripcion': 'Alerta de detección de fuga de gas peligroso',
+    #         'tipo_alerta': 'NARANJA',
+    #         'color_alerta': '#FFA500',
+    #         'recomendaciones': [
+    #             'Ventilar el área inmediatamente',
+    #             'Cerrar válvulas de gas',
+    #             'Evacuar la zona de peligro',
+    #             'No encender llamas ni equipos eléctricos',
+    #             'Usar detectores de gas',
+    #             'Llamar a especialistas en gas'
+    #         ],
+    #         'implementos_necesarios': [
+    #             'Detectores de gas',
+    #             'Válvulas de cierre de emergencia',
+    #             'Equipos de ventilación',
+    #             'Máscaras de gas',
+    #             'Herramientas antichispa',
+    #             'Medidores de concentración de gas'
+    #         ],
+    #         'imagen_base64': 'https://assets.codeium.com/4c/5d/4c5d6e7f-8g9h-0i1j-2k3l-4m5n6o7p8q9r.png'  # URL de fuga de gas
+    #     },
+    #     {
+    #         'nombre': 'Emergencia Médica',
+    #         'descripcion': 'Alerta de emergencia médica que requiere atención inmediata',
+    #         'tipo_alerta': 'AZUL',
+    #         'color_alerta': '#0000FF',
+    #         'recomendaciones': [
+    #             'Llamar inmediatamente al servicio médico (911)',
+    #             'Aplicar primeros auxilios básicos',
+    #             'Mantener a la persona consciente si es posible',
+    #             'No mover a la persona lesionada',
+    #             'Controlar hemorragias si las hay',
+    #             'Preparar el acceso para paramédicos'
+    #         ],
+    #         'implementos_necesarios': [
+    #             'Botiquín de primeros auxilios',
+    #             'Desfibrilador externo automático (DEA)',
+    #             'Camilla',
+    #             'Oxígeno portátil',
+    #             'Vendajes y gasas',
+    #             'Medicamentos básicos',
+    #             'Teléfono directo con servicios médicos'
+    #         ],
+    #         'imagen_base64': 'https://assets.codeium.com/6e/7f/6e7f8g9h-0i1j-2k3l-4m5n-6o7p8q9r0s1t.png'  # URL de emergencia médica
+    #     },
+    #     {
+    #         'nombre': 'Todo Despejado',
+    #         'descripcion': 'Señal de que la situación ha sido controlada y es segura',
+    #         'tipo_alerta': 'VERDE',
+    #         'color_alerta': '#00FF00',
+    #         'recomendaciones': [
+    #             'Verificar que todas las áreas estén seguras',
+    #             'Confirmar que el personal esté completo',
+    #             'Documentar el incidente resuelto',
+    #             'Realizar inspección post-emergencia',
+    #             'Reactivar sistemas normales',
+    #             'Comunicar estado seguro a todo el personal'
+    #         ],
+    #         'implementos_necesarios': [
+    #             'Lista de verificación de seguridad',
+    #             'Equipos de comunicación',
+    #             'Formularios de reporte',
+    #             'Herramientas de inspección',
+    #             'Sistemas de monitoreo'
+    #         ],
+    #         'imagen_base64': 'https://assets.codeium.com/8g/9h/8g9h0i1j-2k3l-4m5n-6o7p-8q9r0s1t2u3v.png'  # URL de todo despejado
+    #     }
+    # ]
     tipos_alarma_default = [
-        {
-            'nombre': 'Incendio',
-            'descripcion': 'Alerta de incendio detectado en las instalaciones',
-            'tipo_alerta': 'ROJO',
-            'color_alerta': '#FF0000',
-            'recomendaciones': [
-                'Evacuar inmediatamente la zona afectada',
-                'Activar el sistema de extinción automática',
-                'Llamar a los bomberos (911)',
-                'Dirigirse al punto de encuentro designado',
-                'No usar ascensores',
-                'Seguir las rutas de evacuación señalizadas'
-            ],
-            'implementos_necesarios': [
-                'Extintores tipo ABC',
-                'Mangueras contra incendios',
-                'Equipos de respiración autónoma',
-                'Hachas contra incendios',
-                'Detectores de humo',
-                'Alarmas sonoras',
-                'Señalización de evacuación'
-            ],
-            'imagen_base64': 'https://assets.codeium.com/9e/6e/9e6e5a1f-9b8d-4c1f-9b8d-4c1f9b8d4c1f.png'  # URL de incendio
-        },
-        {
-            'nombre': 'Intrusión',
-            'descripcion': 'Alerta de intrusión o acceso no autorizado',
-            'tipo_alerta': 'AMARILLO',
-            'color_alerta': '#FFFF00',
-            'recomendaciones': [
-                'Verificar identidad del personal',
-                'Revisar cámaras de seguridad',
-                'Notificar a seguridad inmediatamente',
-                'Activar protocolos de seguridad',
-                'Documentar el incidente',
-                'Contactar a las autoridades si es necesario'
-            ],
-            'implementos_necesarios': [
-                'Cámaras de seguridad',
-                'Sensores de movimiento',
-                'Tarjetas de acceso',
-                'Walkie-talkies',
-                'Llaves maestras',
-                'Sistemas de alarma',
-                'Iluminación de emergencia'
-            ],
-            'imagen_base64': 'https://assets.codeium.com/2a/3b/2a3b4c5d-6e7f-8g9h-0i1j-2k3l4m5n6o7p.png'  # URL de intrusión
-        },
-        {
-            'nombre': 'Fuga de Gas',
-            'descripcion': 'Alerta de detección de fuga de gas peligroso',
-            'tipo_alerta': 'NARANJA',
-            'color_alerta': '#FFA500',
-            'recomendaciones': [
-                'Ventilar el área inmediatamente',
-                'Cerrar válvulas de gas',
-                'Evacuar la zona de peligro',
-                'No encender llamas ni equipos eléctricos',
-                'Usar detectores de gas',
-                'Llamar a especialistas en gas'
-            ],
-            'implementos_necesarios': [
-                'Detectores de gas',
-                'Válvulas de cierre de emergencia',
-                'Equipos de ventilación',
-                'Máscaras de gas',
-                'Herramientas antichispa',
-                'Medidores de concentración de gas'
-            ],
-            'imagen_base64': 'https://assets.codeium.com/4c/5d/4c5d6e7f-8g9h-0i1j-2k3l-4m5n6o7p8q9r.png'  # URL de fuga de gas
-        },
-        {
-            'nombre': 'Emergencia Médica',
-            'descripcion': 'Alerta de emergencia médica que requiere atención inmediata',
-            'tipo_alerta': 'AZUL',
-            'color_alerta': '#0000FF',
-            'recomendaciones': [
-                'Llamar inmediatamente al servicio médico (911)',
-                'Aplicar primeros auxilios básicos',
-                'Mantener a la persona consciente si es posible',
-                'No mover a la persona lesionada',
-                'Controlar hemorragias si las hay',
-                'Preparar el acceso para paramédicos'
-            ],
-            'implementos_necesarios': [
-                'Botiquín de primeros auxilios',
-                'Desfibrilador externo automático (DEA)',
-                'Camilla',
-                'Oxígeno portátil',
-                'Vendajes y gasas',
-                'Medicamentos básicos',
-                'Teléfono directo con servicios médicos'
-            ],
-            'imagen_base64': 'https://assets.codeium.com/6e/7f/6e7f8g9h-0i1j-2k3l-4m5n-6o7p8q9r0s1t.png'  # URL de emergencia médica
-        },
-        {
-            'nombre': 'Todo Despejado',
-            'descripcion': 'Señal de que la situación ha sido controlada y es segura',
-            'tipo_alerta': 'VERDE',
-            'color_alerta': '#00FF00',
-            'recomendaciones': [
-                'Verificar que todas las áreas estén seguras',
-                'Confirmar que el personal esté completo',
-                'Documentar el incidente resuelto',
-                'Realizar inspección post-emergencia',
-                'Reactivar sistemas normales',
-                'Comunicar estado seguro a todo el personal'
-            ],
-            'implementos_necesarios': [
-                'Lista de verificación de seguridad',
-                'Equipos de comunicación',
-                'Formularios de reporte',
-                'Herramientas de inspección',
-                'Sistemas de monitoreo'
-            ],
-            'imagen_base64': 'https://assets.codeium.com/8g/9h/8g9h0i1j-2k3l-4m5n-6o7p-8q9r0s1t2u3v.png'  # URL de todo despejado
-        }
-    ]
-    
+    {
+        'nombre': 'Incendio',
+        'descripcion': 'Alerta por incendio.',
+        'tipo_alerta': 'ROJO',
+        'color_alerta': '#FF0000',
+        'recomendaciones': [
+            'Evacuar la zona afectada.',
+            'Activar el sistema de extinción.',
+            'Llamar a los bomberos (911).',
+            'No usar ascensores.',
+            'Seguir las rutas de evacuación señalizadas.'
+        ],
+        'implementos_necesarios': [
+            'Extintores tipo ABC',
+            'Mangueras contra incendios',
+            'Alarmas sonoras',
+            'Señalización de evacuación'
+        ],
+        'imagen_base64': 'https://media.istockphoto.com/id/1416603097/es/foto/fuego-naranja-denso-sobre-blanco.jpg?s=612x612&w=0&k=20&c=WbGEIj2G1YPmZ1rQ46tgCIdBdGXDLoNGTh-ejYGdgx8='
+    },
+    {
+        'nombre': 'Peligro Químico',
+        'descripcion': 'Alerta por exposición a sustancias químicas nocivas.',
+        'tipo_alerta': 'AMARILLO',
+        'color_alerta': '#FFFF00',
+        'recomendaciones': [
+            'Evitar contacto directo.',
+            'Evacuar el área afectada.',
+            'Ventilar la zona si es posible.',
+            'Usar protección personal.',
+            'Buscar atención médica si hay exposición.'
+        ],
+        'implementos_necesarios': [
+            'Guantes resistentes a químicos',
+            'Gafas de seguridad',
+            'Máscaras de protección respiratoria',
+            'Botiquín de primeros auxilios'
+        ],
+        'imagen_base64': 'https://thumbs.dreamstime.com/b/careta-antig%C3%A1s-con-lentes-y-una-capilla-peligro-de-la-sustancia-qu%C3%ADmica-muestra-105231681.jpg'
+    },
+    {
+        'nombre': 'Robo',
+        'descripcion': 'Alerta por riesgo de robo o hurto.',
+        'tipo_alerta': 'VERDE',
+        'color_alerta': '#00FF00',
+        'recomendaciones': [
+            'Notificar a seguridad.',
+            'No enfrentar al sospechoso.',
+            'Verificar cámaras de vigilancia.',
+            'Llamar a la policía.',
+            'Registrar el incidente.'
+        ],
+        'implementos_necesarios': [
+            'Cámaras de vigilancia',
+            'Alarmas antirrobo',
+            'Botón de pánico'
+        ],
+        'imagen_base64': 'https://acuglass.es/assets/protegerse-contra-los-ladrones.jpg'
+    },
+    {
+        'nombre': 'Terremoto',
+        'descripcion': 'Alerta por sismo o terremoto.',
+        'tipo_alerta': 'NARANJA',
+        'color_alerta': '#FFA500',
+        'recomendaciones': [
+            'Buscar refugio bajo una mesa resistente.',
+            'Alejarse de ventanas.',
+            'No usar ascensores.',
+            'Evacuar solo cuando termine el sismo.',
+            'Dirigirse al punto de encuentro.'
+        ],
+        'implementos_necesarios': [
+            'Botiquín de primeros auxilios',
+            'Linterna',
+            'Silbato de emergencia'
+        ],
+        'imagen_base64': 'https://www.shutterstock.com/image-vector/earthquake-location-icon-isolated-on-600nw-2092776469.jpg'
+    },
+    {
+        'nombre': 'Inundación',
+        'descripcion': 'Alerta por inundación.',
+        'tipo_alerta': 'AZUL',
+        'color_alerta': '#0000FF',
+        'recomendaciones': [
+            'Evacuar áreas bajas.',
+            'Desconectar equipos eléctricos.',
+            'No caminar ni conducir por zonas inundadas.',
+            'Dirigirse a zonas seguras.'
+        ],
+        'implementos_necesarios': [
+            'Bolsas de arena',
+            'Linterna',
+            'Botiquín de emergencia',
+            'Ropa impermeable'
+        ],
+        'imagen_base64': 'https://thumbs.dreamstime.com/b/signo-de-advertencia-signos-inundaci%C3%B3n-o-aislados-en-fondo-blanco-se%C3%B1ales-propensas-inundaciones-desastres-naturales-aisladas-206117198.jpg'
+    }
+]
+
+
     tipos_creados = 0
 
     print("Creando tipos de alarma globales...")

@@ -17,9 +17,9 @@ class HardwareService:
         return self.empresa_repo.find_by_nombre(empresa_nombre)
     
     def _procesar_direccion(self, direccion):
-        """Procesa una dirección y devuelve URL, coordenadas y posible error."""
+        """Procesa una dirección y devuelve URLs, coordenadas y posible error."""
         if not direccion:
-            return None, None, "La dirección es obligatoria"
+            return None, None, None, "La dirección es obligatoria"
         return procesar_direccion_para_hardware(direccion)
 
     def create_hardware(self, data):
@@ -50,14 +50,15 @@ class HardwareService:
             datos_finales = data.get('datos', data) if 'datos' in data else data
             
             # Procesar dirección y geocodificar
-            direccion_url, coordenadas, direccion_error = self._procesar_direccion(direccion)
+            direccion_url_google, direccion_url_openstreetmap, coordenadas, direccion_error = self._procesar_direccion(direccion)
             if direccion_error:
                 return {'success': False, 'errors': [direccion_error]}
             
             # Crear instancia de hardware y generar topic automáticamente
             hardware = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa._id, sede=sede, datos=datos_finales)
             hardware.direccion = direccion
-            hardware.direccion_url = direccion_url
+            hardware.direccion_url = direccion_url_google
+            hardware.direccion_open_maps = direccion_url_openstreetmap
             hardware.coordenadas = coordenadas  # Nuevo campo para coordenadas
             hardware.topic = hardware.generate_topic(nombre_empresa, sede, tipo, nombre)
             
@@ -193,21 +194,23 @@ class HardwareService:
             datos_finales = data.get('datos', data) if 'datos' in data else data
             
             # Procesar dirección solo si cambió
-            direccion_url = existing.direccion_url
+            direccion_url_google = existing.direccion_url
+            direccion_url_openstreetmap = getattr(existing, 'direccion_open_maps', None)
             coordenadas = getattr(existing, 'coordenadas', None)
             
             if direccion != getattr(existing, 'direccion', None):
                 print(f'🗺️ Dirección cambió, geocodificando nueva dirección: {direccion}')
-                direccion_url, coordenadas, direccion_error = self._procesar_direccion(direccion)
+                direccion_url_google, direccion_url_openstreetmap, coordenadas, direccion_error = self._procesar_direccion(direccion)
                 if direccion_error:
                     return {'success': False, 'errors': [direccion_error]}
             else:
-                print(f'🔄 Dirección sin cambios, manteniendo URL existente')
+                print(f'🔄 Dirección sin cambios, manteniendo URLs existentes')
             
             # Crear instancia actualizada y regenerar topic automáticamente
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=datos_finales, _id=existing._id, activa=existing.activa)
             updated.direccion = direccion
-            updated.direccion_url = direccion_url
+            updated.direccion_url = direccion_url_google
+            updated.direccion_open_maps = direccion_url_openstreetmap
             updated.coordenadas = coordenadas
             updated.fecha_creacion = existing.fecha_creacion
             

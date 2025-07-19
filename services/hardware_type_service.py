@@ -7,7 +7,7 @@ class HardwareTypeService:
         self._ensure_defaults()
 
     def _ensure_defaults(self):
-        defaults = ['botonera', 'semaforo']
+        defaults = ['botonera', 'semaforo', 'televisor']
         existing = [t.nombre for t in self.repo.find_all()]
         for name in defaults:
             if name not in existing:
