@@ -586,30 +586,79 @@ class MqttAlertController:
             # Obtener prioridad (opcional)
             prioridad = data.get('prioridad', 'media')
             
-            # Buscar hardware de la misma empresa y sede para obtener topics
+            # Buscar SOLO la botonera de la misma empresa y sede
             from repositories.hardware_repository import HardwareRepository
             hardware_repo = HardwareRepository()
-            hardware_empresa = hardware_repo.find_with_filters({
+            
+            # Buscar específicamente una botonera en la empresa y sede del usuario
+            print(f"🔍 Buscando botonera para empresa_id: {empresa._id}, sede: {sede}")
+            
+            # Primero buscar TODO el hardware de esa empresa y sede para ver qué hay
+            all_hardware_debug = hardware_repo.find_with_filters({
                 'empresa_id': empresa._id,
                 'sede': sede,
-                'activo': True
+                'activa': True
+            })
+            print(f"🔍 TODO el hardware activo en empresa {empresa.nombre}, sede {sede}:")
+            for hw in all_hardware_debug:
+                print(f"  - {hw.nombre} | Tipo: {hw.tipo} | Sede: {hw.sede}")
+            
+            botonera = None
+            # Buscar botonera con filtro case-insensitive
+            all_hardware_sede = hardware_repo.find_with_filters({
+                'empresa_id': empresa._id,
+                'sede': sede,
+                'activa': True
             })
             
-            # Obtener topics de hardware activo (excluir botoneras) y ubicaciones
-            topics = []
-            hardware_ubicaciones = []
+            # Filtrar manualmente por tipo botonera (case-insensitive)
+            hardware_empresa = []
+            for hw in all_hardware_sede:
+                if hw.tipo.upper() == 'BOTONERA':
+                    hardware_empresa.append(hw)
+            
+            print(f"🔍 Hardware tipo BOTONERA encontrado: {len(hardware_empresa) if hardware_empresa else 0} elementos")
             for hw in hardware_empresa:
+                print(f"  - Botonera: {hw.nombre}, Tipo: {hw.tipo}, Sede: {hw.sede}")
+                print(f"    Direccion: {hw.direccion}")
+                print(f"    Direccion URL (Google): {hw.direccion_url}")
+                print(f"    Direccion Open Maps: {getattr(hw, 'direccion_open_maps', 'No disponible')}")
+            
+            # Tomar la primera botonera encontrada (debería haber solo una por sede)
+            if hardware_empresa:
+                botonera = hardware_empresa[0]
+                print(f"✅ Botonera encontrada: {botonera.nombre}")
+            else:
+                print(f"❌ No se encontró botonera para empresa {empresa.nombre} en sede {sede}")
+                print(f"❌ Tipos disponibles en la sede: {[hw.tipo for hw in all_hardware_debug]}")
+            
+            # Preparar ubicación de la botonera
+            botonera_ubicacion = None
+            if botonera:
+                botonera_ubicacion = {
+                    'hardware_nombre': botonera.nombre,
+                    'hardware_id': str(botonera._id),
+                    'direccion': botonera.direccion,
+                    'direccion_url': botonera.direccion_url,  # Este es el de Google Maps
+                    'direccion_open_maps': getattr(botonera, 'direccion_open_maps', None),
+                    'topic': botonera.topic,
+                    'tipo': botonera.tipo
+                }
+                print(f"📍 Ubicación de botonera preparada: {botonera_ubicacion}")
+            else:
+                print(f"📍 botonera_ubicacion será NULL porque no se encontró botonera")
+            
+            # Obtener topics de otros hardware (excluir botoneras) para notificaciones
+            todos_hardware = hardware_repo.find_with_filters({
+                'empresa_id': empresa._id,
+                'sede': sede,
+                'activa': True  # Corregido: campo correcto es 'activa'
+            })
+            
+            topics = []
+            for hw in todos_hardware:
                 if hw.topic and hw.tipo.upper() != 'BOTONERA':
                     topics.append(hw.topic)
-                    # Agregar información de ubicación del hardware
-                    hardware_ubicaciones.append({
-                        'hardware_nombre': hw.nombre,
-                        'hardware_id': str(hw._id),
-                        'direccion': hw.direccion,
-                        'direccion_url': hw.direccion_url,
-                        'direccion_open_maps': getattr(hw, 'direccion_open_maps', None),
-                        'topic': hw.topic
-                    })
             
             # Obtener números telefónicos de usuarios de la misma empresa y sede
             usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
@@ -624,6 +673,13 @@ class MqttAlertController:
                         'numero': usr['telefono'],
                         'nombre': usr.get('nombre', '')
                     })
+            
+            # Buscar información del tipo de alarma
+            tipo_alarma_info = None
+            if tipo_alerta:
+                from repositories.tipo_alarma_repository import TipoAlarmaRepository
+                tipo_alarma_repo = TipoAlarmaRepository()
+                tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(tipo_alerta)
             
             # Preparar datos adicionales
             data_adicional = {
@@ -664,28 +720,38 @@ class MqttAlertController:
             # Guardar en base de datos
             created_alert = self.service.alert_repo.create_alert(alert)
             
+            # Preparar información del tipo de alarma para incluir en la respuesta
+            tipo_alarma_response = {}
+            if tipo_alarma_info:
+                tipo_alarma_response = {
+                    'nombre': tipo_alarma_info.nombre,
+                    'descripcion': tipo_alarma_info.descripcion,
+                    'tipo_alerta': tipo_alarma_info.tipo_alerta,
+                    'color_alerta': tipo_alarma_info.color_alerta,
+                    'recomendaciones': tipo_alarma_info.recomendaciones,
+                    'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
+                    'imagen_base64': tipo_alarma_info.imagen_base64
+                }
+            
             # Respuesta exitosa
             return jsonify({
                 'success': True,
                 'message': 'Alerta de usuario creada exitosamente',
-                'alert_id': str(created_alert._id),
                 'topics': topics,
                 'numeros_telefonicos': numeros_telefonicos,
-                'hardware_ubicaciones': hardware_ubicaciones,
-                'usuario': {
-                    'id': str(usuario._id),
-                    'nombre': usuario.nombre,
-                    'telefono': usuario.telefono,
-                    'empresa': empresa.nombre,
-                    'sede': sede
-                },
                 'alerta': {
+                    'alert_id': str(created_alert._id),
                     'tipo_alerta': tipo_alerta,
                     'descripcion': descripcion,
                     'prioridad': prioridad,
                     'origen_tipo': 'usuario',
                     'activo': True,
-                    'fecha_creacion': created_alert.fecha_creacion.isoformat()
+                    'fecha_creacion': created_alert.fecha_creacion.isoformat(),
+                    # Ubicación completa de la botonera (3 campos)
+                    'direccion': botonera.direccion if botonera else None,
+                    'direccion_url': botonera.direccion_url if botonera else None,
+                    'direccion_open_maps': getattr(botonera, 'direccion_open_maps', None) if botonera else None,
+                    **tipo_alarma_response  # Incluir información del tipo de alarma
                 }
             }), 201
             
@@ -696,14 +762,21 @@ class MqttAlertController:
                 'message': str(e)
             }), 500
 
-    def deactivate_alert(self, alert_id):
-        """Desactiva una alerta por ID, requiere desactivado_por_id y desactivado_por_tipo"""
+    def deactivate_alert_from_body(self):
+        """Desactiva una alerta usando alert_id en el cuerpo, junto con desactivado_por_id y desactivado_por_tipo"""
         try:
             data = request.get_json()
             
             # Validar campos requeridos
+            alert_id = data.get('alert_id')
             desactivado_por_id = data.get('desactivado_por_id')
             desactivado_por_tipo = data.get('desactivado_por_tipo')
+            
+            if not alert_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'El ID de la alerta es obligatorio'
+                }), 400
             
             if not desactivado_por_id:
                 return jsonify({
@@ -745,7 +818,7 @@ class MqttAlertController:
                         'error': 'Hardware no encontrado'
                     }), 404
             # Para administrador y super_admin podrías agregar más validaciones si es necesario
-            
+
             # Buscar la alerta
             alert = self.service.alert_repo.get_alert_by_id(alert_id)
             if not alert:
@@ -753,7 +826,69 @@ class MqttAlertController:
                     'success': False,
                     'error': 'Alerta no encontrada'
                 }), 404
+
+            # Verificar si la alerta ya fue desactivada
+            if not alert.activo:
+                # Obtener usuarios relacionados para la respuesta
+                usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
+                    alert.empresa_nombre, alert.sede
+                )
+                
+                numeros_telefonicos = []
+                for usr in usuarios_relacionados:
+                    if usr.get('telefono'):
+                        numeros_telefonicos.append({
+                            'numero': usr['telefono'],
+                            'nombre': usr.get('nombre', '')
+                        })
+                
+                return jsonify({
+                    'success': False,
+                    'error': 'Alerta ya desactivada',
+                    'message': 'Esta alerta ya fue desactivada previamente',
+                    'numeros_telefonicos': numeros_telefonicos,
+                    'desactivado_por': alert.desactivado_por,
+                    'fecha_desactivacion': alert.fecha_desactivacion.isoformat() if alert.fecha_desactivacion else None
+                }), 400
+
+            # Obtener usuarios relacionados antes de desactivar
+            usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
+                alert.empresa_nombre, alert.sede
+            )
             
+            numeros_telefonicos = []
+            for usr in usuarios_relacionados:
+                if usr.get('telefono'):
+                    numeros_telefonicos.append({
+                        'numero': usr['telefono'],
+                        'nombre': usr.get('nombre', '')
+                    })
+
+            # Obtener topics de hardware de la empresa y sede (excluyendo botoneras)
+            from repositories.hardware_repository import HardwareRepository
+            hardware_repo = HardwareRepository()
+            todos_hardware = hardware_repo.find_with_filters({
+                'activa': True  # Solo hardware activo
+            })
+            
+            topics = []
+            for hw in todos_hardware:
+                # Filtrar por empresa y sede, y excluir botoneras
+                if (hw.topic and 
+                    hw.tipo.upper() != 'BOTONERA' and
+                    hasattr(hw, 'empresa_id')):
+                    
+                    # Obtener información de la empresa del hardware
+                    from repositories.empresa_repository import EmpresaRepository
+                    empresa_repo = EmpresaRepository()
+                    hw_empresa = empresa_repo.find_by_id(hw.empresa_id)
+                    
+                    # Solo incluir si coincide con empresa y sede de la alerta
+                    if (hw_empresa and 
+                        hw_empresa.nombre == alert.empresa_nombre and 
+                        hw.sede == alert.sede):
+                        topics.append(hw.topic)
+
             # Desactivar con información de quien desactiva
             alert.deactivate(desactivado_por_id=desactivado_por_id, desactivado_por_tipo=desactivado_por_tipo)
             
@@ -764,12 +899,14 @@ class MqttAlertController:
                 return jsonify({
                     'success': True,
                     'message': 'Alerta desactivada exitosamente',
-                    'topics': alert.topics_otros_hardware,
+                    'topics': topics,  # Topics de hardware de la empresa y sede
+                    'numeros_telefonicos': numeros_telefonicos,
                     'desactivado_por': {
                         'id': desactivado_por_id,
                         'tipo': desactivado_por_tipo,
                         'fecha_desactivacion': alert.fecha_desactivacion.isoformat()
-                    }
+                    },
+                    'prioridad': alert.prioridad  # Incluir la prioridad de la alerta
                 }), 200
             else:
                 return jsonify({

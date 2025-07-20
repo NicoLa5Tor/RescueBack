@@ -382,10 +382,10 @@ def create_user_alert():
     return mqtt_alert_controller.create_user_alert()
 
 # Ruta para desactivar alerta SIN AUTENTICACIÓN
-@mqtt_alert_bp.route('/user-alert/<alert_id>/deactivate', methods=['PUT'])
-def deactivate_user_alert(alert_id):
-    """PUT /api/mqtt-alerts/user-alert/<alert_id>/deactivate - Desactivar alerta con ID y tipo de quien desactiva (SIN AUTENTICACIÓN)"""
-    return mqtt_alert_controller.deactivate_alert(alert_id)
+@mqtt_alert_bp.route('/user-alert/deactivate', methods=['PUT'])
+def deactivate_user_alert():
+    """PUT /api/mqtt-alerts/user-alert/deactivate - Desactivar alerta con ID en body y tipo de quien desactiva (SIN AUTENTICACIÓN)"""
+    return mqtt_alert_controller.deactivate_alert_from_body()
 
 # ========== BLUEPRINT DE BÚSQUEDA POR TELÉFONO ==========
 from controllers.phone_lookup_controller import PhoneLookupController
