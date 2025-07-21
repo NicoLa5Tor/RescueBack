@@ -419,18 +419,17 @@ class EmpresaService:
                     'errors': ['Empresa no encontrada']
                 }
             
-            # Importar servicios necesarios para obtener estadísticas
+            # Importar servicios necesarios
             from services.usuario_service import UsuarioService
             from services.hardware_service import HardwareService
-            from services.activity_service import ActivityService
             from services.mqtt_alert_service import MqttAlertService
+            from datetime import datetime, timedelta
             
             usuario_service = UsuarioService()
             hardware_service = HardwareService()
-            activity_service = ActivityService()
             alert_service = MqttAlertService()
             
-            # Obtener estadísticas de usuarios de la empresa
+            # Obtener estadísticas de usuarios
             usuarios_result = usuario_service.get_usuarios_by_empresa_including_inactive(empresa_id)
             usuarios_stats = {
                 'total_usuarios': 0,
@@ -446,7 +445,7 @@ class EmpresaService:
                     'usuarios_inactivos': len([u for u in usuarios_data if not u.get('activo', True)])
                 }
             
-            # Obtener estadísticas de hardware de la empresa
+            # Obtener estadísticas de hardware
             hardware_result = hardware_service.get_hardware_by_empresa_including_inactive(empresa_id)
             hardware_stats = {
                 'total_hardware': 0,
@@ -471,37 +470,18 @@ class EmpresaService:
                     'por_tipo': por_tipo
                 }
             
-            # Obtener estadísticas de actividad de la empresa
-            activity_result = activity_service.get_by_empresa(empresa_id)
-            activity_stats = {
-                'total_actividad': 0,
-                'actividad_reciente': 0
-            }
-            
-            if activity_result.get('success'):
-                activity_data = activity_result.get('data', [])
-                activity_stats['total_actividad'] = len(activity_data)
-                # Actividad de los últimos 7 días (esto es una aproximación)
-                activity_stats['actividad_reciente'] = min(len(activity_data), 10)
-            
-            # Obtener estadísticas de alertas de la empresa
+            # Obtener estadísticas de alertas
             alertas_stats = {
                 'total_alertas': 0,
                 'alertas_activas': 0,
                 'alertas_inactivas': 0,
-                'alertas_autorizadas': 0,
-                'alertas_no_autorizadas': 0,
+                'alertas_recientes_30d': 0,
                 'alertas_por_prioridad': {
                     'critica': 0,
                     'alta': 0,
                     'media': 0,
                     'baja': 0
-                },
-                'alertas_por_origen': {
-                    'hardware': 0,
-                    'usuario': 0
-                },
-                'alertas_recientes_30d': 0
+                }
             }
             
             try:
@@ -512,27 +492,16 @@ class EmpresaService:
                     
                     # Estadísticas básicas
                     alertas_stats['total_alertas'] = len(alertas_data)
-                    alertas_stats['alertas_activas'] = len([a for a in alertas_data if a.get('activo', True)])
-                    alertas_stats['alertas_inactivas'] = len([a for a in alertas_data if not a.get('activo', True)])
+                    alertas_stats['alertas_activas'] = len([a for a in alertas_data if a.get('activo', False)])
+                    alertas_stats['alertas_inactivas'] = len([a for a in alertas_data if not a.get('activo', False)])
                     
-                    # Estadísticas de autorización
-                    alertas_stats['alertas_autorizadas'] = len([a for a in alertas_data if a.get('autorizado', False)])
-                    alertas_stats['alertas_no_autorizadas'] = len([a for a in alertas_data if not a.get('autorizado', False)])
-
                     # Estadísticas por prioridad
                     for alerta in alertas_data:
-                        prioridad = alerta.get('prioridad', 'media')
+                        prioridad = alerta.get('prioridad', 'media').lower()
                         if prioridad in alertas_stats['alertas_por_prioridad']:
                             alertas_stats['alertas_por_prioridad'][prioridad] += 1
                     
-                    # Estadísticas por origen
-                    for alerta in alertas_data:
-                        origen = alerta.get('origen_tipo', 'hardware')
-                        if origen in alertas_stats['alertas_por_origen']:
-                            alertas_stats['alertas_por_origen'][origen] += 1
-                    
                     # Alertas de los últimos 30 días
-                    from datetime import datetime, timedelta
                     hace_30_dias = datetime.utcnow() - timedelta(days=30)
                     
                     for alerta in alertas_data:
@@ -540,14 +509,18 @@ class EmpresaService:
                         if fecha_creacion_str:
                             try:
                                 # Manejar diferentes formatos de fecha
-                                if 'T' in fecha_creacion_str:
-                                    fecha_creacion = datetime.fromisoformat(fecha_creacion_str.replace('Z', '+00:00'))
+                                if isinstance(fecha_creacion_str, str):
+                                    if 'T' in fecha_creacion_str:
+                                        fecha_creacion = datetime.fromisoformat(fecha_creacion_str.replace('Z', '+00:00'))
+                                    else:
+                                        fecha_creacion = datetime.fromisoformat(fecha_creacion_str)
                                 else:
-                                    fecha_creacion = datetime.fromisoformat(fecha_creacion_str)
+                                    # Si es un objeto datetime directamente
+                                    fecha_creacion = fecha_creacion_str
                                 
                                 if fecha_creacion >= hace_30_dias:
                                     alertas_stats['alertas_recientes_30d'] += 1
-                            except (ValueError, TypeError):
+                            except (ValueError, TypeError, AttributeError):
                                 continue
                     
             except Exception as e:
@@ -565,7 +538,6 @@ class EmpresaService:
                     },
                     'usuarios': usuarios_stats,
                     'hardware': hardware_stats,
-                    'actividad': activity_stats,
                     'alertas': alertas_stats
                 }
             }

@@ -349,7 +349,6 @@ class EmpresaController:
             result = self.empresa_service.get_empresa_statistics(empresa_id)
 
             if result["success"]:
-                print(result["data"])
                 return jsonify({"success": True, "data": result["data"]}), 200
             else:
                 return jsonify(result), 404
