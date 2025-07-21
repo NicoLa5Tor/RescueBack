@@ -114,11 +114,27 @@ class MqttAlert:
     
     def to_json(self):
         """Convierte a JSON serializable"""
+        from bson import ObjectId
+        import json
+        
+        def convert_objectids(obj):
+            """Convierte recursivamente ObjectIds a strings"""
+            if isinstance(obj, ObjectId):
+                return str(obj)
+            elif isinstance(obj, dict):
+                return {key: convert_objectids(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_objectids(item) for item in obj]
+            elif hasattr(obj, 'isoformat'):  # datetime objects
+                return obj.isoformat()
+            else:
+                return obj
+        
         return {
             '_id': str(self._id) if self._id else None,
             'empresa_nombre': self.empresa_nombre,
             'sede': self.sede,
-            'data': self.data,
+            'data': convert_objectids(self.data),
             'origen_tipo': self.origen_tipo,
             'origen_id': str(self.origen_id) if self.origen_id else None,
             'usuario_id': str(self.usuario_id) if self.usuario_id else None,

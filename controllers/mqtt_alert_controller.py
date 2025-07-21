@@ -71,9 +71,14 @@ class MqttAlertController:
     def get_alert_by_id(self, alert_id):
         """Obtener alerta por ID"""
         try:
+            print(f"🔍 Buscando alerta con ID: {alert_id}")
             result = self.service.get_alert_by_id(alert_id)
+            print(f"📊 Resultado del servicio: {result}")
             return jsonify(result), 200 if result['success'] else 404
         except Exception as e:
+            print(f"❌ Error en get_alert_by_id: {e}")
+            import traceback
+            traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
 
     def verify_empresa_sede(self):
@@ -740,14 +745,33 @@ class MqttAlertController:
                 tipo_alarma_repo = TipoAlarmaRepository()
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(tipo_alerta)
             
-            # Preparar datos adicionales
+            # Preparar datos adicionales completos
             data_adicional = {
                 'origen': 'usuario_movil',
                 'usuario_id_origen': usuario_id,
                 'usuario_nombre': usuario.nombre,
+                'usuario_telefono': getattr(usuario, 'telefono', None),
+                'usuario_email': getattr(usuario, 'email', None),
+                'usuario_rol': getattr(usuario, 'rol', None),
                 'empresa_nombre': empresa.nombre,
                 'sede_usuario': sede,
                 'timestamp_creacion': datetime.utcnow().isoformat(),
+                'topics_notificacion': topics,  # Guardar topics para notificaciones
+                'botonera_ubicacion': botonera_ubicacion,  # Guardar ubicación de botonera
+                'tipo_alarma_info': {
+                    'nombre': tipo_alarma_info.nombre,
+                    'descripcion': tipo_alarma_info.descripcion,
+                    'tipo_alerta': tipo_alarma_info.tipo_alerta,
+                    'color_alerta': tipo_alarma_info.color_alerta,
+                    'recomendaciones': tipo_alarma_info.recomendaciones,
+                    'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
+                    'imagen_base64': tipo_alarma_info.imagen_base64,
+                    'empresa_id': str(tipo_alarma_info.empresa_id) if tipo_alarma_info.empresa_id else None,
+                    'activo': tipo_alarma_info.activo,
+                    'fecha_creacion': tipo_alarma_info.fecha_creacion.isoformat() if tipo_alarma_info.fecha_creacion else None,
+                    'fecha_actualizacion': tipo_alarma_info.fecha_actualizacion.isoformat() if tipo_alarma_info.fecha_actualizacion else None,
+                    '_id': str(tipo_alarma_info._id)
+                } if tipo_alarma_info else None,  # Información completa del tipo de alarma
                 'metadatos': {
                     'tipo_procesamiento': 'manual',
                     'plataforma': 'mobile_app',
@@ -764,7 +788,8 @@ class MqttAlertController:
                 descripcion=descripcion,
                 prioridad=prioridad,
                 data=data_adicional,
-                numeros_telefonicos=numeros_telefonicos
+                numeros_telefonicos=numeros_telefonicos,
+                topics_otros_hardware=topics  # Guardar los topics para notificaciones
             )
             
             # Validar alerta

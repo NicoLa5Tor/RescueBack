@@ -24,12 +24,27 @@ class MqttAlertRepository:
     def get_alert_by_id(self, alert_id):
         """Obtiene una alerta por su ID"""
         try:
-            alert_data = self.collection.find_one({'_id': ObjectId(alert_id)})
+            print(f"🏛️  Repositorio: Buscando alerta con ID: {alert_id}")
+            print(f"🔧 Convirtiendo a ObjectId...")
+            object_id = ObjectId(alert_id)
+            print(f"✅ ObjectId creado: {object_id}")
+            
+            print(f"🔍 Ejecutando query en MongoDB...")
+            alert_data = self.collection.find_one({'_id': object_id})
+            print(f"📄 Datos obtenidos de MongoDB: {alert_data}")
+            
             if alert_data:
-                return MqttAlert.from_dict(alert_data)
+                print(f"✅ Datos encontrados, creando objeto MqttAlert...")
+                alert_obj = MqttAlert.from_dict(alert_data)
+                print(f"🎯 Objeto MqttAlert creado: {alert_obj}")
+                return alert_obj
+            else:
+                print(f"❌ No se encontraron datos para este ID")
             return None
         except Exception as e:
-            print(f"Error obteniendo alerta por ID: {e}")
+            print(f"❌ Error obteniendo alerta por ID: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def get_all_alerts(self, page=1, limit=50):

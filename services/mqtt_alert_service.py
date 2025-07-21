@@ -209,19 +209,27 @@ class MqttAlertService:
     def get_alert_by_id(self, alert_id):
         """Obtiene una alerta por ID"""
         try:
+            print(f"🔍 Servicio: Buscando alerta con ID: {alert_id}")
             alert = self.alert_repo.get_alert_by_id(alert_id)
+            print(f"📊 Alerta obtenida del repo: {alert}")
             if alert:
+                print(f"✅ Alerta encontrada, convirtiendo a JSON...")
+                json_data = alert.to_json()
+                print(f"📝 JSON generado: {json_data}")
                 return {
                     'success': True,
-                    'alert': alert.to_json()
+                    'alert': json_data
                 }
             else:
+                print(f"❌ Alerta NO encontrada")
                 return {
                     'success': False,
                     'error': 'Alerta no encontrada'
                 }
         except Exception as e:
-            print(f"Error obteniendo alerta por ID: {e}")
+            print(f"❌ Error obteniendo alerta por ID: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 'success': False,
                 'error': str(e)
