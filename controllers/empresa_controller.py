@@ -343,6 +343,28 @@ class EmpresaController:
                 500,
             )
     
+    def get_empresa_statistics(self, empresa_id):
+        """Endpoint para obtener estadísticas de una empresa específica"""
+        try:
+            result = self.empresa_service.get_empresa_statistics(empresa_id)
+
+            if result["success"]:
+                print(result["data"])
+                return jsonify({"success": True, "data": result["data"]}), 200
+            else:
+                return jsonify(result), 404
+
+        except Exception as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [f"Error interno del servidor: {str(e)}"],
+                    }
+                ),
+                500,
+            )
+    
     @require_super_admin_token
     def toggle_empresa_status(self, empresa_id):
         """Endpoint para activar/desactivar empresa (solo super admin)"""

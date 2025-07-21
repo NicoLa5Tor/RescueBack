@@ -81,6 +81,12 @@ def toggle_empresa_status(empresa_id):
     """PATCH /api/empresas/<id>/toggle-status - Activar/desactivar empresa (solo super admin)"""
     return empresa_controller.toggle_empresa_status(empresa_id)
 
+@empresa_bp.route('/<empresa_id>/statistics', methods=['GET'])
+@require_empresa_or_admin_token
+def get_empresa_statistics(empresa_id):
+    """GET /api/empresas/<id>/statistics - Obtener estadísticas de una empresa específica"""
+    return empresa_controller.get_empresa_statistics(empresa_id)
+
 @empresa_bp.route('/<empresa_id>/activity', methods=['GET'])
 def empresa_activity(empresa_id):
     return admin_controller.get_empresa_activity(empresa_id)

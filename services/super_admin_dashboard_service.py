@@ -319,6 +319,14 @@ class SuperAdminDashboardService:
                     hw_type = hardware.get('tipo', 'Unknown')
                     type_distribution[hw_type] = type_distribution.get(hw_type, 0) + 1
                 
+                # Convertir a formato que espera el frontend
+                by_type = []
+                for tipo, cantidad in type_distribution.items():
+                    by_type.append({
+                        'nombre': tipo,
+                        'count': cantidad
+                    })
+                
                 stats = {
                     'total_items': total_items,
                     'available_items': available_items,
@@ -326,7 +334,8 @@ class SuperAdminDashboardService:
                     'discontinued': 0,  # Mock data
                     'total_value': random.randint(500000, 2000000),  # Mock data
                     'avg_price': random.randint(3000, 8000),  # Mock data
-                    'type_distribution': type_distribution
+                    'type_distribution': type_distribution,
+                    'by_type': by_type  # Para compatibilidad con frontend
                 }
                 
                 return {'success': True, 'data': stats}

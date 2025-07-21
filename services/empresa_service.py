@@ -407,3 +407,170 @@ class EmpresaService:
                 'success': False,
                 'errors': [str(e)]
             }
+    
+    def get_empresa_statistics(self, empresa_id):
+        """Obtiene estadísticas específicas de una empresa"""
+        try:
+            # Verificar que la empresa existe
+            empresa = self.empresa_repository.find_by_id(empresa_id)
+            if not empresa:
+                return {
+                    'success': False,
+                    'errors': ['Empresa no encontrada']
+                }
+            
+            # Importar servicios necesarios para obtener estadísticas
+            from services.usuario_service import UsuarioService
+            from services.hardware_service import HardwareService
+            from services.activity_service import ActivityService
+            from services.mqtt_alert_service import MqttAlertService
+            
+            usuario_service = UsuarioService()
+            hardware_service = HardwareService()
+            activity_service = ActivityService()
+            alert_service = MqttAlertService()
+            
+            # Obtener estadísticas de usuarios de la empresa
+            usuarios_result = usuario_service.get_usuarios_by_empresa_including_inactive(empresa_id)
+            usuarios_stats = {
+                'total_usuarios': 0,
+                'usuarios_activos': 0,
+                'usuarios_inactivos': 0
+            }
+            
+            if usuarios_result.get('success'):
+                usuarios_data = usuarios_result.get('data', [])
+                usuarios_stats = {
+                    'total_usuarios': len(usuarios_data),
+                    'usuarios_activos': len([u for u in usuarios_data if u.get('activo', True)]),
+                    'usuarios_inactivos': len([u for u in usuarios_data if not u.get('activo', True)])
+                }
+            
+            # Obtener estadísticas de hardware de la empresa
+            hardware_result = hardware_service.get_hardware_by_empresa_including_inactive(empresa_id)
+            hardware_stats = {
+                'total_hardware': 0,
+                'hardware_activo': 0,
+                'hardware_inactivo': 0,
+                'por_tipo': {}
+            }
+            
+            if hardware_result.get('success'):
+                hardware_data = hardware_result.get('data', [])
+                
+                # Calcular distribución por tipo
+                por_tipo = {}
+                for hardware in hardware_data:
+                    tipo = hardware.get('tipo', 'Unknown')
+                    por_tipo[tipo] = por_tipo.get(tipo, 0) + 1
+                
+                hardware_stats = {
+                    'total_hardware': len(hardware_data),
+                    'hardware_activo': len([h for h in hardware_data if h.get('activa', True)]),
+                    'hardware_inactivo': len([h for h in hardware_data if not h.get('activa', True)]),
+                    'por_tipo': por_tipo
+                }
+            
+            # Obtener estadísticas de actividad de la empresa
+            activity_result = activity_service.get_by_empresa(empresa_id)
+            activity_stats = {
+                'total_actividad': 0,
+                'actividad_reciente': 0
+            }
+            
+            if activity_result.get('success'):
+                activity_data = activity_result.get('data', [])
+                activity_stats['total_actividad'] = len(activity_data)
+                # Actividad de los últimos 7 días (esto es una aproximación)
+                activity_stats['actividad_reciente'] = min(len(activity_data), 10)
+            
+            # Obtener estadísticas de alertas de la empresa
+            alertas_stats = {
+                'total_alertas': 0,
+                'alertas_activas': 0,
+                'alertas_inactivas': 0,
+                'alertas_autorizadas': 0,
+                'alertas_no_autorizadas': 0,
+                'alertas_por_prioridad': {
+                    'critica': 0,
+                    'alta': 0,
+                    'media': 0,
+                    'baja': 0
+                },
+                'alertas_por_origen': {
+                    'hardware': 0,
+                    'usuario': 0
+                },
+                'alertas_recientes_30d': 0
+            }
+            
+            try:
+                # Obtener alertas por nombre de empresa
+                alertas_result = alert_service.get_alerts_by_empresa(empresa.nombre, page=1, limit=1000)
+                if alertas_result.get('success'):
+                    alertas_data = alertas_result.get('alerts', [])
+                    
+                    # Estadísticas básicas
+                    alertas_stats['total_alertas'] = len(alertas_data)
+                    alertas_stats['alertas_activas'] = len([a for a in alertas_data if a.get('activo', True)])
+                    alertas_stats['alertas_inactivas'] = len([a for a in alertas_data if not a.get('activo', True)])
+                    
+                    # Estadísticas de autorización
+                    alertas_stats['alertas_autorizadas'] = len([a for a in alertas_data if a.get('autorizado', False)])
+                    alertas_stats['alertas_no_autorizadas'] = len([a for a in alertas_data if not a.get('autorizado', False)])
+
+                    # Estadísticas por prioridad
+                    for alerta in alertas_data:
+                        prioridad = alerta.get('prioridad', 'media')
+                        if prioridad in alertas_stats['alertas_por_prioridad']:
+                            alertas_stats['alertas_por_prioridad'][prioridad] += 1
+                    
+                    # Estadísticas por origen
+                    for alerta in alertas_data:
+                        origen = alerta.get('origen_tipo', 'hardware')
+                        if origen in alertas_stats['alertas_por_origen']:
+                            alertas_stats['alertas_por_origen'][origen] += 1
+                    
+                    # Alertas de los últimos 30 días
+                    from datetime import datetime, timedelta
+                    hace_30_dias = datetime.utcnow() - timedelta(days=30)
+                    
+                    for alerta in alertas_data:
+                        fecha_creacion_str = alerta.get('fecha_creacion')
+                        if fecha_creacion_str:
+                            try:
+                                # Manejar diferentes formatos de fecha
+                                if 'T' in fecha_creacion_str:
+                                    fecha_creacion = datetime.fromisoformat(fecha_creacion_str.replace('Z', '+00:00'))
+                                else:
+                                    fecha_creacion = datetime.fromisoformat(fecha_creacion_str)
+                                
+                                if fecha_creacion >= hace_30_dias:
+                                    alertas_stats['alertas_recientes_30d'] += 1
+                            except (ValueError, TypeError):
+                                continue
+                    
+            except Exception as e:
+                print(f"Error obteniendo estadísticas de alertas: {e}")
+                # Mantener las estadísticas vacías si hay error
+            
+            return {
+                'success': True,
+                'data': {
+                    'empresa': {
+                        'id': str(empresa._id),
+                        'nombre': empresa.nombre,
+                        'activa': empresa.activa,
+                        'fecha_creacion': empresa.fecha_creacion.isoformat() if empresa.fecha_creacion else None
+                    },
+                    'usuarios': usuarios_stats,
+                    'hardware': hardware_stats,
+                    'actividad': activity_stats,
+                    'alertas': alertas_stats
+                }
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'errors': [str(e)]
+            }
