@@ -395,6 +395,30 @@ class MqttAlertService:
                 'usuarios': []
             }
     
+    def get_alerts_active_by_empresa_sede(self, empresa_id, page=1, limit=5):
+        """Obtiene alertas activas por empresa y sede"""
+        try:
+            alerts, total = self.alert_repo.get_active_alerts_by_empresa_sede(empresa_id, page, limit)
+            return {
+                'success': True,
+                'data': [alert.to_json() for alert in alerts],
+                'pagination': {
+                    'total_pages': (total + limit - 1) // limit,
+                    'current_page': page,
+                    'total_items': total,
+                    'has_next': page * limit < total,
+                    'has_prev': page > 1
+                }
+            }
+        except Exception as e:
+            print(f"Error obteniendo alertas activas por empresa y sede: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'data': [],
+                'pagination': {}
+            }
+
     def _determine_priority(self, tipo_alerta, datos_hardware):
         """Determina la prioridad de la alerta basada en el tipo y datos"""
         try:

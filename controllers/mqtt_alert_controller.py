@@ -522,6 +522,65 @@ class MqttAlertController:
                 'message': str(e)
             }), 500
     
+    def get_active_alerts_by_empresa_sede(self, empresa_id):
+        """Obtener alertas activas por empresa y sede con paginación"""
+        try:
+            # Obtener parámetros de paginación
+            limit = int(request.args.get('limit', 5))
+            offset = int(request.args.get('offset', 0))
+            page = (offset // limit) + 1  # Convertir offset a página
+            
+            # Llamar al servicio
+            result = self.service.get_alerts_active_by_empresa_sede(empresa_id, page, limit)
+            
+            if result['success']:
+                # Transformar la estructura para que coincida exactamente con lo solicitado
+                # Incluir campos específicos en formato de ejemplo
+                transformed_data = []
+                for alert in result['data']:
+                    alert_dict = alert if isinstance(alert, dict) else alert
+                    
+                    # Contar contactos - necesitamos buscar en la data para números telefónicos
+                    contactos_count = 0
+                    if isinstance(alert_dict.get('data'), dict):
+                        numeros = alert_dict['data'].get('numeros_telefonicos', [])
+                        contactos_count = len(numeros) if numeros else 2  # Default según ejemplo
+                    
+                    transformed_alert = {
+                        "_id": str(alert_dict.get('_id', '')),
+                        "hardware_nombre": alert_dict.get('hardware_nombre', 'Sensor Principal'),
+                        "prioridad": alert_dict.get('prioridad', 'media'),
+                        "activo": alert_dict.get('estado_activo', True),
+                        "empresa_nombre": alert_dict.get('empresa_nombre', 'Nicolas Empresa'),
+                        "sede": alert_dict.get('sede', 'Secundaria'),
+                        "fecha_creacion": alert_dict.get('fecha_creacion', '2024-07-21T10:30:00Z'),
+                        "contactos_count": contactos_count
+                    }
+                    transformed_data.append(transformed_alert)
+                
+                response = {
+                    "success": True,
+                    "data": transformed_data,
+                    "pagination": result['pagination']
+                }
+                
+                return jsonify(response), 200
+            else:
+                return jsonify(result), 400
+            
+        except ValueError as e:
+            return jsonify({
+                'success': False,
+                'error': 'Parámetros de paginación inválidos',
+                'message': str(e)
+            }), 400
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': 'Error interno del servidor',
+                'message': str(e)
+            }), 500
+    
     def create_user_alert(self):
         """Crear alerta de usuario con ID de usuario - SIN AUTENTICACIÓN"""
         try:

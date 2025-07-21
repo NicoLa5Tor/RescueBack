@@ -6,7 +6,7 @@ from controllers.hardware_controller import HardwareController
 from controllers.hardware_type_controller import HardwareTypeController
 from controllers.tipo_empresa_controller import tipo_empresa_controller
 from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
-from utils.permissions import require_empresa_or_admin_token
+from utils.permissions import require_empresa_or_admin_token, require_empresa_token
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -220,7 +220,6 @@ def get_system_performance():
 # ========== BLUEPRINT DE MULTI-TENANT (USUARIOS POR EMPRESA) ==========
 from controllers.multitenant_controller import MultiTenantController
 from controllers.mqtt_alert_controller import MqttAlertController
-from utils.permissions import require_empresa_or_admin_token
 
 multitenant_bp = Blueprint('multitenant', __name__, url_prefix='/empresas')
 multitenant_controller = MultiTenantController()
@@ -362,6 +361,12 @@ def get_unauthorized_alerts():
 def get_alerts_stats():
     """GET /api/mqtt-alerts/stats - Obtener estadísticas de alertas"""
     return mqtt_alert_controller.get_alerts_stats()
+
+@mqtt_alert_bp.route('/empresa/<empresa_id>/active-by-sede', methods=['GET'])
+@require_empresa_token
+def get_active_alerts_by_empresa_sede(empresa_id):
+    """GET /api/mqtt-alerts/empresa/{empresaId}/active-by-sede - Obtener alertas activas por empresa y sede con paginación"""
+    return mqtt_alert_controller.get_active_alerts_by_empresa_sede(empresa_id)
 
 # Rutas de utilidad y verificación
 @mqtt_alert_bp.route('/verify-empresa-sede', methods=['GET'])
