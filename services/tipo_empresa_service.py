@@ -24,9 +24,9 @@ class TipoEmpresaService:
         except Exception as e:
             return {"success": False, "errors": [f"Error al crear tipo de empresa: {str(e)}"]}
     
-    def get_tipo_empresa_by_id(self, tipo_empresa_id):
+    def get_tipo_empresa_by_id(self, tipo_empresa_id, include_empresas=False):
         """Obtiene un tipo de empresa por su ID"""
-        return self.repository.get_by_id(tipo_empresa_id)
+        return self.repository.get_by_id(tipo_empresa_id, include_empresas=include_empresas)
     
     def get_all_tipos_empresa(self, skip=0, limit=100):
         """Obtiene todos los tipos de empresa"""

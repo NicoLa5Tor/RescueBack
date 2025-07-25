@@ -304,3 +304,153 @@ curl -X GET "http://localhost:5000/api/tipos_empresa/search?query=tecnologia"
 ```bash
 curl -X GET http://localhost:5000/api/tipos_empresa/activos
 ```
+
+---
+
+## NUEVOS ENDPOINTS - EMPRESAS ASOCIADAS
+
+### 8. Obtener Tipo de Empresa con Empresas Asociadas
+**GET** `/tipos_empresa/{tipo_empresa_id}?include_empresas=true`
+
+Obtiene un tipo de empresa específico incluyendo la lista de empresas asociadas.
+
+#### Parámetros de Query
+- `include_empresas`: boolean (true/false) - Incluye las empresas asociadas en la respuesta
+
+#### Ejemplo
+```
+GET /tipos_empresa/60f1b2c3d4e5f6g7h8i9j0k1?include_empresas=true
+```
+
+#### Respuesta Exitosa (200)
+```json
+{
+    "success": true,
+    "data": {
+        "_id": "60f1b2c3d4e5f6g7h8i9j0k1",
+        "nombre": "Tecnología",
+        "descripcion": "Empresas de desarrollo de software, hardware y soluciones tecnológicas",
+        "caracteristicas": ["Innovación", "Desarrollo de software", "Hardware"],
+        "activo": true,
+        "creado_por": "507f1f77bcf86cd799439011",
+        "fecha_creacion": "2025-07-03T05:30:00.000Z",
+        "fecha_actualizacion": "2025-07-03T05:30:00.000Z",
+        "empresas_asociadas": [
+            {
+                "_id": "60f1b2c3d4e5f6g7h8i9j0k2",
+                "nombre": "TechCorp Solutions",
+                "descripcion": "Empresa de desarrollo de software empresarial",
+                "ubicacion": "Ciudad de México",
+                "sedes": ["CDMX Central", "Guadalajara"],
+                "activa": true,
+                "fecha_creacion": "2025-07-03T06:00:00.000Z"
+            },
+            {
+                "_id": "60f1b2c3d4e5f6g7h8i9j0k3",
+                "nombre": "InnovateTech",
+                "descripcion": "Startup de tecnología blockchain",
+                "ubicacion": "Monterrey",
+                "sedes": ["Centro"],
+                "activa": true,
+                "fecha_creacion": "2025-07-03T07:00:00.000Z"
+            }
+        ],
+        "empresas_count": 2
+    }
+}
+```
+
+---
+
+### 9. Obtener Empresas Asociadas a un Tipo Específico
+**GET** `/tipos_empresa/{tipo_empresa_id}/empresas`
+
+Obtiene todas las empresas activas asociadas a un tipo de empresa específico.
+
+#### Ejemplo
+```
+GET /tipos_empresa/60f1b2c3d4e5f6g7h8i9j0k1/empresas
+```
+
+#### Respuesta Exitosa (200)
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "_id": "60f1b2c3d4e5f6g7h8i9j0k2",
+            "nombre": "TechCorp Solutions",
+            "descripcion": "Empresa de desarrollo de software empresarial",
+            "ubicacion": "Ciudad de México",
+            "sedes": ["CDMX Central", "Guadalajara"],
+            "activa": true,
+            "fecha_creacion": "2025-07-03T06:00:00.000Z"
+        },
+        {
+            "_id": "60f1b2c3d4e5f6g7h8i9j0k3",
+            "nombre": "InnovateTech",
+            "descripcion": "Startup de tecnología blockchain",
+            "ubicacion": "Monterrey",
+            "sedes": ["Centro"],
+            "activa": true,
+            "fecha_creacion": "2025-07-03T07:00:00.000Z"
+        }
+    ],
+    "count": 2
+}
+```
+
+#### Respuesta Vacía (200)
+```json
+{
+    "success": true,
+    "data": [],
+    "count": 0
+}
+```
+
+#### Respuesta de Error (404)
+```json
+{
+    "success": false,
+    "errors": [
+        "ID de tipo de empresa inválido"
+    ]
+}
+```
+
+---
+
+## CAMPOS ADICIONALES EN LAS RESPUESTAS
+
+### Campos incluidos en todos los endpoints de tipos de empresa:
+- `empresas_count`: Número entero que indica cuántas empresas activas están asociadas a este tipo
+
+### Campos incluidos cuando `include_empresas=true`:
+- `empresas_asociadas`: Array con los datos básicos de las empresas asociadas
+- `empresas_count`: Número de empresas en el array (mismo valor que el conteo general)
+
+### Campos de empresas asociadas (datos básicos por seguridad):
+- `_id`: ID único de la empresa
+- `nombre`: Nombre de la empresa
+- `descripcion`: Descripción de la empresa
+- `ubicacion`: Ubicación de la empresa
+- `sedes`: Array de nombres de sedes
+- `activa`: Estado activo/inactivo
+- `fecha_creacion`: Fecha de creación (ISO format)
+
+**NOTA**: Los campos sensibles como `email`, `password_hash`, `username`, etc. NO se incluyen por seguridad.
+
+---
+
+## EJEMPLOS DE USO CON cURL - NUEVOS ENDPOINTS
+
+### Obtener tipo con empresas asociadas
+```bash
+curl -X GET "http://localhost:5000/api/tipos_empresa/60f1b2c3d4e5f6g7h8i9j0k1?include_empresas=true"
+```
+
+### Obtener solo las empresas de un tipo específico
+```bash
+curl -X GET http://localhost:5000/api/tipos_empresa/60f1b2c3d4e5f6g7h8i9j0k1/empresas
+```

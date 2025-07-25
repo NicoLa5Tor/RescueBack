@@ -138,15 +138,44 @@ class MqttAlertService:
             # Determinar prioridad de la alerta
             prioridad_alerta = self._determine_priority(tipo_alerta, datos_hardware)
             
-            # Crear la alerta usando el método de fábrica
+            # Obtener imagen de la alerta desde tipo_alarma_info si existe
+            image_alert = None
+            # TODO: Implementar búsqueda de tipo_alarma_info si es necesario
+            
+            # Preparar información de ubicación (vacía por ahora para MQTT)
+            ubicacion_info = {
+                'direccion': '',
+                'url_maps': '',
+                'url_open_maps': ''
+            }
+            
+            # Preparar números telefónicos desde usuarios_notificados
+            numeros_telefonicos = []
+            for usuario in usuarios_notificados:
+                if usuario.get('telefono'):
+                    numeros_telefonicos.append({
+                        'numero': usuario['telefono'],
+                        'nombre': usuario.get('nombre', '')
+                    })
+            
+            # Extraer topics de otros hardware (vacío por ahora para MQTT)
+            topics_otros_hardware = []
+            
+            # Crear la alerta usando el método de fábrica actualizado
             alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa_nombre_final,
                 sede=sede_final,
                 hardware_nombre=hardware_nombre,
                 hardware_id=hardware_id,
                 tipo_alerta=tipo_alerta,
+                descripcion=f'Alerta MQTT generada por {hardware_nombre}',
+                prioridad=prioridad_alerta,
+                image_alert=image_alert,
                 data=data_adicional,
-                prioridad=prioridad_alerta
+                numeros_telefonicos=numeros_telefonicos,
+                topic='',  # Vacío para alertas MQTT
+                topics_otros_hardware=topics_otros_hardware,
+                ubicacion=ubicacion_info
             )
             # Validar datos
             errors = alert.validate()
@@ -216,6 +245,11 @@ class MqttAlertService:
                 print(f"✅ Alerta encontrada, convirtiendo a JSON...")
                 json_data = alert.to_json()
                 print(f"📝 JSON generado: {json_data}")
+                
+                # COMENTADO: La ubicación ya viene incluida en el modelo actualizado
+                # ubicacion_info = self._get_botonera_ubicacion(alert.empresa_nombre, alert.sede)
+                # json_data['ubicacion'] = ubicacion_info
+                
                 return {
                     'success': True,
                     'alert': json_data
@@ -459,3 +493,67 @@ class MqttAlertService:
         except Exception as e:
             print(f"Error determinando prioridad: {e}")
             return 'media'  # prioridad por defecto
+    
+    # COMENTADO: Método obsoleto - La ubicación ahora viene incluida en el modelo MqttAlert
+    # def _get_botonera_ubicacion(self, empresa_nombre, sede):
+    #     """Obtiene información de ubicación de la botonera asociada a la empresa y sede"""
+    #     try:
+    #         print(f"🔍 Buscando botonera para empresa: {empresa_nombre}, sede: {sede}")
+    #         
+    #         # Buscar la empresa por nombre
+    #         from repositories.empresa_repository import EmpresaRepository
+    #         empresa_repo = EmpresaRepository()
+    #         empresa = empresa_repo.find_by_nombre(empresa_nombre)
+    #         
+    #         if not empresa:
+    #             print(f"❌ Empresa no encontrada: {empresa_nombre}")
+    #             return {
+    #                 'direccion': None,
+    #                 'direccion_url': None,
+    #                 'direccion_open_maps': None,
+    #                 'error': 'Empresa no encontrada'
+    #             }
+    #         
+    #         # Buscar botonera de esa empresa y sede
+    #         from repositories.hardware_repository import HardwareRepository
+    #         hardware_repo = HardwareRepository()
+    #         
+    #         botoneras = hardware_repo.find_with_filters({
+    #             'empresa_id': empresa._id,
+    #             'sede': sede,
+    #             'activa': True
+    #         })
+    #         
+    #         # Filtrar solo botoneras
+    #         botonera = None
+    #         for hw in botoneras:
+    #             if hw.tipo.upper() == 'BOTONERA':
+    #                 botonera = hw
+    #                 break
+    #         
+    #         if botonera:
+    #             print(f"✅ Botonera encontrada: {botonera.nombre}")
+    #             return {
+    #                 'direccion': botonera.direccion,
+    #                 'direccion_url': botonera.direccion_url,  # Google Maps
+    #                 'direccion_open_maps': getattr(botonera, 'direccion_open_maps', None),  # OpenStreetMap
+    #                 'hardware_nombre': botonera.nombre,
+    #                 'hardware_id': str(botonera._id)
+    #             }
+    #         else:
+    #             print(f"❌ No se encontró botonera para empresa {empresa_nombre} en sede {sede}")
+    #             return {
+    #                 'direccion': None,
+    #                 'direccion_url': None,
+    #                 'direccion_open_maps': None,
+    #                 'error': 'Botonera no encontrada para esta empresa y sede'
+    #             }
+    #             
+    #     except Exception as e:
+    #         print(f"❌ Error buscando ubicación de botonera: {e}")
+    #         return {
+    #             'direccion': None,
+    #             'direccion_url': None,
+    #             'direccion_open_maps': None,
+    #             'error': f'Error interno: {str(e)}'
+    #         }

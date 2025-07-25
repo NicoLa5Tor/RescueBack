@@ -37,7 +37,7 @@ class TipoEmpresaRepository:
         except Exception as e:
             return {"success": False, "errors": [f"Error interno: {str(e)}"]}
     
-    def get_by_id(self, tipo_empresa_id):
+    def get_by_id(self, tipo_empresa_id, include_empresas=False):
         """Obtiene un tipo de empresa por su ID"""
         try:
             if not ObjectId.is_valid(tipo_empresa_id):
@@ -47,7 +47,17 @@ class TipoEmpresaRepository:
             
             if data:
                 tipo_empresa = TipoEmpresa.from_dict(data)
-                return {"success": True, "data": tipo_empresa.to_json()}
+                
+                # Si se solicitan las empresas, obtenerlas
+                empresas_data = None
+                if include_empresas:
+                    empresas_result = self.get_empresas_by_tipo_id(tipo_empresa_id)
+                    if empresas_result["success"]:
+                        empresas_data = empresas_result["data"]
+                    else:
+                        empresas_data = []
+                
+                return {"success": True, "data": tipo_empresa.to_json(include_empresas=include_empresas, empresas_data=empresas_data)}
             else:
                 return {"success": False, "errors": ["Tipo de empresa no encontrado"]}
                 
@@ -505,6 +515,44 @@ class TipoEmpresaRepository:
                     "porcentaje_categorizadas": round(porcentaje_categorizadas, 1),
                     "distribucion_por_tipo": distribucion_detallada
                 }
+            }
+            
+        except Exception as e:
+            return {"success": False, "errors": [f"Error interno: {str(e)}"]}
+    
+    def get_empresas_by_tipo_id(self, tipo_empresa_id):
+        """Obtiene todas las empresas asociadas a un tipo de empresa"""
+        try:
+            if not ObjectId.is_valid(tipo_empresa_id):
+                return {"success": False, "errors": ["ID de tipo de empresa inválido"]}
+            
+            # Obtener collection de empresas
+            empresas_collection = self.db.empresas
+            
+            # Buscar empresas activas con este tipo_empresa_id
+            cursor = empresas_collection.find({
+                "tipo_empresa_id": ObjectId(tipo_empresa_id),
+                "activa": True
+            }).sort("nombre", 1)
+            
+            empresas = []
+            for empresa_data in cursor:
+                # Solo incluir campos básicos de la empresa para evitar datos sensibles
+                empresa_info = {
+                    "_id": str(empresa_data.get('_id')),
+                    "nombre": empresa_data.get('nombre'),
+                    "descripcion": empresa_data.get('descripcion'),
+                    "ubicacion": empresa_data.get('ubicacion'),
+                    "sedes": empresa_data.get('sedes', []),
+                    "activa": empresa_data.get('activa', True),
+                    "fecha_creacion": empresa_data.get('fecha_creacion').isoformat() if empresa_data.get('fecha_creacion') else None
+                }
+                empresas.append(empresa_info)
+            
+            return {
+                "success": True,
+                "data": empresas,
+                "count": len(empresas)
             }
             
         except Exception as e:

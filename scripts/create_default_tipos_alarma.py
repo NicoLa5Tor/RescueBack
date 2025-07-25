@@ -146,7 +146,7 @@ def create_default_tipos_alarma():
     tipos_alarma_default = [
     {
         'nombre': 'Incendio',
-        'descripcion': 'Alerta por incendio.',
+        'descripcion': 'Incendios estructurales y/o forestales.',
         'tipo_alerta': 'ROJO',
         'color_alerta': '#FF0000',
         'recomendaciones': [
@@ -165,29 +165,29 @@ def create_default_tipos_alarma():
         'imagen_base64': 'https://media.istockphoto.com/id/1416603097/es/foto/fuego-naranja-denso-sobre-blanco.jpg?s=612x612&w=0&k=20&c=WbGEIj2G1YPmZ1rQ46tgCIdBdGXDLoNGTh-ejYGdgx8='
     },
     {
-        'nombre': 'Peligro Químico',
-        'descripcion': 'Alerta por exposición a sustancias químicas nocivas.',
+        'nombre': 'Sanitaria',
+        'descripcion': 'Emergencias médicas y/o sanitarias.',
         'tipo_alerta': 'AMARILLO',
         'color_alerta': '#FFFF00',
         'recomendaciones': [
             'Evitar contacto directo.',
-            'Evacuar el área afectada.',
-            'Ventilar la zona si es posible.',
             'Usar protección personal.',
+            'Ventilar la zona si es posible.',
+            'Evacuar el área afectada si corresponde.',
             'Buscar atención médica si hay exposición.'
         ],
         'implementos_necesarios': [
-            'Guantes resistentes a químicos',
-            'Gafas de seguridad',
-            'Máscaras de protección respiratoria',
+            'Guantes desechables',
+            'Mascarillas',
+            'Gafas de protección',
             'Botiquín de primeros auxilios'
         ],
         'imagen_base64': 'https://thumbs.dreamstime.com/b/careta-antig%C3%A1s-con-lentes-y-una-capilla-peligro-de-la-sustancia-qu%C3%ADmica-muestra-105231681.jpg'
     },
     {
-        'nombre': 'Robo',
-        'descripcion': 'Alerta por riesgo de robo o hurto.',
-        'tipo_alerta': 'VERDE',
+        'nombre': 'Delincuencia',
+        'descripcion': 'Robos, hurtos, atracos, asonadas.',
+        'tipo_alerta' : 'VERDE',
         'color_alerta': '#00FF00',
         'recomendaciones': [
             'Notificar a seguridad.',
@@ -204,40 +204,43 @@ def create_default_tipos_alarma():
         'imagen_base64': 'https://acuglass.es/assets/protegerse-contra-los-ladrones.jpg'
     },
     {
-        'nombre': 'Terremoto',
-        'descripcion': 'Alerta por sismo o terremoto.',
+        'nombre': 'Catástrofe natural',
+        'descripcion': 'Terremotos, inundaciones, derrumbes y otras catástrofes.',
         'tipo_alerta': 'NARANJA',
         'color_alerta': '#FFA500',
         'recomendaciones': [
-            'Buscar refugio bajo una mesa resistente.',
-            'Alejarse de ventanas.',
+            'Buscar refugio seguro.',
+            'Alejarse de ventanas y objetos que puedan caer.',
             'No usar ascensores.',
-            'Evacuar solo cuando termine el sismo.',
-            'Dirigirse al punto de encuentro.'
+            'Evacuar solo cuando sea seguro.',
+            'Dirigirse al punto de encuentro asignado.'
         ],
         'implementos_necesarios': [
             'Botiquín de primeros auxilios',
             'Linterna',
-            'Silbato de emergencia'
+            'Silbato de emergencia',
+            'Radio portátil'
         ],
         'imagen_base64': 'https://www.shutterstock.com/image-vector/earthquake-location-icon-isolated-on-600nw-2092776469.jpg'
     },
     {
-        'nombre': 'Inundación',
-        'descripcion': 'Alerta por inundación.',
+        'nombre': 'Accidente',
+        'descripcion': 'Accidentes vehiculares e industriales.',
         'tipo_alerta': 'AZUL',
         'color_alerta': '#0000FF',
         'recomendaciones': [
-            'Evacuar áreas bajas.',
-            'Desconectar equipos eléctricos.',
-            'No caminar ni conducir por zonas inundadas.',
-            'Dirigirse a zonas seguras.'
+            'Mantener la calma.',
+            'Llamar a emergencias (123).',
+            'No mover a los heridos a menos que sea necesario.',
+            'Señalizar el área del accidente.',
+            'Proporcionar primeros auxilios si es posible.'
         ],
         'implementos_necesarios': [
-            'Bolsas de arena',
-            'Linterna',
-            'Botiquín de emergencia',
-            'Ropa impermeable'
+            'Botiquín de primeros auxilios',
+            'Triángulos de seguridad',
+            'Chaleco reflectivo',
+            'Extintor',
+            'Linterna'
         ],
         'imagen_base64': 'https://thumbs.dreamstime.com/b/signo-de-advertencia-signos-inundaci%C3%B3n-o-aislados-en-fondo-blanco-se%C3%B1ales-propensas-inundaciones-desastres-naturales-aisladas-206117198.jpg'
     }

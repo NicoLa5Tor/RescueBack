@@ -49,9 +49,9 @@ class TipoEmpresa:
         tipo_empresa.fecha_actualizacion = data.get('fecha_actualizacion')
         return tipo_empresa
     
-    def to_json(self):
+    def to_json(self, include_empresas=False, empresas_data=None):
         """Convierte a JSON serializable"""
-        return {
+        result = {
             '_id': str(self._id) if self._id else None,
             'nombre': self.nombre,
             'descripcion': self.descripcion,
@@ -61,6 +61,13 @@ class TipoEmpresa:
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None
         }
+        
+        # Incluir información de empresas si se solicita
+        if include_empresas and empresas_data is not None:
+            result['empresas_asociadas'] = empresas_data
+            result['empresas_count'] = len(empresas_data)
+        
+        return result
     
     def validate(self):
         """Valida los datos del tipo de empresa"""

@@ -4,6 +4,7 @@ from services.hardware_auth_service import HardwareAuthService
 from utils.auth_utils import get_auth_header, get_auth_cookie
 from models.mqtt_alert import MqttAlert
 from datetime import datetime
+from utils.geocoding import generar_url_google_maps, generar_url_openstreetmap
 
 class MqttAlertController:
     """Controlador para gestionar las alertas MQTT"""
@@ -265,18 +266,33 @@ class MqttAlertController:
                 alert_data
             )
             
-            # Crear alerta con la información del hardware usando el método de fábrica
+            # Preparar información de ubicación
+            ubicacion_info = {
+                'direccion': hardware.direccion or '',
+                'url_maps': hardware.direccion_url or '',
+                'url_open_maps': getattr(hardware, 'direccion_open_maps', '') or ''
+            }
+            
+            # Obtener imagen de la alerta desde tipo_alarma_info si existe
+            image_alert = None
+            if tipo_alarma_info and tipo_alarma_info.imagen_base64:
+                image_alert = tipo_alarma_info.imagen_base64
+            
+            # Crear alerta con la información del hardware usando el método de fábrica actualizado
             alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa.nombre,
                 sede=hardware.sede,
                 hardware_nombre=hardware.nombre,
                 hardware_id=hardware_id,
                 tipo_alerta=alert_data.get('tipo_alerta'),
+                descripcion=alert_data.get('descripcion', f'Alerta generada por {hardware.nombre}'),
+                prioridad=prioridad_alerta,
+                image_alert=image_alert,
                 data=alert_data,
                 numeros_telefonicos=numeros_telefonicos,
                 topic=hardware.topic,
                 topics_otros_hardware=topics_otros_hardware,
-                prioridad=prioridad_alerta
+                ubicacion=ubicacion_info
             )
             
             # Crear en base de datos
@@ -598,15 +614,38 @@ class MqttAlertController:
             
             data = request.get_json()
             
-            # Validar campos requeridos
-            usuario_id = data.get('usuario_id')
+            # Validar estructura de campos requeridos
+            creador = data.get('creador', {})
+            ubicacion = data.get('ubicacion', {})
             tipo_alerta = data.get('tipo_alerta')
             descripcion = data.get('descripcion')
+            
+            # Validar objeto creador
+            usuario_id = creador.get('usuario_id')
+            tipo_creador = creador.get('tipo', 'usuario')  # Por defecto 'usuario'
             
             if not usuario_id:
                 return jsonify({
                     'success': False,
-                    'error': 'El ID de usuario es obligatorio'
+                    'error': 'El ID de usuario en creador es obligatorio',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
+                }), 400
+            
+            # Validar objeto ubicación
+            latitud = ubicacion.get('latitud')
+            longitud = ubicacion.get('longitud')
+            
+            if not latitud or not longitud:
+                return jsonify({
+                    'success': False,
+                    'error': 'Latitud y longitud en ubicacion son obligatorias',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
                 }), 400
             
             if not tipo_alerta:
@@ -619,6 +658,14 @@ class MqttAlertController:
                 return jsonify({
                     'success': False,
                     'error': 'La descripción es obligatoria'
+                }), 400
+            
+            # Validar que el tipo de creador sea válido
+            tipos_creador_validos = ['usuario', 'empresa']
+            if tipo_creador not in tipos_creador_validos:
+                return jsonify({
+                    'success': False,
+                    'error': f'Tipo de creador inválido. Tipos válidos: {tipos_creador_validos}'
                 }), 400
             
             # Buscar usuario por ID
@@ -779,17 +826,33 @@ class MqttAlertController:
                 }
             }
             
-            # Crear alerta usando el método de fábrica para usuarios
+            # Preparar información de ubicación desde la botonera
+            # Generar URLs de mapas
+            ubicacion_info = {
+                'direccion': '',
+                'url_maps': generar_url_google_maps(latitud, longitud),
+                'url_open_maps': generar_url_openstreetmap(latitud, longitud)
+            }
+            
+            # Obtener imagen desde tipo_alarma_info si existe
+            image_alert = None
+            if tipo_alarma_info and tipo_alarma_info.imagen_base64:
+                image_alert = tipo_alarma_info.imagen_base64
+            
+            # Crear alerta usando el método de fábrica para usuarios actualizado
             alert = MqttAlert.create_from_user(
                 empresa_nombre=empresa.nombre,
                 sede=sede,
                 usuario_id=str(usuario._id),
+                usuario_nombre=usuario.nombre,
                 tipo_alerta=tipo_alerta,
                 descripcion=descripcion,
                 prioridad=prioridad,
+                image_alert=image_alert,
                 data=data_adicional,
                 numeros_telefonicos=numeros_telefonicos,
-                topics_otros_hardware=topics  # Guardar los topics para notificaciones
+                topics_otros_hardware=topics,  # Guardar los topics para notificaciones
+                ubicacion=ubicacion_info
             )
             
             # Validar alerta
@@ -875,7 +938,7 @@ class MqttAlertController:
                 }), 400
             
             # Validar tipo permitido
-            tipos_permitidos = ['usuario', 'hardware', 'administrador', 'super_admin']
+            tipos_permitidos = ['usuario', 'hardware', 'administrador', 'super_admin', 'empresa']
             if desactivado_por_tipo not in tipos_permitidos:
                 return jsonify({
                     'success': False,
@@ -901,6 +964,31 @@ class MqttAlertController:
                         'success': False,
                         'error': 'Hardware no encontrado'
                     }), 404
+            elif desactivado_por_tipo == 'empresa':
+                from repositories.empresa_repository import EmpresaRepository
+                empresa_repo = EmpresaRepository()
+                empresa = empresa_repo.find_by_id(desactivado_por_id)
+                if not empresa:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Empresa no encontrada'
+                    }), 404
+                
+                # Verificar que la empresa corresponda a la alerta (necesitamos buscar la alerta primero)
+                alert_temp = self.service.alert_repo.get_alert_by_id(alert_id)
+                if not alert_temp:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Alerta no encontrada para validación de empresa'
+                    }), 404
+                
+                # Validar que la empresa corresponda a la alerta
+                if empresa.nombre != alert_temp.empresa_nombre:
+                    return jsonify({
+                        'success': False,
+                        'error': 'La empresa no está autorizada para desactivar esta alerta',
+                        'message': f'Esta alerta pertenece a la empresa "{alert_temp.empresa_nombre}" y no puede ser desactivada por "{empresa.nombre}"'
+                    }), 403
             # Para administrador y super_admin podrías agregar más validaciones si es necesario
 
             # Buscar la alerta

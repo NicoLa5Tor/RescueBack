@@ -18,7 +18,8 @@ def create_app():
          resources={r"/*": {"origins": [
              "http://localhost:5000", "http://127.0.0.1:5000",
              "http://localhost:5004", "http://127.0.0.1:5004",
-             "http://localhost:5050", "http://127.0.0.1:5050"
+             "http://localhost:5050", "http://127.0.0.1:5050",
+             "http://localhost:5051", "http://127.0.0.1:5051"  # Frontend principal
          ]}},
          supports_credentials=True)
 
@@ -69,7 +70,8 @@ def create_app():
         allowed_origins = [
             'http://localhost:5000', 'http://127.0.0.1:5000',
             'http://localhost:5004', 'http://127.0.0.1:5004', 
-            'http://localhost:5050', 'http://127.0.0.1:5050'
+            'http://localhost:5050', 'http://127.0.0.1:5050',
+            'http://localhost:5051', 'http://127.0.0.1:5051'  # Frontend principal
         ]
         if origin in allowed_origins:
             response.headers['Access-Control-Allow-Origin'] = origin

@@ -29,8 +29,9 @@ def create_tipo_empresa():
 
 @tipo_empresa_controller.route('/tipos_empresa/<tipo_empresa_id>', methods=['GET'])
 def get_tipo_empresa(tipo_empresa_id):
-    """Obtiene un tipo de empresa por su ID"""
-    result = tipo_empresa_service.get_tipo_empresa_by_id(tipo_empresa_id)
+    """Obtiene un tipo de empresa por su ID incluyendo las empresas asociadas"""
+    # SIEMPRE incluir las empresas asociadas por defecto
+    result = tipo_empresa_service.get_tipo_empresa_by_id(tipo_empresa_id, include_empresas=True)
     return jsonify(result), (200 if result['success'] else 404)
 
 
@@ -170,5 +171,30 @@ def get_total_empresas_categorizadas():
         
     except Exception as e:
         logger.error(f"Error al obtener total de empresas categorizadas: {str(e)}")
+        return jsonify({"success": False, "errors": ["Error interno: {}".format(str(e))]}), 500
+
+
+@tipo_empresa_controller.route('/tipos_empresa/<tipo_empresa_id>/empresas', methods=['GET'])
+def get_empresas_by_tipo(tipo_empresa_id):
+    """Obtiene todas las empresas asociadas a un tipo de empresa específico"""
+    try:
+        logger.info(f"=== GET EMPRESAS BY TIPO: {tipo_empresa_id} ===")
+        # Usar el repositorio directamente para este endpoint específico
+        from repositories.tipo_empresa_repository import TipoEmpresaRepository
+        repository = TipoEmpresaRepository()
+        
+        result = repository.get_empresas_by_tipo_id(tipo_empresa_id)
+        
+        if result['success']:
+            logger.info(f"Empresas encontradas para tipo {tipo_empresa_id}: {result.get('count', 0)}")
+            if result.get('data'):
+                logger.info(f"Primeras empresas: {[e.get('nombre', 'N/A') for e in result['data'][:3]]}")
+        else:
+            logger.warning(f"No se pudieron obtener empresas para tipo {tipo_empresa_id}: {result.get('errors', [])}")
+        
+        return jsonify(result), (200 if result['success'] else 404)
+        
+    except Exception as e:
+        logger.error(f"Error al obtener empresas por tipo {tipo_empresa_id}: {str(e)}")
         return jsonify({"success": False, "errors": ["Error interno: {}".format(str(e))]}), 500
 
