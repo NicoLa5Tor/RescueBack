@@ -408,6 +408,31 @@ def lookup_by_phone():
     """GET /api/phone-lookup?telefono=NUMERO - Buscar información por número de teléfono"""
     return phone_lookup_controller.lookup_by_phone()
 
+# ========== BLUEPRINT DE CONTACTO ==========
+from controllers.contact_controller import ContactController
+contact_bp = Blueprint('contact', __name__, url_prefix='/api/contact')
+contact_controller = ContactController()
+
+@contact_bp.route('/send', methods=['POST'])
+def send_contact_email():
+    """POST /api/contact/send - Enviar formulario de contacto via email"""
+    return contact_controller.send_contact_email()
+
+@contact_bp.route('/', methods=['GET'])
+def get_contacts():
+    """GET /api/contact - Obtener lista de contactos (para administración)"""
+    return contact_controller.get_contacts()
+
+@contact_bp.route('/<contact_id>', methods=['GET'])
+def get_contact_by_id(contact_id):
+    """GET /api/contact/<contact_id> - Obtener contacto específico por ID"""
+    return contact_controller.get_contact_by_id(contact_id)
+
+@contact_bp.route('/status/<status>', methods=['GET'])
+def get_contacts_by_status(status):
+    """GET /api/contact/status/<status> - Obtener contactos por status"""
+    return contact_controller.get_contacts_by_status(status)
+
 # ========== FUNCIÓN PARA REGISTRAR TODAS LAS RUTAS ==========
 def register_routes(app):
     """Registra todos los blueprints en la aplicación Flask"""
@@ -421,4 +446,5 @@ def register_routes(app):
     app.register_blueprint(mqtt_alert_bp)  # Rehabilitado para manejar alertas MQTT
     app.register_blueprint(hardware_auth_bp)
     app.register_blueprint(phone_lookup_bp)  # Búsqueda por teléfono
+    app.register_blueprint(contact_bp)  # Formulario de contacto
     app.register_blueprint(tipo_empresa_controller, url_prefix='/api')

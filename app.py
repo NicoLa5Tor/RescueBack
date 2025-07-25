@@ -159,9 +159,20 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    app = create_app()
-    app.run(
-        host='0.0.0.0',
-        port=5002,
-        debug=Config.DEBUG
-    )
+    try:
+        # Validar configuración antes de iniciar la aplicación
+        Config.validate_config()
+        
+        app = create_app()
+        app.run(
+            host='0.0.0.0',
+            port=Config.PORT,
+            debug=Config.DEBUG
+        )
+    except ValueError as e:
+        print(f"❌ Error de configuración: {e}")
+        print("💡 Asegúrate de que tu archivo .env contenga todas las variables requeridas.")
+        exit(1)
+    except Exception as e:
+        print(f"❌ Error al iniciar la aplicación: {e}")
+        exit(1)
