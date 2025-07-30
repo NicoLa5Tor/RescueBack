@@ -362,6 +362,11 @@ def get_alerts_stats():
     """GET /api/mqtt-alerts/stats - Obtener estadísticas de alertas"""
     return mqtt_alert_controller.get_alerts_stats()
 
+@mqtt_alert_bp.route('/update-user-status', methods=['PATCH'])
+def update_alert_user_status():
+    """PATCH /api/mqtt-alerts/update-user-status - Actualizar estado de usuario en alerta (SIN AUTENTICACIÓN)"""
+    return mqtt_alert_controller.update_alert_user_status()
+
 @mqtt_alert_bp.route('/empresa/<empresa_id>/active-by-sede', methods=['GET'])
 @require_empresa_token
 def get_active_alerts_by_empresa_sede(empresa_id):
@@ -397,6 +402,12 @@ def create_user_alert():
 def deactivate_user_alert():
     """PUT /api/mqtt-alerts/user-alert/deactivate - Desactivar alerta con ID en body y tipo de quien desactiva (SIN AUTENTICACIÓN)"""
     return mqtt_alert_controller.deactivate_alert_from_body()
+
+# Ruta para obtener alerta específica para un usuario SIN AUTENTICACIÓN
+@mqtt_alert_bp.route('/user-alert/details', methods=['POST'])
+def get_alert_details_for_user():
+    """POST /api/mqtt-alerts/user-alert/details - Obtener detalles de una alerta si el usuario tiene acceso (SIN AUTENTICACIÓN)"""
+    return mqtt_alert_controller.get_alert_details_for_user()
 
 # ========== BLUEPRINT DE BÚSQUEDA POR TELÉFONO ==========
 from controllers.phone_lookup_controller import PhoneLookupController

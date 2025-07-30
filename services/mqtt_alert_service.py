@@ -269,6 +269,41 @@ class MqttAlertService:
                 'error': str(e)
             }
     
+    def get_alert_for_user(self, alert_id, user_id):
+        """Obtiene una alerta por ID si el usuario está en la lista de notificados."""
+        try:
+            print(f"🔍 Servicio: Buscando alerta {alert_id} para usuario {user_id}")
+            alert = self.alert_repo.get_alert_by_id(alert_id)
+            
+            if not alert:
+                return {
+                    'success': False,
+                    'error': 'Alert not found'
+                }
+            
+            # Verificar si el usuario está en la lista de números telefónicos
+            user_is_authorized = False
+            for user_info in alert.numeros_telefonicos:
+                if user_info.get('usuario_id') == user_id:
+                    user_is_authorized = True
+                    break
+            
+            if not user_is_authorized:
+                return {
+                    'success': False,
+                    'error': 'Access denied',
+                    'message': 'El usuario no está autorizado para ver esta alerta'
+                }
+            
+            return {
+                'success': True,
+                'alert': alert.to_json()
+            }
+            
+        except Exception as e:
+            print(f"❌ Error obteniendo alerta para usuario: {e}")
+            return {'success': False, 'error': str(e)}
+    
     def get_alerts_by_empresa(self, empresa_nombre, page=1, limit=50):
         """Obtiene alertas por empresa"""
         try:
@@ -395,6 +430,20 @@ class MqttAlertService:
                 'error': str(e)
             }
     
+    def update_alert_user_status(self, alert_id, usuario_id, updates):
+        """
+        Actualiza el estado de un usuario en una alerta.
+        """
+        try:
+            alert, error = self.alert_repo.update_user_status_in_alert(alert_id, usuario_id, updates)
+            if error:
+                return {'success': False, 'error': error}
+            
+            return {'success': True, 'alert': alert.to_json()}
+        except Exception as e:
+            print(f"Error updating alert user status: {e}")
+            return {'success': False, 'error': str(e)}
+
     def get_alerts_stats(self):
         """Obtiene estadísticas de alertas"""
         try:

@@ -178,6 +178,42 @@ class MqttAlertRepository:
             print(f"Error eliminando alerta: {e}")
             return False
     
+    def update_user_status_in_alert(self, alert_id, usuario_id, updates):
+        """
+        Actualiza el estado de un usuario en la lista de numeros_telefonicos de una alerta.
+        """
+        try:
+            # Filtrar solo las llaves permitidas para actualizar
+            allowed_keys = ['disponible', 'embarcado']
+            update_fields = {f"numeros_telefonicos.$[elem].{key}": value for key, value in updates.items() if key in allowed_keys}
+
+            if not update_fields:
+                return None, "No valid fields to update"
+
+            result = self.collection.update_one(
+                {'_id': ObjectId(alert_id)},
+                {'$set': update_fields},
+                array_filters=[{'elem.usuario_id': usuario_id}]
+            )
+
+            if result.modified_count > 0:
+                return self.get_alert_by_id(alert_id), None
+            else:
+                # Check if the alert and user exist
+                alert = self.collection.find_one({'_id': ObjectId(alert_id)})
+                if not alert:
+                    return None, "Alert not found"
+                
+                user_in_alert = any(user['usuario_id'] == usuario_id for user in alert.get('numeros_telefonicos', []))
+                if not user_in_alert:
+                    return None, "User not found in this alert"
+                
+                return None, "No changes were made"
+
+        except Exception as e:
+            print(f"Error updating user status in alert: {e}")
+            return None, str(e)
+
     def get_alerts_stats(self):
         """Obtiene estadísticas de alertas"""
         try:

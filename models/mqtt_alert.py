@@ -6,6 +6,7 @@ class MqttAlert:
     
     def __init__(self, empresa_nombre=None, sede=None, data=None, 
                  tipo_alerta=None,
+                 nombre_alerta=None,
                  descripcion=None,
                  prioridad=None,
                  image_alert=None,
@@ -24,6 +25,7 @@ class MqttAlert:
         
         # Campos de la alerta
         self.tipo_alerta = tipo_alerta
+        self.nombre_alerta = nombre_alerta
         self.descripcion = descripcion
         self.prioridad = prioridad or 'media'
         self.image_alert = image_alert  # imagen de la alerta (base64 o URL)
@@ -53,6 +55,7 @@ class MqttAlert:
             'sede': self.sede,
             'data': self.data,
             'tipo_alerta': self.tipo_alerta,
+            'nombre_alerta': self.nombre_alerta,
             'descripcion': self.descripcion,
             'prioridad': self.prioridad,
             'image_alert': self.image_alert,
@@ -80,6 +83,7 @@ class MqttAlert:
         alert.sede = data.get('sede')
         alert.data = data.get('data', {})
         alert.tipo_alerta = data.get('tipo_alerta')
+        alert.nombre_alerta = data.get('nombre_alerta')
         alert.descripcion = data.get('descripcion')
         alert.prioridad = data.get('prioridad', 'media')
         alert.image_alert = data.get('image_alert')
@@ -119,6 +123,7 @@ class MqttAlert:
             'sede': self.sede,
             'data': convert_objectids(self.data),
             'tipo_alerta': self.tipo_alerta,
+            'nombre_alerta': self.nombre_alerta,
             'descripcion': self.descripcion,
             'prioridad': self.prioridad,
             'image_alert': self.image_alert,

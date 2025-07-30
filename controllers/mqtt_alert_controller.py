@@ -189,25 +189,12 @@ class MqttAlertController:
             data = request.get_json()
             alert_data = data.get('data', {})
             
-            # Buscar información del tipo de alarma si viene en los datos
+            # Buscar información del tipo de alarma solo para obtener el nombre y la imagen
             tipo_alarma_info = None
             if 'tipo_alarma' in alert_data:
                 from repositories.tipo_alarma_repository import TipoAlarmaRepository
                 tipo_alarma_repo = TipoAlarmaRepository()
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(alert_data['tipo_alarma'])
-                
-                # Agregar información del tipo de alarma a los datos
-                if tipo_alarma_info:
-                    alert_data['tipo_alarma_info'] = {
-                        'id': str(tipo_alarma_info._id),
-                        'nombre': tipo_alarma_info.nombre,
-                        'descripcion': tipo_alarma_info.descripcion,
-                        'tipo_alerta': tipo_alarma_info.tipo_alerta,
-                        'color_alerta': tipo_alarma_info.color_alerta,
-                        'recomendaciones': tipo_alarma_info.recomendaciones,
-                        'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
-                        'imagen_base64': tipo_alarma_info.imagen_base64
-                    }
             
             # Buscar el hardware en la base de datos para obtener toda la información
             from repositories.hardware_repository import HardwareRepository
@@ -243,7 +230,10 @@ class MqttAlertController:
                 if usuario.get('telefono'):
                     numeros_telefonicos.append({
                         'numero': usuario['telefono'],
-                        'nombre': usuario.get('nombre', '')
+                        'nombre': usuario.get('nombre', ''),
+                        'usuario_id': str(usuario.get('_id')),
+                        'disponible': False,  # Por defecto False para alertas de hardware
+                        'embarcado': False    # Por defecto False
                     })
             
             # Buscar otros hardware de la misma empresa y sede que NO sean botoneras
@@ -285,6 +275,7 @@ class MqttAlertController:
                 hardware_nombre=hardware.nombre,
                 hardware_id=hardware_id,
                 tipo_alerta=alert_data.get('tipo_alerta'),
+                nombre_alerta=tipo_alarma_info.nombre if tipo_alarma_info else None, # <-- CAMBIO AÑADIDO
                 descripcion=alert_data.get('descripcion', f'Alerta generada por {hardware.nombre}'),
                 prioridad=prioridad_alerta,
                 image_alert=image_alert,
@@ -301,39 +292,12 @@ class MqttAlertController:
             # INVALIDAR TOKEN DESPUÉS DE USO EXITOSO
             self.hardware_auth_service.invalidate_token_after_use(token)
             
-            response_data = {
+            return jsonify({
                 'success': True,
                 'message': 'Alerta creada exitosamente',
-                'alert_id': str(created_alert._id),
-                'numeros_telefonicos': numeros_telefonicos,
-                'topic': hardware.topic,
-                'topics_otros_hardware': topics_otros_hardware,
-                'activo': created_alert.activo,
-                'fecha_creacion': created_alert.fecha_creacion.isoformat(),
-                'fecha_desactivacion': None,
-                'prioridad': prioridad_alerta,
-                'hardware_ubicacion': {
-                    'direccion': hardware.direccion,
-                    'direccion_url': hardware.direccion_url,
-                    'direccion_open_maps': getattr(hardware, 'direccion_open_maps', None)
-                },
+                'alert': created_alert.to_json(),
                 'token_status': 'invalidated'  # Indicar que el token ya no es válido
-            }
-            
-            # Agregar información del tipo de alarma si se encontró
-            if tipo_alarma_info:
-                response_data['tipo_alarma_info'] = {
-                    'id': str(tipo_alarma_info._id),
-                    'nombre': tipo_alarma_info.nombre,
-                    'descripcion': tipo_alarma_info.descripcion,
-                    'tipo_alerta': tipo_alarma_info.tipo_alerta,
-                    'color_alerta': tipo_alarma_info.color_alerta,
-                    'recomendaciones': tipo_alarma_info.recomendaciones,
-                    'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
-                    'imagen_base64': tipo_alarma_info.imagen_base64
-                }
-            
-            return jsonify(response_data), 201
+            }), 201
             
         except Exception as e:
             return jsonify({
@@ -530,6 +494,57 @@ class MqttAlertController:
                 'message': str(e)
             }), 500
     
+    def update_alert_user_status(self):
+        """
+        PATCH /api/mqtt-alerts/update-user-status - Actualizar estado de usuario en alerta
+        """
+        try:
+            if not request.is_json:
+                return jsonify({
+                    'success': False, 
+                    'error': 'Invalid format', 
+                    'message': 'Content must be JSON'
+                }), 400
+            
+            data = request.get_json()
+            
+            # Validar campos requeridos
+            alert_id = data.get('alert_id')
+            usuario_id = data.get('usuario_id')
+            
+            if not alert_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'alert_id is required'
+                }), 400
+            
+            if not usuario_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'usuario_id is required'
+                }), 400
+            
+            # Extraer solo los campos de actualización
+            update_data = {}
+            if 'disponible' in data:
+                update_data['disponible'] = data['disponible']
+            if 'embarcado' in data:
+                update_data['embarcado'] = data['embarcado']
+            
+            result = self.service.update_alert_user_status(alert_id, usuario_id, update_data)
+            
+            if result['success']:
+                return jsonify(result), 200
+            else:
+                return jsonify(result), 404 if 'not found' in result.get('error', '').lower() else 400
+
+        except Exception as e:
+            return jsonify({
+                'success': False, 
+                'error': 'Internal server error', 
+                'message': str(e)
+            }), 500
+
     def get_alerts_stats(self):
         """Obtener estadísticas de alertas"""
         try:
@@ -780,9 +795,15 @@ class MqttAlertController:
             numeros_telefonicos = []
             for usr in usuarios_relacionados:
                 if usr.get('telefono'):
+                    # Determinar si este usuario es el creador de la alerta
+                    es_creador = str(usr.get('_id')) == usuario_id
+                    
                     numeros_telefonicos.append({
                         'numero': usr['telefono'],
-                        'nombre': usr.get('nombre', '')
+                        'nombre': usr.get('nombre', ''),
+                        'usuario_id': str(usr.get('_id')),
+                        'disponible': es_creador,  # True si es el creador, False para otros
+                        'embarcado': False  # Por defecto False para todos
                     })
             
             # Buscar información del tipo de alarma
@@ -792,7 +813,7 @@ class MqttAlertController:
                 tipo_alarma_repo = TipoAlarmaRepository()
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(tipo_alerta)
             
-            # Preparar datos adicionales completos
+            # Preparar datos adicionales completos SIN tipo_alarma_info
             data_adicional = {
                 'origen': 'usuario_movil',
                 'usuario_id_origen': usuario_id,
@@ -805,20 +826,6 @@ class MqttAlertController:
                 'timestamp_creacion': datetime.utcnow().isoformat(),
                 'topics_notificacion': topics,  # Guardar topics para notificaciones
                 'botonera_ubicacion': botonera_ubicacion,  # Guardar ubicación de botonera
-                'tipo_alarma_info': {
-                    'nombre': tipo_alarma_info.nombre,
-                    'descripcion': tipo_alarma_info.descripcion,
-                    'tipo_alerta': tipo_alarma_info.tipo_alerta,
-                    'color_alerta': tipo_alarma_info.color_alerta,
-                    'recomendaciones': tipo_alarma_info.recomendaciones,
-                    'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
-                    'imagen_base64': tipo_alarma_info.imagen_base64,
-                    'empresa_id': str(tipo_alarma_info.empresa_id) if tipo_alarma_info.empresa_id else None,
-                    'activo': tipo_alarma_info.activo,
-                    'fecha_creacion': tipo_alarma_info.fecha_creacion.isoformat() if tipo_alarma_info.fecha_creacion else None,
-                    'fecha_actualizacion': tipo_alarma_info.fecha_actualizacion.isoformat() if tipo_alarma_info.fecha_actualizacion else None,
-                    '_id': str(tipo_alarma_info._id)
-                } if tipo_alarma_info else None,  # Información completa del tipo de alarma
                 'metadatos': {
                     'tipo_procesamiento': 'manual',
                     'plataforma': 'mobile_app',
@@ -846,6 +853,7 @@ class MqttAlertController:
                 usuario_id=str(usuario._id),
                 usuario_nombre=usuario.nombre,
                 tipo_alerta=tipo_alerta,
+                nombre_alerta=tipo_alarma_info.nombre if tipo_alarma_info else None, # <-- CAMBIO AÑADIDO
                 descripcion=descripcion,
                 prioridad=prioridad,
                 image_alert=image_alert,
@@ -867,39 +875,11 @@ class MqttAlertController:
             # Guardar en base de datos
             created_alert = self.service.alert_repo.create_alert(alert)
             
-            # Preparar información del tipo de alarma para incluir en la respuesta
-            tipo_alarma_response = {}
-            if tipo_alarma_info:
-                tipo_alarma_response = {
-                    'nombre': tipo_alarma_info.nombre,
-                    'descripcion': tipo_alarma_info.descripcion,
-                    'tipo_alerta': tipo_alarma_info.tipo_alerta,
-                    'color_alerta': tipo_alarma_info.color_alerta,
-                    'recomendaciones': tipo_alarma_info.recomendaciones,
-                    'implementos_necesarios': tipo_alarma_info.implementos_necesarios,
-                    'imagen_base64': tipo_alarma_info.imagen_base64
-                }
-            
-            # Respuesta exitosa
+            # Respuesta exitosa unificada
             return jsonify({
                 'success': True,
                 'message': 'Alerta de usuario creada exitosamente',
-                'topics': topics,
-                'numeros_telefonicos': numeros_telefonicos,
-                'alerta': {
-                    'alert_id': str(created_alert._id),
-                    'tipo_alerta': tipo_alerta,
-                    'descripcion': descripcion,
-                    'prioridad': prioridad,
-                    'origen_tipo': 'usuario',
-                    'activo': True,
-                    'fecha_creacion': created_alert.fecha_creacion.isoformat(),
-                    # Ubicación completa de la botonera (3 campos)
-                    'direccion': botonera.direccion if botonera else None,
-                    'direccion_url': botonera.direccion_url if botonera else None,
-                    'direccion_open_maps': getattr(botonera, 'direccion_open_maps', None) if botonera else None,
-                    **tipo_alarma_response  # Incluir información del tipo de alarma
-                }
+                'alert': created_alert.to_json()
             }), 201
             
         except Exception as e:
@@ -1011,7 +991,10 @@ class MqttAlertController:
                     if usr.get('telefono'):
                         numeros_telefonicos.append({
                             'numero': usr['telefono'],
-                            'nombre': usr.get('nombre', '')
+                            'nombre': usr.get('nombre', ''),
+                            'usuario_id': str(usr.get('_id')),
+                            'disponible': False,  # Por defecto False al desactivar
+                            'embarcado': False    # Por defecto False
                         })
                 
                 return jsonify({
@@ -1033,7 +1016,10 @@ class MqttAlertController:
                 if usr.get('telefono'):
                     numeros_telefonicos.append({
                         'numero': usr['telefono'],
-                        'nombre': usr.get('nombre', '')
+                        'nombre': usr.get('nombre', ''),
+                        'usuario_id': str(usr.get('_id')),
+                        'disponible': False,  # Por defecto False al desactivar
+                        'embarcado': False    # Por defecto False
                     })
 
             # Obtener topics de hardware de la empresa y sede (excluyendo botoneras)
@@ -1089,6 +1075,59 @@ class MqttAlertController:
         except Exception as e:
             return jsonify({
                 'success': False,
+                'error': 'Error interno del servidor',
+                'message': str(e)
+            }), 500
+
+    def get_alert_details_for_user(self):
+        """Obtener detalles de una alerta si el usuario tiene acceso (SIN AUTENTICACIÓN)"""
+        try:
+            if not request.is_json:
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato inválido',
+                    'message': 'El contenido debe ser JSON'
+                }), 400
+            
+            data = request.get_json()
+            
+            # Validar campos requeridos
+            alert_id = data.get('alert_id')
+            user_id = data.get('user_id')
+            
+            if not alert_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'alert_id es requerido'
+                }), 400
+            
+            if not user_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'user_id es requerido'
+                }), 400
+            
+            print(f"🔍 Buscando alerta {alert_id} para usuario {user_id}")
+            result = self.service.get_alert_for_user(alert_id, user_id)
+            print(f"📊 Resultado del servicio: {result}")
+            
+            if result['success']:
+                return jsonify(result), 200
+            else:
+                # Determinar el código de estado según el tipo de error
+                if 'not found' in result.get('error', '').lower():
+                    return jsonify(result), 404
+                elif 'access denied' in result.get('error', '').lower() or 'no autorizado' in result.get('error', '').lower():
+                    return jsonify(result), 403
+                else:
+                    return jsonify(result), 400
+                    
+        except Exception as e:
+            print(f"❌ Error en get_alert_details_for_user: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False, 
                 'error': 'Error interno del servidor',
                 'message': str(e)
             }), 500
