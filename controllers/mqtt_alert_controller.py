@@ -981,21 +981,24 @@ class MqttAlertController:
 
             # Verificar si la alerta ya fue desactivada
             if not alert.activo:
-                # Obtener usuarios relacionados para la respuesta
-                usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
-                    alert.empresa_nombre, alert.sede
-                )
+                # Obtener números telefónicos reales de la alerta ya desactivada
+                numeros_telefonicos = alert.numeros_telefonicos if hasattr(alert, 'numeros_telefonicos') and alert.numeros_telefonicos else []
                 
-                numeros_telefonicos = []
-                for usr in usuarios_relacionados:
-                    if usr.get('telefono'):
-                        numeros_telefonicos.append({
-                            'numero': usr['telefono'],
-                            'nombre': usr.get('nombre', ''),
-                            'usuario_id': str(usr.get('_id')),
-                            'disponible': False,  # Por defecto False al desactivar
-                            'embarcado': False    # Por defecto False
-                        })
+                # Si no hay números en la alerta, buscar usuarios relacionados (fallback)
+                if not numeros_telefonicos:
+                    usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
+                        alert.empresa_nombre, alert.sede
+                    )
+                    
+                    for usr in usuarios_relacionados:
+                        if usr.get('telefono'):
+                            numeros_telefonicos.append({
+                                'numero': usr['telefono'],
+                                'nombre': usr.get('nombre', ''),
+                                'usuario_id': str(usr.get('_id')),
+                                'disponible': False,  # Fallback por defecto
+                                'embarcado': False    # Fallback por defecto
+                            })
                 
                 return jsonify({
                     'success': False,
@@ -1006,21 +1009,25 @@ class MqttAlertController:
                     'fecha_desactivacion': alert.fecha_desactivacion.isoformat() if alert.fecha_desactivacion else None
                 }), 400
 
-            # Obtener usuarios relacionados antes de desactivar
-            usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
-                alert.empresa_nombre, alert.sede
-            )
+            # Obtener números telefónicos reales de la alerta existente
+            # En lugar de recrear desde cero, usar los datos que ya existen en la alerta
+            numeros_telefonicos = alert.numeros_telefonicos if hasattr(alert, 'numeros_telefonicos') and alert.numeros_telefonicos else []
             
-            numeros_telefonicos = []
-            for usr in usuarios_relacionados:
-                if usr.get('telefono'):
-                    numeros_telefonicos.append({
-                        'numero': usr['telefono'],
-                        'nombre': usr.get('nombre', ''),
-                        'usuario_id': str(usr.get('_id')),
-                        'disponible': False,  # Por defecto False al desactivar
-                        'embarcado': False    # Por defecto False
-                    })
+            # Si no hay números en la alerta, buscar usuarios relacionados (fallback)
+            if not numeros_telefonicos:
+                usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(
+                    alert.empresa_nombre, alert.sede
+                )
+                
+                for usr in usuarios_relacionados:
+                    if usr.get('telefono'):
+                        numeros_telefonicos.append({
+                            'numero': usr['telefono'],
+                            'nombre': usr.get('nombre', ''),
+                            'usuario_id': str(usr.get('_id')),
+                            'disponible': False,  # Fallback por defecto
+                            'embarcado': False    # Fallback por defecto
+                        })
 
             # Obtener topics de hardware de la empresa y sede (excluyendo botoneras)
             from repositories.hardware_repository import HardwareRepository
