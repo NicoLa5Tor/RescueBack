@@ -10,6 +10,8 @@ class MqttAlert:
                  descripcion=None,
                  prioridad=None,
                  image_alert=None,
+                 elementos_necesarios=None,
+                 instrucciones=None,
                  numeros_telefonicos=None, 
                  topic=None, 
                  topics_otros_hardware=None,
@@ -29,6 +31,8 @@ class MqttAlert:
         self.descripcion = descripcion
         self.prioridad = prioridad or 'media'
         self.image_alert = image_alert  # imagen de la alerta (base64 o URL)
+        self.elementos_necesarios = elementos_necesarios or []  # implementos necesarios del tipo de alarma
+        self.instrucciones = instrucciones or []  # recomendaciones del tipo de alarma
         
         # Campos específicos para hardware
         self.numeros_telefonicos = numeros_telefonicos or []  # números telefónicos de usuarios relacionados
@@ -59,6 +63,8 @@ class MqttAlert:
             'descripcion': self.descripcion,
             'prioridad': self.prioridad,
             'image_alert': self.image_alert,
+            'elementos_necesarios': self.elementos_necesarios,
+            'instrucciones': self.instrucciones,
             'numeros_telefonicos': self.numeros_telefonicos,
             'topic': self.topic,
             'topics_otros_hardware': self.topics_otros_hardware,
@@ -87,6 +93,8 @@ class MqttAlert:
         alert.descripcion = data.get('descripcion')
         alert.prioridad = data.get('prioridad', 'media')
         alert.image_alert = data.get('image_alert')
+        alert.elementos_necesarios = data.get('elementos_necesarios', [])
+        alert.instrucciones = data.get('instrucciones', [])
         alert.numeros_telefonicos = data.get('numeros_telefonicos', [])
         alert.topic = data.get('topic')
         alert.topics_otros_hardware = data.get('topics_otros_hardware', [])
@@ -127,6 +135,8 @@ class MqttAlert:
             'descripcion': self.descripcion,
             'prioridad': self.prioridad,
             'image_alert': self.image_alert,
+            'elementos_necesarios': self.elementos_necesarios,
+            'instrucciones': self.instrucciones,
             'numeros_telefonicos': self.numeros_telefonicos,
             'topic': self.topic,
             'topics_otros_hardware': self.topics_otros_hardware,

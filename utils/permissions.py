@@ -18,12 +18,12 @@ def require_super_admin_token(f):
         try:
             # Intentar obtener el token de las cookies primero
             auth_token = request.cookies.get('auth_token')
-            print(f"Debug: Cookie auth_token: {auth_token[:50] if auth_token else 'None'}...")
+            # print(f"Debug: Cookie auth_token: {auth_token[:50] if auth_token else 'None'}...")
             
             if not auth_token:
                 # Si no hay cookie, intentar con header Authorization
                 auth_header = request.headers.get('Authorization')
-                print(f"Debug: Auth header: {auth_header}")
+                # print(f"Debug: Auth header: {auth_header}")
                 if auth_header and auth_header.startswith('Bearer '):
                     auth_token = auth_header.replace('Bearer ', '')
                     # Verificar que no sea el placeholder 'cookie_auth'
@@ -31,7 +31,7 @@ def require_super_admin_token(f):
                         auth_token = None
             
             if not auth_token:
-                print("Debug: No se encontró token válido")
+                # print("Debug: No se encontró token válido")
                 return (
                     jsonify({"success": False, "errors": ["Token de autenticación requerido"]}),
                     401,
@@ -44,22 +44,22 @@ def require_super_admin_token(f):
                     Config.JWT_SECRET_KEY,
                     algorithms=['HS256']
                 )
-                print(f"Debug: Claims decodificados: {claims}")
+                # print(f"Debug: Claims decodificados: {claims}")
             except jwt.ExpiredSignatureError:
-                print("Debug: Token expirado")
+                # print("Debug: Token expirado")
                 return (
                     jsonify({"success": False, "errors": ["Token expirado"]}),
                     401,
                 )
             except jwt.InvalidTokenError as e:
-                print(f"Debug: Token inválido: {e}")
+                # print(f"Debug: Token inválido: {e}")
                 return (
                     jsonify({"success": False, "errors": ["Token inválido"]}),
                     401,
                 )
             
             if claims.get("role") != "super_admin":
-                print(f"Debug: Rol incorrecto: {claims.get('role')}")
+                # print(f"Debug: Rol incorrecto: {claims.get('role')}")
                 return (
                     jsonify({"success": False, "errors": ["Permiso de super admin requerido"]}),
                     401,
@@ -67,13 +67,13 @@ def require_super_admin_token(f):
             
             g.user_id = claims.get('sub')
             g.role = "super_admin"
-            print(f"Debug: Autenticación exitosa para usuario {g.user_id}")
+            # print(f"Debug: Autenticación exitosa para usuario {g.user_id}")
             return f(*args, **kwargs)
             
         except Exception as e:
-            print(f"Error en require_super_admin_token: {e}")
-            print(f"Cookies recibidas: {dict(request.cookies)}")
-            print(f"Headers recibidos: {dict(request.headers)}")
+            # print(f"Error en require_super_admin_token: {e}")
+            # print(f"Cookies recibidas: {dict(request.cookies)}")
+            # print(f"Headers recibidos: {dict(request.headers)}")
             return (
                 jsonify({"success": False, "errors": ["Error de autenticación"]}),
                 422,
@@ -133,7 +133,7 @@ def require_empresa_token(f):
             return f(*args, **kwargs)
             
         except Exception as e:
-            print(f"Error en require_empresa_token: {e}")
+            # print(f"Error en require_empresa_token: {e}")
             return (
                 jsonify({"success": False, "errors": ["Error de autenticación"]}),
                 422,
@@ -194,7 +194,7 @@ def require_empresa_or_admin_token(f):
             return f(*args, **kwargs)
             
         except Exception as e:
-            print(f"Error en require_empresa_or_admin_token: {e}")
+            # print(f"Error en require_empresa_or_admin_token: {e}")
             return (
                 jsonify({"success": False, "errors": ["Error de autenticación"]}),
                 422,

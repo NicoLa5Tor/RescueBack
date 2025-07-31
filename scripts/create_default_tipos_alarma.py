@@ -249,7 +249,7 @@ def create_default_tipos_alarma():
 
     tipos_creados = 0
 
-    print("Creando tipos de alarma globales...")
+    # print("Creando tipos de alarma globales...")
     # Crear tipos de alarma sin empresa específica (globales)
     for tipo_data in tipos_alarma_default:
         try:
@@ -267,40 +267,40 @@ def create_default_tipos_alarma():
             # Validar antes de crear
             errors = tipo_alarma.validate()
             if errors:
-                print(f"Error validando tipo de alarma '{tipo_data['nombre']}': {errors}")
+    # print(f"Error validando tipo de alarma '{tipo_data['nombre']}': {errors}")
                 continue
             
             # Crear en la base de datos
             tipo_creado = tipo_alarma_repo.create_tipo_alarma(tipo_alarma)
             if tipo_creado:
                 tipos_creados += 1
-                print(f"Tipo de alarma creado: {tipo_data['nombre']} ({tipo_data['tipo_alerta']})")
+    # print(f"Tipo de alarma creado: {tipo_data['nombre']} ({tipo_data['tipo_alerta']})")
             else:
-                print(f"Error creando tipo de alarma: {tipo_data['nombre']}")
+    # print(f"Error creando tipo de alarma: {tipo_data['nombre']}")
                 
         except Exception as e:
-            print(f"Error creando tipo de alarma '{tipo_data['nombre']}': {e}")
+    # print(f"Error creando tipo de alarma '{tipo_data['nombre']}': {e}")
     
-    print(f"\n✅ Proceso completado. Se crearon {tipos_creados} tipos de alarma.")
+    # print(f"\n✅ Proceso completado. Se crearon {tipos_creados} tipos de alarma.")
     
     # Mostrar estadísticas
     stats = tipo_alarma_repo.get_tipos_alarma_stats()
-    print(f"\nEstadísticas de tipos de alarma:")
-    print(f"Total: {stats['total']}")
-    print(f"Activos: {stats['active']}")
-    print(f"Inactivos: {stats['inactive']}")
-    print(f"Por tipo de alerta: {stats['por_tipo']}")
+    # print(f"\nEstadísticas de tipos de alarma:")
+    # print(f"Total: {stats['total']}")
+    # print(f"Activos: {stats['active']}")
+    # print(f"Inactivos: {stats['inactive']}")
+    # print(f"Por tipo de alerta: {stats['por_tipo']}")
 
 def main():
     """Función principal"""
-    print("🚀 Iniciando creación de tipos de alarma por defecto...")
-    print("=" * 60)
+    # print("🚀 Iniciando creación de tipos de alarma por defecto...")
+    # print("=" * 60)
     
     try:
         create_default_tipos_alarma()
-        print("\n✅ Script ejecutado exitosamente!")
+    # print("\n✅ Script ejecutado exitosamente!")
     except Exception as e:
-        print(f"\n❌ Error ejecutando script: {e}")
+    # print(f"\n❌ Error ejecutando script: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

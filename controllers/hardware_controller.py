@@ -57,7 +57,7 @@ class HardwareController:
         try:
             # Use get_hardware_including_inactive to fetch by ID including inactive
             result = self.service.get_hardware_including_inactive(hardware_id)
-            print(f"el result de get_hardware trae esto: {result}")
+            # print(f"el result de get_hardware trae esto: {result}")
             status = 200 if result.get('success') else 404
             return jsonify(result), status
         except Exception as exc:
@@ -67,9 +67,9 @@ class HardwareController:
     def update_hardware(self, hardware_id):
         try:
             data = request.get_json() or {}
-            print(f"json entrante: {data} ")
-            result = self.service.update_hardware(hardware_id, data)
-            print(f"result: {result}")
+            # print(f"json entrante: {data} ")
+            result = self.hardware_service.update_hardware(hardware_id, data)
+            # print(f"result: {result}")
             status = 200 if result.get('success') else 400
             return jsonify(result), status
         except Exception as exc:

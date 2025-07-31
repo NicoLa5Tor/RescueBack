@@ -2,6 +2,7 @@ from bson import ObjectId
 from models.hardware import Hardware
 from repositories.hardware_repository import HardwareRepository
 from repositories.empresa_repository import EmpresaRepository
+from repositories.mqtt_alert_repository import MqttAlertRepository
 from services.hardware_type_service import HardwareTypeService
 from utils.geocoding import procesar_direccion_para_hardware
 
@@ -10,6 +11,7 @@ class HardwareService:
         self.hardware_repo = HardwareRepository()
         self.empresa_repo = EmpresaRepository()
         self.type_service = HardwareTypeService()
+        self.mqtt_alert_repo = MqttAlertRepository()
 
 
     def _get_empresa(self, empresa_nombre):
@@ -21,6 +23,45 @@ class HardwareService:
         if not direccion:
             return None, None, None, "La dirección es obligatoria"
         return procesar_direccion_para_hardware(direccion)
+    
+    def _get_topics_otros_hardware_from_alerts(self, hardware_topic):
+        """Obtiene los topics de otros hardware que están vinculados en alertas con este hardware"""
+        try:
+            # Buscar alertas que contengan el topic del hardware desactivado
+            # Buscar en el campo 'topic' (hardware principal) o 'topics_otros_hardware' (hardware secundario)
+            query = {
+                '$or': [
+                    {'topic': hardware_topic},  # Hardware principal de la alerta
+                    {'topics_otros_hardware': hardware_topic}  # Hardware secundario
+                ]
+            }
+            
+            alerts_data = self.mqtt_alert_repo.collection.find(query)
+            topics_otros_hardware = set()  # Usar set para evitar duplicados
+            
+            for alert_data in alerts_data:
+                # Si el hardware desactivado es el principal, agregar todos los otros
+                if alert_data.get('topic') == hardware_topic:
+                    otros_topics = alert_data.get('topics_otros_hardware', [])
+                    topics_otros_hardware.update(otros_topics)
+                
+                # Si el hardware desactivado está en otros_hardware, agregar el principal y el resto
+                elif hardware_topic in alert_data.get('topics_otros_hardware', []):
+                    # Agregar el topic principal
+                    main_topic = alert_data.get('topic')
+                    if main_topic:
+                        topics_otros_hardware.add(main_topic)
+                    
+                    # Agregar los otros topics (excluyendo el actual)
+                    otros_topics = alert_data.get('topics_otros_hardware', [])
+                    for topic in otros_topics:
+                        if topic != hardware_topic:
+                            topics_otros_hardware.add(topic)
+            
+            return list(topics_otros_hardware)
+        except Exception as e:
+            # print(f"Error obteniendo topics de otros hardware: {e}")
+            return []
 
     def create_hardware(self, data):
         try:
@@ -199,12 +240,13 @@ class HardwareService:
             coordenadas = getattr(existing, 'coordenadas', None)
             
             if direccion != getattr(existing, 'direccion', None):
-                print(f'🗺️ Dirección cambió, geocodificando nueva dirección: {direccion}')
+                # print(f'🗺️ Dirección cambió, geocodificando nueva dirección: {direccion}')
                 direccion_url_google, direccion_url_openstreetmap, coordenadas, direccion_error = self._procesar_direccion(direccion)
                 if direccion_error:
                     return {'success': False, 'errors': [direccion_error]}
             else:
-                print(f'🔄 Dirección sin cambios, manteniendo URLs existentes')
+                # print(f'🔄 Dirección sin cambios, manteniendo URLs existentes')
+                pass
             
             # Crear instancia actualizada y regenerar topic automáticamente
             updated = Hardware(nombre=nombre, tipo=tipo, empresa_id=empresa_id, sede=sede, datos=datos_finales, _id=existing._id, activa=existing.activa)
@@ -246,6 +288,11 @@ class HardwareService:
             if not existing:
                 return {'success': False, 'errors': ['Hardware no encontrado']}
             
+            # Si se está desactivando el hardware (activa=False), buscar topics de otros hardware vinculados
+            topics_otros_hardware = []
+            if not activa and existing.topic:  # Solo si se desactiva y tiene topic
+                topics_otros_hardware = self._get_topics_otros_hardware_from_alerts(existing.topic)
+            
             # Actualizar solo el campo activa
             existing.activa = activa
             existing.update_timestamp()
@@ -256,11 +303,19 @@ class HardwareService:
                 result = updated.to_json()
                 empresa = self.empresa_repo.find_by_id(updated.empresa_id) if updated.empresa_id else None
                 result['empresa_nombre'] = empresa.nombre if empresa else None
-                return {
+                
+                response = {
                     'success': True, 
                     'data': result,
                     'message': f'Hardware {status_text} exitosamente'
                 }
+                
+                # Si se desactivó y hay topics de otros hardware, incluirlos en la respuesta
+                if not activa and topics_otros_hardware:
+                    response['topics_otros_hardware'] = topics_otros_hardware
+                    response['message'] += f'. Se encontraron {len(topics_otros_hardware)} hardware(s) vinculado(s) en alertas.'
+                
+                return response
             return {'success': False, 'errors': ['Error al actualizar el estado del hardware']}
         except Exception as exc:
             return {'success': False, 'errors': [str(exc)]}

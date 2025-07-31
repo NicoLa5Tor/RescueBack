@@ -30,7 +30,8 @@ class EmpresaRepository:
             # Índice para empresas activas
             self.collection.create_index([("activa", 1)])
         except Exception as e:
-            print(f"Error creando índices: {e}")
+            # print(f"Error creando índices: {e}")
+            pass
     
     def create(self, empresa):
         """Crea una nueva empresa en la base de datos"""

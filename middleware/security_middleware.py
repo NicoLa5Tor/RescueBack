@@ -58,7 +58,7 @@ class SecurityMiddleware:
             return True
             
         except Exception as e:
-            print(f"Error validando token binding: {str(e)}")
+            # print(f"Error validando token binding: {str(e)}")
             return False
     
     def create_session_record(self, user_id, fingerprint, jti):
@@ -86,7 +86,7 @@ class SecurityMiddleware:
             return True
             
         except Exception as e:
-            print(f"Error creando registro de sesión: {str(e)}")
+            # print(f"Error creando registro de sesión: {str(e)}")
             return False
     
     def invalidate_session(self, user_id, jti=None):
@@ -105,7 +105,7 @@ class SecurityMiddleware:
             return True
             
         except Exception as e:
-            print(f"Error invalidando sesión: {str(e)}")
+            # print(f"Error invalidando sesión: {str(e)}")
             return False
     
     def validate_request_security(self):
@@ -132,5 +132,5 @@ class SecurityMiddleware:
             return None  # Todo correcto
             
         except Exception as e:
-            print(f"Error en validación de seguridad: {str(e)}")
+            # print(f"Error en validación de seguridad: {str(e)}")
             return jsonify({'error': 'Error de seguridad'}), 500

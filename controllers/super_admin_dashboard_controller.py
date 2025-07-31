@@ -17,7 +17,7 @@ class SuperAdminDashboardController:
         """GET /api/dashboard/stats - Estadísticas generales del sistema"""
         try:
             result = self.dashboard_service.get_dashboard_stats()
-            print(f"los stats son: {result}")
+            # print(f"los stats son: {result}")
             if result['success']:
                 return success_response(result['data'])
             else:
@@ -102,7 +102,7 @@ class SuperAdminDashboardController:
             result = self.dashboard_service.get_system_performance()
             
             if result['success']:
-                print(f"El result data: {result["data"]}")
+                # print(f"El result data: {result[\"data\"]}")
                 return success_response(result['data'])
             else:
                 return error_response(result.get('errors', ['Error al obtener rendimiento del sistema']))

@@ -18,7 +18,7 @@ class TipoAlarmaRepository:
             tipo_alarma._id = result.inserted_id
             return tipo_alarma
         except Exception as e:
-            print(f"Error creando tipo de alarma: {e}")
+            # print(f"Error creando tipo de alarma: {e}")
             raise e
     
     def get_tipo_alarma_by_id(self, tipo_alarma_id):
@@ -29,7 +29,7 @@ class TipoAlarmaRepository:
                 return TipoAlarma.from_dict(tipo_alarma_data)
             return None
         except Exception as e:
-            print(f"Error obteniendo tipo de alarma por ID: {e}")
+            # print(f"Error obteniendo tipo de alarma por ID: {e}")
             return None
     
     def get_all_tipos_alarma(self, page=1, limit=50):
@@ -41,7 +41,7 @@ class TipoAlarmaRepository:
             total = self.collection.count_documents({})
             return tipos_alarma, total
         except Exception as e:
-            print(f"Error obteniendo tipos de alarma: {e}")
+            # print(f"Error obteniendo tipos de alarma: {e}")
             return [], 0
     
     def get_tipos_alarma_by_empresa(self, empresa_id, page=1, limit=50):
@@ -54,7 +54,7 @@ class TipoAlarmaRepository:
             total = self.collection.count_documents(query)
             return tipos_alarma, total
         except Exception as e:
-            print(f"Error obteniendo tipos de alarma por empresa: {e}")
+            # print(f"Error obteniendo tipos de alarma por empresa: {e}")
             return [], 0
     
     def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50):
@@ -67,7 +67,7 @@ class TipoAlarmaRepository:
             total = self.collection.count_documents(query)
             return tipos_alarma, total
         except Exception as e:
-            print(f"Error obteniendo tipos de alarma por tipo de alerta: {e}")
+            # print(f"Error obteniendo tipos de alarma por tipo de alerta: {e}")
             return [], 0
     
     def find_by_tipo_alerta(self, tipo_alerta):
@@ -79,7 +79,7 @@ class TipoAlarmaRepository:
                 return TipoAlarma.from_dict(tipo_alarma_data)
             return None
         except Exception as e:
-            print(f"Error buscando tipo de alarma por tipo de alerta: {e}")
+            # print(f"Error buscando tipo de alarma por tipo de alerta: {e}")
             return None
     
     def get_active_tipos_alarma(self, page=1, limit=50):
@@ -92,7 +92,7 @@ class TipoAlarmaRepository:
             total = self.collection.count_documents(query)
             return tipos_alarma, total
         except Exception as e:
-            print(f"Error obteniendo tipos de alarma activos: {e}")
+            # print(f"Error obteniendo tipos de alarma activos: {e}")
             return [], 0
     
     def get_tipos_alarma_by_empresa_and_tipo(self, empresa_id, tipo_alerta):
@@ -103,7 +103,7 @@ class TipoAlarmaRepository:
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             return tipos_alarma
         except Exception as e:
-            print(f"Error obteniendo tipos de alarma por empresa y tipo: {e}")
+            # print(f"Error obteniendo tipos de alarma por empresa y tipo: {e}")
             return []
     
     def update_tipo_alarma(self, tipo_alarma_id, tipo_alarma):
@@ -120,7 +120,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error actualizando tipo de alarma: {e}")
+            # print(f"Error actualizando tipo de alarma: {e}")
             return False
     
     def toggle_tipo_alarma_status(self, tipo_alarma_id):
@@ -142,7 +142,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error cambiando estado de tipo de alarma: {e}")
+            # print(f"Error cambiando estado de tipo de alarma: {e}")
             return False
     
     def delete_tipo_alarma(self, tipo_alarma_id):
@@ -151,7 +151,7 @@ class TipoAlarmaRepository:
             result = self.collection.delete_one({'_id': ObjectId(tipo_alarma_id)})
             return result.deleted_count > 0
         except Exception as e:
-            print(f"Error eliminando tipo de alarma: {e}")
+            # print(f"Error eliminando tipo de alarma: {e}")
             return False
     
     def get_tipos_alarma_stats(self):
@@ -173,7 +173,7 @@ class TipoAlarmaRepository:
                 'por_tipo': tipos_stats
             }
         except Exception as e:
-            print(f"Error obteniendo estadísticas de tipos de alarma: {e}")
+            # print(f"Error obteniendo estadísticas de tipos de alarma: {e}")
             return {
                 'total': 0,
                 'active': 0,
@@ -187,7 +187,7 @@ class TipoAlarmaRepository:
             empresa = self.db.empresas.find_one({'_id': ObjectId(empresa_id)})
             return empresa is not None
         except Exception as e:
-            print(f"Error verificando empresa: {e}")
+            # print(f"Error verificando empresa: {e}")
             return False
     
     def check_duplicate_name(self, nombre, empresa_id, exclude_id=None):
@@ -200,7 +200,7 @@ class TipoAlarmaRepository:
             existing = self.collection.find_one(query)
             return existing is not None
         except Exception as e:
-            print(f"Error verificando duplicado: {e}")
+            # print(f"Error verificando duplicado: {e}")
             return False
     
     def search_tipos_alarma(self, search_term, page=1, limit=50):
@@ -218,7 +218,7 @@ class TipoAlarmaRepository:
             total = self.collection.count_documents(query)
             return tipos_alarma, total
         except Exception as e:
-            print(f"Error buscando tipos de alarma: {e}")
+            # print(f"Error buscando tipos de alarma: {e}")
             return [], 0
     
     def bulk_create_tipos_alarma(self, tipos_alarma_list):
@@ -232,7 +232,7 @@ class TipoAlarmaRepository:
             result = self.collection.insert_many(documents)
             return len(result.inserted_ids)
         except Exception as e:
-            print(f"Error creando tipos de alarma en lote: {e}")
+            # print(f"Error creando tipos de alarma en lote: {e}")
             return 0
     
     def update_imagen_tipo_alarma(self, tipo_alarma_id, imagen_base64):
@@ -249,7 +249,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error actualizando imagen: {e}")
+            # print(f"Error actualizando imagen: {e}")
             return False
     
     def add_recomendacion_to_tipo_alarma(self, tipo_alarma_id, recomendacion):
@@ -264,7 +264,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error agregando recomendación: {e}")
+            # print(f"Error agregando recomendación: {e}")
             return False
     
     def remove_recomendacion_from_tipo_alarma(self, tipo_alarma_id, recomendacion):
@@ -279,7 +279,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error eliminando recomendación: {e}")
+            # print(f"Error eliminando recomendación: {e}")
             return False
     
     def add_implemento_to_tipo_alarma(self, tipo_alarma_id, implemento):
@@ -294,7 +294,7 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error agregando implemento: {e}")
+            # print(f"Error agregando implemento: {e}")
             return False
     
     def remove_implemento_from_tipo_alarma(self, tipo_alarma_id, implemento):
@@ -309,5 +309,5 @@ class TipoAlarmaRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error eliminando implemento: {e}")
+            # print(f"Error eliminando implemento: {e}")
             return False

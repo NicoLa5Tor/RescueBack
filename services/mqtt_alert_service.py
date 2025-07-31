@@ -31,7 +31,7 @@ class MqttAlertService:
             
             return results
         except Exception as e:
-            print(f"Error procesando mensaje MQTT: {e}")
+            # print(f"Error procesando mensaje MQTT: {e}")
             return [{
                 'success': False,
                 'error': str(e),
@@ -206,7 +206,7 @@ class MqttAlertService:
             }
             
         except Exception as e:
-            print(f"Error creando alerta desde MQTT: {e}")
+            # print(f"Error creando alerta desde MQTT: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -227,7 +227,7 @@ class MqttAlertService:
                 'total_pages': (total + limit - 1) // limit
             }
         except Exception as e:
-            print(f"Error obteniendo alertas: {e}")
+            # print(f"Error obteniendo alertas: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -238,13 +238,13 @@ class MqttAlertService:
     def get_alert_by_id(self, alert_id):
         """Obtiene una alerta por ID"""
         try:
-            print(f"🔍 Servicio: Buscando alerta con ID: {alert_id}")
+            # print(f"🔍 Servicio: Buscando alerta con ID: {alert_id}")
             alert = self.alert_repo.get_alert_by_id(alert_id)
-            print(f"📊 Alerta obtenida del repo: {alert}")
+            # print(f"📊 Alerta obtenida del repo: {alert}")
             if alert:
-                print(f"✅ Alerta encontrada, convirtiendo a JSON...")
+                # print(f"✅ Alerta encontrada, convirtiendo a JSON...")
                 json_data = alert.to_json()
-                print(f"📝 JSON generado: {json_data}")
+                # print(f"📝 JSON generado: {json_data}")
                 
                 # COMENTADO: La ubicación ya viene incluida en el modelo actualizado
                 # ubicacion_info = self._get_botonera_ubicacion(alert.empresa_nombre, alert.sede)
@@ -255,13 +255,13 @@ class MqttAlertService:
                     'alert': json_data
                 }
             else:
-                print(f"❌ Alerta NO encontrada")
+                # print(f"❌ Alerta NO encontrada")
                 return {
                     'success': False,
                     'error': 'Alerta no encontrada'
                 }
         except Exception as e:
-            print(f"❌ Error obteniendo alerta por ID: {e}")
+            # print(f"❌ Error obteniendo alerta por ID: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -272,7 +272,7 @@ class MqttAlertService:
     def get_alert_for_user(self, alert_id, user_id):
         """Obtiene una alerta por ID si el usuario está en la lista de notificados."""
         try:
-            print(f"🔍 Servicio: Buscando alerta {alert_id} para usuario {user_id}")
+            # print(f"🔍 Servicio: Buscando alerta {alert_id} para usuario {user_id}")
             alert = self.alert_repo.get_alert_by_id(alert_id)
             
             if not alert:
@@ -301,7 +301,7 @@ class MqttAlertService:
             }
             
         except Exception as e:
-            print(f"❌ Error obteniendo alerta para usuario: {e}")
+            # print(f"❌ Error obteniendo alerta para usuario: {e}")
             return {'success': False, 'error': str(e)}
     
     def get_alerts_by_empresa(self, empresa_nombre, page=1, limit=50):
@@ -317,7 +317,7 @@ class MqttAlertService:
                 'total_pages': (total + limit - 1) // limit
             }
         except Exception as e:
-            print(f"Error obteniendo alertas por empresa: {e}")
+            # print(f"Error obteniendo alertas por empresa: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -338,7 +338,7 @@ class MqttAlertService:
                 'total_pages': (total + limit - 1) // limit
             }
         except Exception as e:
-            print(f"Error obteniendo alertas activas: {e}")
+            # print(f"Error obteniendo alertas activas: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -359,7 +359,7 @@ class MqttAlertService:
                 'total_pages': (total + limit - 1) // limit
             }
         except Exception as e:
-            print(f"Error obteniendo alertas no autorizadas: {e}")
+            # print(f"Error obteniendo alertas no autorizadas: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -382,7 +382,7 @@ class MqttAlertService:
                     'error': 'No se pudo autorizar la alerta'
                 }
         except Exception as e:
-            print(f"Error autorizando alerta: {e}")
+            # print(f"Error autorizando alerta: {e}")
             return {
                 'success': False,
                 'error': str(e)
@@ -403,7 +403,7 @@ class MqttAlertService:
                     'error': 'No se pudo actualizar el estado de la alerta'
                 }
         except Exception as e:
-            print(f"Error cambiando estado de alerta: {e}")
+            # print(f"Error cambiando estado de alerta: {e}")
             return {
                 'success': False,
                 'error': str(e)
@@ -424,7 +424,7 @@ class MqttAlertService:
                     'error': 'No se pudo eliminar la alerta'
                 }
         except Exception as e:
-            print(f"Error eliminando alerta: {e}")
+            # print(f"Error eliminando alerta: {e}")
             return {
                 'success': False,
                 'error': str(e)
@@ -441,7 +441,7 @@ class MqttAlertService:
             
             return {'success': True, 'alert': alert.to_json()}
         except Exception as e:
-            print(f"Error updating alert user status: {e}")
+            # print(f"Error updating alert user status: {e}")
             return {'success': False, 'error': str(e)}
 
     def get_alerts_stats(self):
@@ -453,7 +453,7 @@ class MqttAlertService:
                 'stats': stats
             }
         except Exception as e:
-            print(f"Error obteniendo estadísticas: {e}")
+            # print(f"Error obteniendo estadísticas: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -477,7 +477,7 @@ class MqttAlertService:
                 'usuarios': usuarios
             }
         except Exception as e:
-            print(f"Error verificando empresa y sede: {e}")
+            # print(f"Error verificando empresa y sede: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -502,7 +502,7 @@ class MqttAlertService:
                 }
             }
         except Exception as e:
-            print(f"Error obteniendo alertas activas por empresa y sede: {e}")
+            # print(f"Error obteniendo alertas activas por empresa y sede: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -540,7 +540,7 @@ class MqttAlertService:
             return base_priority
             
         except Exception as e:
-            print(f"Error determinando prioridad: {e}")
+            # print(f"Error determinando prioridad: {e}")
             return 'media'  # prioridad por defecto
     
     # COMENTADO: Método obsoleto - La ubicación ahora viene incluida en el modelo MqttAlert

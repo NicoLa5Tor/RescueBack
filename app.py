@@ -88,7 +88,7 @@ def create_app():
     
     # Verificar conexión a la base de datos al iniciar
     if not db.test_connection():
-        print("Error: No se pudo conectar a MongoDB")
+        # print("Error: No se pudo conectar a MongoDB")
         exit(1)
     
     # Registrar rutas
@@ -110,10 +110,10 @@ def create_app():
         headers = dict(request.headers)
         auth_token = request.cookies.get('auth_token')
         
-        print(f"\ud83d\udd0d DEBUG COOKIES:")
-        print(f"  - All cookies: {cookies}")
-        print(f"  - auth_token cookie: {auth_token}")
-        print(f"  - Authorization header: {headers.get('Authorization')}")
+        # print(f"🔍 DEBUG COOKIES:")
+        # print(f"  - All cookies: {cookies}")
+        # print(f"  - auth_token cookie: {auth_token}")
+        # print(f"  - Authorization header: {headers.get('Authorization')}")
         
         return jsonify({
             'cookies': cookies,
@@ -170,9 +170,9 @@ if __name__ == '__main__':
             debug=Config.DEBUG
         )
     except ValueError as e:
-        print(f"❌ Error de configuración: {e}")
-        print("💡 Asegúrate de que tu archivo .env contenga todas las variables requeridas.")
+        # print(f"❌ Error de configuración: {e}")
+        # print("💡 Asegúrate de que tu archivo .env contenga todas las variables requeridas.")
         exit(1)
     except Exception as e:
-        print(f"❌ Error al iniciar la aplicación: {e}")
+        # print(f"❌ Error al iniciar la aplicación: {e}")
         exit(1)

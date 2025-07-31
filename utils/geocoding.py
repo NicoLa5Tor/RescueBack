@@ -40,32 +40,32 @@ def obtener_lat_lon(direccion: str) -> Tuple[Optional[str], Optional[str]]:
                 lon = data[0].get('lon')
                 
                 if lat and lon:
-                    print(f"✅ Geocodificación exitosa para '{direccion}': {lat}, {lon}")
+                    # print(f"✅ Geocodificación exitosa para '{direccion}': {lat}, {lon}")
                     return str(lat), str(lon)
             else:
-                print(f"⚠️ No se encontraron coordenadas para: {direccion}")
+                # print(f"⚠️ No se encontraron coordenadas para: {direccion}")
                 return None, None
         elif resp.status_code == 429:
-            print(f"⏰ Rate limit excedido para geocodificación de '{direccion}'")
+            # print(f"⏰ Rate limit excedido para geocodificación de '{direccion}'")
             return None, None
         elif resp.status_code == 403:
-            print(f"🚫 Acceso denegado al servicio de geocodificación para '{direccion}'")
+            # print(f"🙫 Acceso denegado al servicio de geocodificación para '{direccion}'")
             return None, None
         else:
-            print(f"❌ Error del servidor de geocodificación ({resp.status_code}) para '{direccion}'")
+            # print(f"❌ Error del servidor de geocodificación ({resp.status_code}) para '{direccion}'")
             return None, None
         
     except requests.exceptions.Timeout:
-        print(f"⏱️ Timeout en geocodificación para '{direccion}'")
+        # print(f"⏱️ Timeout en geocodificación para '{direccion}'")
         return None, None
     except requests.exceptions.ConnectionError:
-        print(f"🌐 Error de conexión en geocodificación para '{direccion}'")
+        # print(f"🌐 Error de conexión en geocodificación para '{direccion}'")
         return None, None
     except requests.exceptions.RequestException as e:
-        print(f"❌ Error en geocodificación para '{direccion}': {e}")
+        # print(f"❌ Error en geocodificación para '{direccion}': {e}")
         return None, None
     except Exception as e:
-        print(f"❌ Error inesperado en geocodificación: {e}")
+        # print(f"❌ Error inesperado en geocodificación: {e}")
         return None, None
 
 def generar_url_google_maps(lat: str, lon: str, zoom: int = 15) -> str:
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     # Ejemplo de uso
     direccion = "Universidad de Cundinamarca, Facatativá"
     lat, lon = obtener_lat_lon(direccion)
-    print(f"Latitud: {lat}, Longitud: {lon}")
+    # print(f"Latitud: {lat}, Longitud: {lon}")
     
     if lat and lon:
         url = generar_url_google_maps(lat, lon)
-        print(f"URL: {url}")
+        # print(f"URL: {url}")

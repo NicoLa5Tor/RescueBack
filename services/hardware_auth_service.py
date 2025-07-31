@@ -38,10 +38,10 @@ class HardwareAuthService:
             # Normalizar tipo de hardware a mayúsculas
             tipo_hardware_normalizado = tipo_hardware.strip().upper()
             
-            print(f"🔐 AUTENTICACIÓN SIMPLE DE HARDWARE")
-            print(f"   Hardware: {hardware_nombre}")
-            print(f"   Tipo Hardware: {tipo_hardware_normalizado}")
-            print(f"   Tópico: {empresa_nombre}/{sede_nombre}/{tipo_hardware_normalizado}/{hardware_nombre}")
+            # print(f"🔐 AUTENTICACIÓN SIMPLE DE HARDWARE")
+            # print(f"   Hardware: {hardware_nombre}")
+            # print(f"   Tipo Hardware: {tipo_hardware_normalizado}")
+            # print(f"   Tópico: {empresa_nombre}/{sede_nombre}/{tipo_hardware_normalizado}/{hardware_nombre}")
             
             # PASO 1: Verificar que el hardware existe (normalizar nombres quitando espacios)
             hardware_nombre_normalizado = hardware_nombre.strip().replace(' ', '')
@@ -65,7 +65,7 @@ class HardwareAuthService:
                     'message': 'Las credenciales de hardware no son válidas'
                 }
             
-            print(f"✅ Hardware encontrado: {hardware['nombre']}")
+            # print(f"✅ Hardware encontrado: {hardware['nombre']}")
             
             # PASO 2: Verificar que el tópico coincide con el guardado
             topico_recibido = f"{empresa_nombre}/{sede_nombre}/{tipo_hardware_normalizado}/{hardware_nombre}"
@@ -78,7 +78,7 @@ class HardwareAuthService:
                     'message': 'Las credenciales de hardware no son válidas'
                 }
             
-            print(f"✅ Tópico verificado: {topico_guardado}")
+            # print(f"✅ Tópico verificado: {topico_guardado}")
             
             # PASO 3: Generar token con información básica + hardware_id
             current_time = datetime.utcnow()
@@ -95,7 +95,7 @@ class HardwareAuthService:
             
             token = jwt.encode(payload, self.secret_key, algorithm='HS256')
             
-            print(f"✅ Token generado para {self.token_expiry_minutes} minutos")
+            # print(f"✅ Token generado para {self.token_expiry_minutes} minutos")
             
             return {
                 'success': True,
@@ -105,7 +105,7 @@ class HardwareAuthService:
             }
             
         except Exception as e:
-            print(f"💥 ERROR: {str(e)}")
+            # print(f"💥 ERROR: {str(e)}")
             return {
                 'success': False,
                 'error': 'Error interno',
@@ -123,7 +123,7 @@ class HardwareAuthService:
             Dict con success=True/False y payload si es válido
         """
         try:
-            print(f"🔍 VERIFICANDO TOKEN DE HARDWARE")
+            # print(f"🔍 VERIFICANDO TOKEN DE HARDWARE")
             
             # Decodificar el token
             payload = jwt.decode(token, self.secret_key, algorithms=['HS256'])
@@ -171,7 +171,7 @@ class HardwareAuthService:
                         'message': 'El hardware asociado al token no existe o está inactivo'
                     }
             
-            print(f"✅ Token verificado correctamente para hardware: {payload.get('hardware_nombre')}")
+            # print(f"✅ Token verificado correctamente para hardware: {payload.get('hardware_nombre')}")
             
             return {
                 'success': True,
@@ -192,7 +192,7 @@ class HardwareAuthService:
                 'message': 'El token de hardware no es válido'
             }
         except Exception as e:
-            print(f"💥 ERROR verificando token: {str(e)}")
+            # print(f"💥 ERROR verificando token: {str(e)}")
             return {
                 'success': False,
                 'error': 'Error interno',
@@ -231,12 +231,12 @@ class HardwareAuthService:
             }
             
             self.used_tokens_collection.insert_one(used_token_doc)
-            print(f"🚫 Token invalidado después de uso para hardware: {payload.get('hardware_nombre') if 'payload' in locals() else 'desconocido'}")
+            # print(f"🚫 Token invalidado después de uso para hardware: {payload.get('hardware_nombre') if 'payload' in locals() else 'desconocido'}")
             
             return True
             
         except Exception as e:
-            print(f"💥 ERROR invalidando token: {str(e)}")
+            # print(f"💥 ERROR invalidando token: {str(e)}")
             return False
     
     def _get_token_hash(self, token: str) -> str:
@@ -269,7 +269,7 @@ class HardwareAuthService:
             return used_token is not None
             
         except Exception as e:
-            print(f"💥 ERROR verificando si token fue usado: {str(e)}")
+            # print(f"💥 ERROR verificando si token fue usado: {str(e)}")
             # En caso de error, asumir que no fue usado para no bloquear innecesariamente
             return False
     
@@ -291,10 +291,11 @@ class HardwareAuthService:
             })
             
             if result.deleted_count > 0:
-                print(f"🧹 Limpiados {result.deleted_count} tokens expirados de la blacklist")
+                # print(f"🧩 Limpiados {result.deleted_count} tokens expirados de la blacklist")
+                pass
             
             return result.deleted_count
             
         except Exception as e:
-            print(f"💥 ERROR limpiando tokens expirados: {str(e)}")
+            # print(f"💥 ERROR limpiando tokens expirados: {str(e)}")
             return 0

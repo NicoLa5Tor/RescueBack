@@ -26,9 +26,10 @@ class UsuarioRepository:
             self.collection.create_index([("cedula", 1)])
             self.collection.create_index([("telefono", 1)])
             
-            print("Índices de usuarios creados correctamente")
+            # print("Índices de usuarios creados correctamente")
         except Exception as e:
-            print(f"Error creando índices de usuarios: {e}")
+            # print(f"Error creando índices de usuarios: {e}")
+            pass
     
     def create(self, usuario):
         """Crea un nuevo usuario en la base de datos"""

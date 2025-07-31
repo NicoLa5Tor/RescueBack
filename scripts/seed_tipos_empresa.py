@@ -65,14 +65,14 @@ def crear_tipos_empresa_por_defecto():
         }
     ]
     
-    print("Creando tipos de empresa por defecto...")
-    print("-" * 50)
+    # print("Creando tipos de empresa por defecto...")
+    # print("-" * 50)
     
     for tipo_data in tipos_empresa:
         # Verificar si ya existe
         existing = repository.get_by_nombre(tipo_data["nombre"])
         if existing["success"]:
-            print(f"❌ '{tipo_data['nombre']}' ya existe, saltando...")
+    # print(f"❌ '{tipo_data['nombre']}' ya existe, saltando...")
             continue
         
         # Crear nuevo tipo
@@ -85,16 +85,16 @@ def crear_tipos_empresa_por_defecto():
         result = repository.create(tipo_empresa)
         
         if result["success"]:
-            print(f"✅ Tipo de empresa '{tipo_data['nombre']}' creado exitosamente")
+    # print(f"✅ Tipo de empresa '{tipo_data['nombre']}' creado exitosamente")
         else:
-            print(f"❌ Error al crear '{tipo_data['nombre']}': {result.get('errors', [])}")
+    # print(f"❌ Error al crear '{tipo_data['nombre']}': {result.get('errors', [])}")
     
-    print("-" * 50)
-    print("Proceso completado!")
+    # print("-" * 50)
+    # print("Proceso completado!")
 
 if __name__ == "__main__":
     try:
         crear_tipos_empresa_por_defecto()
     except Exception as e:
-        print(f"Error ejecutando el script: {str(e)}")
+    # print(f"Error ejecutando el script: {str(e)}")
         sys.exit(1)

@@ -21,7 +21,7 @@ class ContactRepository:
             result = self.collection.insert_one(contact_dict)
             return str(result.inserted_id)
         except Exception as e:
-            print(f"Error creating contact: {e}")
+            # print(f"Error creating contact: {e}")
             raise Exception(f"No se pudo crear el contacto: {str(e)}")
     
     def get_contact_by_id(self, contact_id: str) -> Optional[Contact]:
@@ -35,7 +35,7 @@ class ContactRepository:
                 return Contact.from_dict(contact_data)
             return None
         except Exception as e:
-            print(f"Error getting contact by ID: {e}")
+            # print(f"Error getting contact by ID: {e}")
             return None
     
     def get_all_contacts(self, limit: int = 100, skip: int = 0) -> List[Contact]:
@@ -50,7 +50,7 @@ class ContactRepository:
                 contacts.append(Contact.from_dict(contact_data))
             return contacts
         except Exception as e:
-            print(f"Error getting all contacts: {e}")
+            # print(f"Error getting all contacts: {e}")
             return []
     
     def update_contact_status(self, contact_id: str, status: str, email_id: str = None) -> bool:
@@ -68,7 +68,7 @@ class ContactRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error updating contact status: {e}")
+            # print(f"Error updating contact status: {e}")
             return False
     
     def get_contacts_by_status(self, status: str) -> List[Contact]:
@@ -83,7 +83,7 @@ class ContactRepository:
                 contacts.append(Contact.from_dict(contact_data))
             return contacts
         except Exception as e:
-            print(f"Error getting contacts by status: {e}")
+            # print(f"Error getting contacts by status: {e}")
             return []
     
     def count_contacts(self) -> int:
@@ -93,5 +93,5 @@ class ContactRepository:
         try:
             return self.collection.count_documents({})
         except Exception as e:
-            print(f"Error counting contacts: {e}")
+            # print(f"Error counting contacts: {e}")
             return 0

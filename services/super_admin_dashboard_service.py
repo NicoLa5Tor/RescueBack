@@ -207,7 +207,8 @@ class SuperAdminDashboardService:
                 if empresa_id in empresas_activas_ids:
                     activity_by_empresa[empresa_id] = stat['count']
                 else:
-                    print(f"⚠️ Skipping activity for inactive empresa: {empresa_id}")
+                    # print(f"⚠️ Skipping activity for inactive empresa: {empresa_id}")
+                    pass
             
             # Preparar datos para el gráfico - ORDENAR POR ACTIVIDAD
             empresas = empresas_result['data']
@@ -237,11 +238,11 @@ class SuperAdminDashboardService:
                 data.append(activity_count)
                 
             # Debug: mostrar el ranking
-            print(f"🏆 TOP {limit} empresas por actividad:")
+            # print(f"🏆 TOP {limit} empresas por actividad:")
             for i, item in enumerate(top_empresas, 1):
                 empresa_nombre = item['empresa']['nombre']
                 activity_count = item['activity_count']
-                print(f"   {i}. {empresa_nombre}: {activity_count} logs")
+                # print(f"   {i}. {empresa_nombre}: {activity_count} logs")
             
             # Si no hay empresas, devolver estructura vacía
             if not labels:

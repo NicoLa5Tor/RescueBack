@@ -72,12 +72,12 @@ class MqttAlertController:
     def get_alert_by_id(self, alert_id):
         """Obtener alerta por ID"""
         try:
-            print(f"🔍 Buscando alerta con ID: {alert_id}")
+            # print(f"🔍 Buscando alerta con ID: {alert_id}")
             result = self.service.get_alert_by_id(alert_id)
-            print(f"📊 Resultado del servicio: {result}")
+            # print(f"📊 Resultado del servicio: {result}")
             return jsonify(result), 200 if result['success'] else 404
         except Exception as e:
-            print(f"❌ Error en get_alert_by_id: {e}")
+            # print(f"❌ Error en get_alert_by_id: {e}")
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
@@ -156,8 +156,11 @@ class MqttAlertController:
     def create_alert(self):
         """Crear una nueva alerta (Solo necesita data - hardware_id desde token)"""
         try:
+            # Debug: CREATE_ALERT endpoint
+            
             # Obtener token y extraer información del hardware
             token = get_auth_cookie(request) or get_auth_header(request)
+            print(f"🔑 TOKEN OBTENIDO: {'Sí' if token else 'No'}")
             if not token:
                 return jsonify({
                     'success': False,
@@ -166,11 +169,13 @@ class MqttAlertController:
                 }), 401
             
             token_result = self.hardware_auth_service.verify_token(token)
+            print(f"🔐 TOKEN VERIFICATION RESULT: {token_result}")
             if not token_result['success']:
                 return jsonify(token_result), 401
             
             token_payload = token_result['payload']
             hardware_id = token_payload.get('hardware_id')
+            print(f"🏗️ HARDWARE_ID FROM TOKEN: {hardware_id}")
             
             if not hardware_id:
                 return jsonify({
@@ -187,7 +192,57 @@ class MqttAlertController:
                 }), 400
             
             data = request.get_json()
-            alert_data = data.get('data', {})
+            print(f"📋 JSON DATA RECEIVED: {data}")
+            
+            # Validación estricta de parámetros
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'error': 'Datos requeridos',
+                    'message': 'El cuerpo de la petición no puede estar vacío'
+                }), 400
+            
+            alert_data = data.get('data')
+            if alert_data is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo data requerido',
+                    'message': 'El campo "data" es obligatorio'
+                }), 400
+            
+            if not isinstance(alert_data, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato de data inválido',
+                    'message': 'El campo "data" debe ser un objeto JSON'
+                }), 400
+            
+            # Validar campos obligatorios dentro de data
+            # Aceptar tanto 'tipo_alerta' como 'tipo_alarma' para flexibilidad
+            tipo_alerta = alert_data.get('tipo_alerta') or alert_data.get('tipo_alarma')
+            print(f"📝 TIPO_ALERTA FOUND: {tipo_alerta}")
+            if not tipo_alerta:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo tipo_alerta requerido',
+                    'message': 'El campo "data.tipo_alerta" o "data.tipo_alarma" es obligatorio'
+                }), 400
+            
+            if not isinstance(tipo_alerta, str) or not tipo_alerta.strip():
+                return jsonify({
+                    'success': False,
+                    'error': 'tipo_alerta inválido',
+                    'message': 'El campo "tipo_alerta" debe ser una cadena no vacía'
+                }), 400
+            
+            # Validar descripción si se proporciona
+            descripcion = alert_data.get('descripcion')
+            if descripcion is not None and (not isinstance(descripcion, str) or not descripcion.strip()):
+                return jsonify({
+                    'success': False,
+                    'error': 'Descripción inválida',
+                    'message': 'El campo "descripcion" debe ser una cadena no vacía si se proporciona'
+                }), 400
             
             # Buscar información del tipo de alarma solo para obtener el nombre y la imagen
             tipo_alarma_info = None
@@ -268,6 +323,13 @@ class MqttAlertController:
             if tipo_alarma_info and tipo_alarma_info.imagen_base64:
                 image_alert = tipo_alarma_info.imagen_base64
             
+            # Obtener elementos necesarios e instrucciones desde tipo_alarma_info si existe
+            elementos_necesarios = []
+            instrucciones = []
+            if tipo_alarma_info:
+                elementos_necesarios = getattr(tipo_alarma_info, 'implementos_necesarios', [])
+                instrucciones = getattr(tipo_alarma_info, 'recomendaciones', [])
+            
             # Crear alerta con la información del hardware usando el método de fábrica actualizado
             alert = MqttAlert.create_from_hardware(
                 empresa_nombre=empresa.nombre,
@@ -279,6 +341,8 @@ class MqttAlertController:
                 descripcion=alert_data.get('descripcion', f'Alerta generada por {hardware.nombre}'),
                 prioridad=prioridad_alerta,
                 image_alert=image_alert,
+                elementos_necesarios=elementos_necesarios,
+                instrucciones=instrucciones,
                 data=alert_data,
                 numeros_telefonicos=numeros_telefonicos,
                 topic=hardware.topic,
@@ -629,11 +693,72 @@ class MqttAlertController:
             
             data = request.get_json()
             
+            # Validación estricta del cuerpo de la petición
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'error': 'Datos requeridos',
+                    'message': 'El cuerpo de la petición no puede estar vacío'
+                }), 400
+            
+            if not isinstance(data, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato de datos inválido',
+                    'message': 'El cuerpo de la petición debe ser un objeto JSON válido'
+                }), 400
+            
             # Validar estructura de campos requeridos
-            creador = data.get('creador', {})
-            ubicacion = data.get('ubicacion', {})
+            creador = data.get('creador')
+            ubicacion = data.get('ubicacion')
             tipo_alerta = data.get('tipo_alerta')
             descripcion = data.get('descripcion')
+            
+            # Validación del campo creador
+            if creador is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo creador requerido',
+                    'message': 'El campo "creador" es obligatorio',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
+                }), 400
+            
+            if not isinstance(creador, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato de creador inválido',
+                    'message': 'El campo "creador" debe ser un objeto',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
+                }), 400
+            
+            # Validación del campo ubicacion
+            if ubicacion is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo ubicacion requerido',
+                    'message': 'El campo "ubicacion" es obligatorio',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
+                }), 400
+            
+            if not isinstance(ubicacion, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato de ubicacion inválido',
+                    'message': 'El campo "ubicacion" debe ser un objeto',
+                    'estructura_esperada': {
+                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
+                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                    }
+                }), 400
             
             # Validar objeto creador
             usuario_id = creador.get('usuario_id')
@@ -717,7 +842,7 @@ class MqttAlertController:
             hardware_repo = HardwareRepository()
             
             # Buscar específicamente una botonera en la empresa y sede del usuario
-            print(f"🔍 Buscando botonera para empresa_id: {empresa._id}, sede: {sede}")
+            # print(f"🔍 Buscando botonera para empresa_id: {empresa._id}, sede: {sede}")
             
             # Primero buscar TODO el hardware de esa empresa y sede para ver qué hay
             all_hardware_debug = hardware_repo.find_with_filters({
@@ -725,9 +850,10 @@ class MqttAlertController:
                 'sede': sede,
                 'activa': True
             })
-            print(f"🔍 TODO el hardware activo en empresa {empresa.nombre}, sede {sede}:")
+            # print(f"🔍 TODO el hardware activo en empresa {empresa.nombre}, sede {sede}:")
             for hw in all_hardware_debug:
-                print(f"  - {hw.nombre} | Tipo: {hw.tipo} | Sede: {hw.sede}")
+                # print(f"  - {hw.nombre} | Tipo: {hw.tipo} | Sede: {hw.sede}")
+                pass
             
             botonera = None
             # Buscar botonera con filtro case-insensitive
@@ -743,20 +869,22 @@ class MqttAlertController:
                 if hw.tipo.upper() == 'BOTONERA':
                     hardware_empresa.append(hw)
             
-            print(f"🔍 Hardware tipo BOTONERA encontrado: {len(hardware_empresa) if hardware_empresa else 0} elementos")
+            # print(f"🔍 Hardware tipo BOTONERA encontrado: {len(hardware_empresa) if hardware_empresa else 0} elementos")
             for hw in hardware_empresa:
-                print(f"  - Botonera: {hw.nombre}, Tipo: {hw.tipo}, Sede: {hw.sede}")
-                print(f"    Direccion: {hw.direccion}")
-                print(f"    Direccion URL (Google): {hw.direccion_url}")
-                print(f"    Direccion Open Maps: {getattr(hw, 'direccion_open_maps', 'No disponible')}")
+                # print(f"  - Botonera: {hw.nombre}, Tipo: {hw.tipo}, Sede: {hw.sede}")
+                # print(f"    Direccion: {hw.direccion}")
+                # print(f"    Direccion URL (Google): {hw.direccion_url}")
+                # print(f"    Direccion Open Maps: {getattr(hw, 'direccion_open_maps', 'No disponible')}")
+                pass
             
             # Tomar la primera botonera encontrada (debería haber solo una por sede)
             if hardware_empresa:
                 botonera = hardware_empresa[0]
-                print(f"✅ Botonera encontrada: {botonera.nombre}")
+                # print(f"✅ Botonera encontrada: {botonera.nombre}")
             else:
-                print(f"❌ No se encontró botonera para empresa {empresa.nombre} en sede {sede}")
-                print(f"❌ Tipos disponibles en la sede: {[hw.tipo for hw in all_hardware_debug]}")
+                # print(f"❌ No se encontró botonera para empresa {empresa.nombre} en sede {sede}")
+                # print(f"❌ Tipos disponibles en la sede: {[hw.tipo for hw in all_hardware_debug]}")
+                pass
             
             # Preparar ubicación de la botonera
             botonera_ubicacion = None
@@ -770,9 +898,10 @@ class MqttAlertController:
                     'topic': botonera.topic,
                     'tipo': botonera.tipo
                 }
-                print(f"📍 Ubicación de botonera preparada: {botonera_ubicacion}")
+                # print(f"📍 Ubicación de botonera preparada: {botonera_ubicacion}")
             else:
-                print(f"📍 botonera_ubicacion será NULL porque no se encontró botonera")
+                # print(f"📍 botonera_ubicacion será NULL porque no se encontró botonera")
+                pass
             
             # Obtener topics de otros hardware (excluir botoneras) para notificaciones
             todos_hardware = hardware_repo.find_with_filters({
@@ -813,23 +942,16 @@ class MqttAlertController:
                 tipo_alarma_repo = TipoAlarmaRepository()
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(tipo_alerta)
             
-            # Preparar datos adicionales completos SIN tipo_alarma_info
+            # Preparar datos adicionales simplificados sin redundancias
             data_adicional = {
                 'origen': 'usuario_movil',
                 'usuario_id_origen': usuario_id,
-                'usuario_nombre': usuario.nombre,
-                'usuario_telefono': getattr(usuario, 'telefono', None),
-                'usuario_email': getattr(usuario, 'email', None),
-                'usuario_rol': getattr(usuario, 'rol', None),
-                'empresa_nombre': empresa.nombre,
-                'sede_usuario': sede,
                 'timestamp_creacion': datetime.utcnow().isoformat(),
                 'topics_notificacion': topics,  # Guardar topics para notificaciones
                 'botonera_ubicacion': botonera_ubicacion,  # Guardar ubicación de botonera
                 'metadatos': {
                     'tipo_procesamiento': 'manual',
-                    'plataforma': 'mobile_app',
-                    'nivel_prioridad': prioridad
+                    'plataforma': 'mobile_app'
                 }
             }
             
@@ -846,6 +968,13 @@ class MqttAlertController:
             if tipo_alarma_info and tipo_alarma_info.imagen_base64:
                 image_alert = tipo_alarma_info.imagen_base64
             
+            # Obtener elementos necesarios e instrucciones desde tipo_alarma_info si existe
+            elementos_necesarios = []
+            instrucciones = []
+            if tipo_alarma_info:
+                elementos_necesarios = getattr(tipo_alarma_info, 'implementos_necesarios', [])
+                instrucciones = getattr(tipo_alarma_info, 'recomendaciones', [])
+            
             # Crear alerta usando el método de fábrica para usuarios actualizado
             alert = MqttAlert.create_from_user(
                 empresa_nombre=empresa.nombre,
@@ -857,6 +986,8 @@ class MqttAlertController:
                 descripcion=descripcion,
                 prioridad=prioridad,
                 image_alert=image_alert,
+                elementos_necesarios=elementos_necesarios,
+                instrucciones=instrucciones,
                 data=data_adicional,
                 numeros_telefonicos=numeros_telefonicos,
                 topics_otros_hardware=topics,  # Guardar los topics para notificaciones
@@ -892,26 +1023,109 @@ class MqttAlertController:
     def deactivate_alert_from_body(self):
         """Desactiva una alerta usando alert_id en el cuerpo, junto con desactivado_por_id y desactivado_por_tipo"""
         try:
+            # Validación estricta del formato JSON
+            if not request.is_json:
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato inválido',
+                    'message': 'El contenido debe ser JSON válido con Content-Type: application/json'
+                }), 400
+            
             data = request.get_json()
             
-            # Validar campos requeridos
+            # Validar que el cuerpo no esté vacío
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'error': 'Datos requeridos',
+                    'message': 'El cuerpo de la petición no puede estar vacío',
+                    'required_fields': ['alert_id', 'desactivado_por_id', 'desactivado_por_tipo']
+                }), 400
+            
+            if not isinstance(data, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Formato de datos inválido',
+                    'message': 'El cuerpo debe ser un objeto JSON válido',
+                    'required_fields': ['alert_id', 'desactivado_por_id', 'desactivado_por_tipo']
+                }), 400
+            
+            # Validación estricta de campos requeridos
             alert_id = data.get('alert_id')
             desactivado_por_id = data.get('desactivado_por_id')
             desactivado_por_tipo = data.get('desactivado_por_tipo')
             
+            # Validación de alert_id
+            if alert_id is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo alert_id requerido',
+                    'message': 'El campo "alert_id" es obligatorio'
+                }), 400
+            
+            if not isinstance(alert_id, str) or not alert_id.strip():
+                return jsonify({
+                    'success': False,
+                    'error': 'alert_id inválido',
+                    'message': 'El campo "alert_id" debe ser una cadena no vacía'
+                }), 400
+            
+            # Validación de desactivado_por_id
+            if desactivado_por_id is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo desactivado_por_id requerido',
+                    'message': 'El campo "desactivado_por_id" es obligatorio'
+                }), 400
+            
+            if not isinstance(desactivado_por_id, str) or not desactivado_por_id.strip():
+                return jsonify({
+                    'success': False,
+                    'error': 'desactivado_por_id inválido',
+                    'message': 'El campo "desactivado_por_id" debe ser una cadena no vacía'
+                }), 400
+            
+            # Validación de desactivado_por_tipo
+            if desactivado_por_tipo is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Campo desactivado_por_tipo requerido',
+                    'message': 'El campo "desactivado_por_tipo" es obligatorio'
+                }), 400
+            
+            if not isinstance(desactivado_por_tipo, str) or not desactivado_por_tipo.strip():
+                return jsonify({
+                    'success': False,
+                    'error': 'desactivado_por_tipo inválido',
+                    'message': 'El campo "desactivado_por_tipo" debe ser una cadena no vacía'
+                }), 400
+            
+            # Limpiar valores (trim)
+            alert_id = alert_id.strip()
+            desactivado_por_id = desactivado_por_id.strip()
+            desactivado_por_tipo = desactivado_por_tipo.strip().lower()
+            
+            # print(f"🧩 Valores limpiados:")
+            # print(f"  alert_id: '{alert_id}'")
+            # print(f"  desactivado_por_id: '{desactivado_por_id}'")
+            # print(f"  desactivado_por_tipo: '{desactivado_por_tipo}'")
+            
             if not alert_id:
+                # print(f"❌ ERROR: alert_id vacío después del trim")
                 return jsonify({
                     'success': False,
                     'error': 'El ID de la alerta es obligatorio'
                 }), 400
             
             if not desactivado_por_id:
+                # print(f"❌ ERROR: desactivado_por_id vacío después del trim")
                 return jsonify({
                     'success': False,
                     'error': 'El ID de quien desactiva es obligatorio'
                 }), 400
             
             if not desactivado_por_tipo:
+                # print(f"❌ ERROR: desactivado_por_tipo vacío después del trim")
                 return jsonify({
                     'success': False,
                     'error': 'El tipo de quien desactiva es obligatorio'
@@ -972,15 +1186,21 @@ class MqttAlertController:
             # Para administrador y super_admin podrías agregar más validaciones si es necesario
 
             # Buscar la alerta
+            # print(f"🔍 Buscando alerta con ID: {alert_id}")
             alert = self.service.alert_repo.get_alert_by_id(alert_id)
             if not alert:
+                # print(f"❌ ERROR: Alerta no encontrada con ID: {alert_id}")
                 return jsonify({
                     'success': False,
                     'error': 'Alerta no encontrada'
                 }), 404
+            
+            # print(f"✅ Alerta encontrada: {alert}")
+            # print(f"🔍 Estado actual de la alerta - activo: {alert.activo}")
 
             # Verificar si la alerta ya fue desactivada
             if not alert.activo:
+                # print(f"⚠️ Alerta ya estaba desactivada")
                 # Obtener números telefónicos reales de la alerta ya desactivada
                 numeros_telefonicos = alert.numeros_telefonicos if hasattr(alert, 'numeros_telefonicos') and alert.numeros_telefonicos else []
                 
@@ -1001,13 +1221,13 @@ class MqttAlertController:
                             })
                 
                 return jsonify({
-                    'success': False,
-                    'error': 'Alerta ya desactivada',
-                    'message': 'Esta alerta ya fue desactivada previamente',
+                    'success': True,
+                    'message': 'Alerta ya fue desactivada previamente',
+                    'already_deactivated': True,
                     'numeros_telefonicos': numeros_telefonicos,
                     'desactivado_por': alert.desactivado_por,
                     'fecha_desactivacion': alert.fecha_desactivacion.isoformat() if alert.fecha_desactivacion else None
-                }), 400
+                }), 200
 
             # Obtener números telefónicos reales de la alerta existente
             # En lugar de recrear desde cero, usar los datos que ya existen en la alerta
@@ -1080,6 +1300,10 @@ class MqttAlertController:
                 }), 500
 
         except Exception as e:
+            # print(f"❌ EXCEPCIÓN en deactivate_alert_from_body: {e}")
+            import traceback
+            # print(f"🔍 Stack trace completo:")
+            traceback.print_exc()
             return jsonify({
                 'success': False,
                 'error': 'Error interno del servidor',
@@ -1114,9 +1338,9 @@ class MqttAlertController:
                     'error': 'user_id es requerido'
                 }), 400
             
-            print(f"🔍 Buscando alerta {alert_id} para usuario {user_id}")
+            # print(f"🔍 Buscando alerta {alert_id} para usuario {user_id}")
             result = self.service.get_alert_for_user(alert_id, user_id)
-            print(f"📊 Resultado del servicio: {result}")
+            # print(f"📊 Resultado del servicio: {result}")
             
             if result['success']:
                 return jsonify(result), 200
@@ -1130,7 +1354,7 @@ class MqttAlertController:
                     return jsonify(result), 400
                     
         except Exception as e:
-            print(f"❌ Error en get_alert_details_for_user: {e}")
+            # print(f"❌ Error en get_alert_details_for_user: {e}")
             import traceback
             traceback.print_exc()
             return jsonify({

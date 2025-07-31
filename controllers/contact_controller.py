@@ -64,7 +64,7 @@ class ContactController:
             return jsonify(result), status_code
             
         except Exception as e:
-            print(f"Error in send_contact_email: {e}")
+            # print(f"Error in send_contact_email: {e}")
             return jsonify({
                 "success": False,
                 "error": "Error interno del servidor",
@@ -110,7 +110,7 @@ class ContactController:
             }), 200
             
         except Exception as e:
-            print(f"Error in get_contacts: {e}")
+            # print(f"Error in get_contacts: {e}")
             return jsonify({
                 "success": False,
                 "error": "Error interno del servidor"
@@ -141,7 +141,7 @@ class ContactController:
             }), 200
             
         except Exception as e:
-            print(f"Error in get_contact_by_id: {e}")
+            # print(f"Error in get_contact_by_id: {e}")
             return jsonify({
                 "success": False,
                 "error": "Error interno del servidor"
@@ -181,7 +181,7 @@ class ContactController:
             }), 200
             
         except Exception as e:
-            print(f"Error in get_contacts_by_status: {e}")
+            # print(f"Error in get_contacts_by_status: {e}")
             return jsonify({
                 "success": False,
                 "error": "Error interno del servidor"

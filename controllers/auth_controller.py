@@ -19,7 +19,7 @@ class AuthController:
                 return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
             result = self.auth_service.login(usuario, password)
-            print(f"Lo que viene de login es: {result}")
+            # print(f"Lo que viene de login es: {result}")
 
             if result['success']:
                 # Crear respuesta exitosa con cookie segura

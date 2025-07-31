@@ -524,8 +524,9 @@ class EmpresaService:
                                 continue
                     
             except Exception as e:
-                print(f"Error obteniendo estadísticas de alertas: {e}")
+                # print(f"Error obteniendo estadísticas de alertas: {e}")
                 # Mantener las estadísticas vacías si hay error
+                pass
             
             return {
                 'success': True,

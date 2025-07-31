@@ -122,7 +122,7 @@ class EmpresaController:
             
             # Obtener TODAS las empresas (activas e inactivas) para dashboards
             result = self.empresa_service.get_all_empresas(include_inactive=True)
-            print(f"Empresas son: {result}")
+            # print(f"Empresas son: {result}")
             logger.info(f"Total empresas (activas e inactivas): {result.get('count', 0)}")
             if result["success"] and result["data"]:
                 activas = [e for e in result["data"] if e.get("activa", True)]

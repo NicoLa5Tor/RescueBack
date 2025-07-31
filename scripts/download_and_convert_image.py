@@ -20,7 +20,7 @@ def download_and_convert_to_base64(url, output_file=None):
         str: Imagen en formato base64
     """
     try:
-        print(f"🔗 Descargando imagen desde: {url}")
+    # print(f"🔗 Descargando imagen desde: {url}")
         
         # Descargar la imagen
         response = requests.get(url)
@@ -36,45 +36,45 @@ def download_and_convert_to_base64(url, output_file=None):
         # Crear el data URI completo
         data_uri = f"data:{content_type};base64,{base64_string}"
         
-        print(f"✅ Imagen convertida a base64")
-        print(f"📏 Tamaño: {len(image_data)} bytes")
-        print(f"🖼️ Tipo: {content_type}")
+    # print(f"✅ Imagen convertida a base64")
+    # print(f"📏 Tamaño: {len(image_data)} bytes")
+    # print(f"🖼️ Tipo: {content_type}")
         
         # Guardar en archivo si se especifica
         if output_file:
             with open(output_file, 'w') as f:
                 f.write(data_uri)
-            print(f"💾 Guardado en: {output_file}")
+    # print(f"💾 Guardado en: {output_file}")
         
         return data_uri
         
     except requests.exceptions.RequestException as e:
-        print(f"❌ Error descargando imagen: {e}")
+    # print(f"❌ Error descargando imagen: {e}")
         return None
     except Exception as e:
-        print(f"❌ Error convirtiendo imagen: {e}")
+    # print(f"❌ Error convirtiendo imagen: {e}")
         return None
 
 def main():
     """Función principal"""
     if len(sys.argv) < 2:
-        print("Uso: python3 download_and_convert_image.py <URL> [archivo_salida]")
+    # print("Uso: python3 download_and_convert_image.py <URL> [archivo_salida]")
         sys.exit(1)
     
     url = sys.argv[1]
     output_file = sys.argv[2] if len(sys.argv) > 2 else None
     
-    print("🚀 Iniciando descarga y conversión de imagen...")
-    print("=" * 60)
+    # print("🚀 Iniciando descarga y conversión de imagen...")
+    # print("=" * 60)
     
     base64_data = download_and_convert_to_base64(url, output_file)
     
     if base64_data:
-        print("\n✅ Conversión completada exitosamente!")
-        print(f"📋 Primeros 100 caracteres del base64:")
-        print(base64_data[:100] + "...")
+    # print("\n✅ Conversión completada exitosamente!")
+    # print(f"📋 Primeros 100 caracteres del base64:")
+    # print(base64_data[:100] + "...")
     else:
-        print("\n❌ Error en la conversión")
+    # print("\n❌ Error en la conversión")
         sys.exit(1)
 
 if __name__ == "__main__":

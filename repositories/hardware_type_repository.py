@@ -13,7 +13,8 @@ class HardwareTypeRepository:
             self.collection.create_index([('nombre', 1)], unique=True)
             self.collection.create_index([('activa', 1)])
         except Exception as exc:
-            print(f'Error creando indices hardware_types: {exc}')
+            # print(f'Error creando indices hardware_types: {exc}')
+            pass
 
     def create(self, hw_type: HardwareType):
         try:

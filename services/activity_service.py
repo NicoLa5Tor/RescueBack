@@ -13,7 +13,8 @@ class ActivityService:
         try:
             self.repo.log(empresa_id, method, endpoint)
         except Exception as exc:
-            print(f"Error registrando actividad: {exc}")
+            # print(f"Error registrando actividad: {exc}")
+            pass
 
     def get_all(self):
         try:

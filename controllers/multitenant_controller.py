@@ -49,7 +49,7 @@ class MultiTenantController:
         """
         try:
             result = self.usuario_service.get_usuarios_by_empresa(empresa_id)
-            print(f"los usuarios son: {result}")
+            # print(f"los usuarios son: {result}")
             if result['success']:
                 return jsonify({
                     'success': True,
@@ -189,7 +189,7 @@ class MultiTenantController:
         """
         try:
             result = self.usuario_service.get_usuarios_by_empresa_including_inactive(empresa_id)
-            print(f"Los usuarios son: {result}")
+            # print(f"Los usuarios son: {result}")
             if result['success']:
                 return jsonify({
                     'success': True,

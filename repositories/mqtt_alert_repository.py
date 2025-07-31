@@ -18,31 +18,31 @@ class MqttAlertRepository:
             alert._id = result.inserted_id
             return alert
         except Exception as e:
-            print(f"Error creando alerta MQTT: {e}")
+            # print(f"Error creando alerta MQTT: {e}")
             raise e
     
     def get_alert_by_id(self, alert_id):
         """Obtiene una alerta por su ID"""
         try:
-            print(f"🏛️  Repositorio: Buscando alerta con ID: {alert_id}")
-            print(f"🔧 Convirtiendo a ObjectId...")
+            # print(f"🏦  Repositorio: Buscando alerta con ID: {alert_id}")
+            # print(f"🔧 Convirtiendo a ObjectId...")
             object_id = ObjectId(alert_id)
-            print(f"✅ ObjectId creado: {object_id}")
+            # print(f"✅ ObjectId creado: {object_id}")
             
-            print(f"🔍 Ejecutando query en MongoDB...")
+            # print(f"🔍 Ejecutando query en MongoDB...")
             alert_data = self.collection.find_one({'_id': object_id})
-            print(f"📄 Datos obtenidos de MongoDB: {alert_data}")
+            # print(f"📄 Datos obtenidos de MongoDB: {alert_data}")
             
             if alert_data:
-                print(f"✅ Datos encontrados, creando objeto MqttAlert...")
+                # print(f"✅ Datos encontrados, creando objeto MqttAlert...")
                 alert_obj = MqttAlert.from_dict(alert_data)
-                print(f"🎯 Objeto MqttAlert creado: {alert_obj}")
+                # print(f"🎯 Objeto MqttAlert creado: {alert_obj}")
                 return alert_obj
             else:
-                print(f"❌ No se encontraron datos para este ID")
-            return None
+                # print(f"❌ No se encontraron datos para este ID")
+                return None
         except Exception as e:
-            print(f"❌ Error obteniendo alerta por ID: {e}")
+            # print(f"❌ Error obteniendo alerta por ID: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -56,7 +56,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents({})
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas: {e}")
+            # print(f"Error obteniendo alertas: {e}")
             return [], 0
     
     def get_alerts_by_empresa(self, empresa_nombre, page=1, limit=50):
@@ -69,7 +69,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas por empresa: {e}")
+            # print(f"Error obteniendo alertas por empresa: {e}")
             return [], 0
     
     def get_alerts_by_sede(self, empresa_nombre, sede, page=1, limit=50):
@@ -82,7 +82,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas por sede: {e}")
+            # print(f"Error obteniendo alertas por sede: {e}")
             return [], 0
     
     def get_active_alerts(self, page=1, limit=50):
@@ -95,7 +95,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas activas: {e}")
+            # print(f"Error obteniendo alertas activas: {e}")
             return [], 0
     
     def get_unauthorized_alerts(self, page=1, limit=50):
@@ -108,7 +108,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas no autorizadas: {e}")
+            # print(f"Error obteniendo alertas no autorizadas: {e}")
             return [], 0
     
     def update_alert(self, alert_id, alert):
@@ -125,7 +125,7 @@ class MqttAlertRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error actualizando alerta: {e}")
+            # print(f"Error actualizando alerta: {e}")
             return False
     
     def authorize_alert(self, alert_id, usuario_id):
@@ -144,7 +144,7 @@ class MqttAlertRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error autorizando alerta: {e}")
+            # print(f"Error autorizando alerta: {e}")
             return False
     
     def toggle_alert_status(self, alert_id):
@@ -166,7 +166,7 @@ class MqttAlertRepository:
             )
             return result.modified_count > 0
         except Exception as e:
-            print(f"Error cambiando estado de alerta: {e}")
+            # print(f"Error cambiando estado de alerta: {e}")
             return False
     
     def delete_alert(self, alert_id):
@@ -175,7 +175,7 @@ class MqttAlertRepository:
             result = self.collection.delete_one({'_id': ObjectId(alert_id)})
             return result.deleted_count > 0
         except Exception as e:
-            print(f"Error eliminando alerta: {e}")
+            # print(f"Error eliminando alerta: {e}")
             return False
     
     def update_user_status_in_alert(self, alert_id, usuario_id, updates):
@@ -211,7 +211,7 @@ class MqttAlertRepository:
                 return None, "No changes were made"
 
         except Exception as e:
-            print(f"Error updating user status in alert: {e}")
+            # print(f"Error updating user status in alert: {e}")
             return None, str(e)
 
     def get_alerts_stats(self):
@@ -230,7 +230,7 @@ class MqttAlertRepository:
                 'unauthorized': unauthorized
             }
         except Exception as e:
-            print(f"Error obteniendo estadísticas de alertas: {e}")
+            # print(f"Error obteniendo estadísticas de alertas: {e}")
             return {
                 'total': 0,
                 'active': 0,
@@ -257,7 +257,7 @@ class MqttAlertRepository:
                 # Si no hay sedes específicas, considerar válida cualquier sede
                 return True, "Empresa válida"
         except Exception as e:
-            print(f"Error verificando empresa y sede: {e}")
+            # print(f"Error verificando empresa y sede: {e}")
             return False, "Error en la verificación"
     
     def get_users_by_empresa_sede(self, empresa_nombre, sede):
@@ -285,7 +285,7 @@ class MqttAlertRepository:
             
             return list(usuarios)
         except Exception as e:
-            print(f"Error obteniendo usuarios por empresa y sede: {e}")
+            # print(f"Error obteniendo usuarios por empresa y sede: {e}")
             return []
     
     def verify_hardware_exists(self, hardware_nombre):
@@ -303,7 +303,7 @@ class MqttAlertRepository:
                 return False, None, "Hardware no encontrado"
                 
         except Exception as e:
-            print(f"Error verificando hardware: {e}")
+            # print(f"Error verificando hardware: {e}")
             return False, None, f"Error en la verificación: {e}"
     
     def get_full_verification_info(self, hardware_nombre):
@@ -359,7 +359,7 @@ class MqttAlertRepository:
             }
             
         except Exception as e:
-            print(f"Error en verificación completa: {e}")
+            # print(f"Error en verificación completa: {e}")
             return {
                 'hardware_exists': False,
                 'hardware_message': f"Error: {e}",
@@ -379,7 +379,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas por hardware_id: {e}")
+            # print(f"Error obteniendo alertas por hardware_id: {e}")
             return [], 0
     
     def get_alerts_by_hardware_name(self, hardware_nombre, page=1, limit=50):
@@ -392,7 +392,7 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas por hardware_nombre: {e}")
+            # print(f"Error obteniendo alertas por hardware_nombre: {e}")
             return [], 0
     
     def get_active_alerts_by_empresa_sede(self, empresa_id, page=1, limit=5):
@@ -403,7 +403,7 @@ class MqttAlertRepository:
             # Primero buscar la empresa por ID para obtener su nombre
             empresa = self.db.empresas.find_one({'_id': ObjectId(empresa_id)})
             if not empresa:
-                print(f"Empresa no encontrada con ID: {empresa_id}")
+                # print(f"Empresa no encontrada con ID: {empresa_id}")
                 return [], 0
             
             empresa_nombre = empresa['nombre']
@@ -415,5 +415,5 @@ class MqttAlertRepository:
             total = self.collection.count_documents(query)
             return alerts, total
         except Exception as e:
-            print(f"Error obteniendo alertas activas por empresa y sede: {e}")
+            # print(f"Error obteniendo alertas activas por empresa y sede: {e}")
             return [], 0

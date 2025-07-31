@@ -9,7 +9,7 @@ current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env_path = os.path.join(current_dir, '.env')
 load_dotenv(env_path, override=True)
 
-print(f"🔧 Cargando .env desde: {env_path}")
+# print(f"🔧 Cargando .env desde: {env_path}")
 
 class EmailService:
     """Servicio para manejar el envío de emails via Resend API"""
@@ -31,10 +31,10 @@ class EmailService:
         # Configurar resend SOLO con la API key del .env
         resend.api_key = api_key
         
-        print(f"📧 EmailService configurado:")
-        print(f"   API Key: {api_key[:10]}...")
-        print(f"   Domain: {self.domain}")
-        print(f"   Contact Email: {self.contact_email}")
+        # print(f"📧 EmailService configurado:")
+        # print(f"   API Key: {api_key[:10]}...")
+        # print(f"   Domain: {self.domain}")
+        # print(f"   Contact Email: {self.contact_email}")
     
     def send_contact_email(self, contact_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -51,10 +51,10 @@ class EmailService:
         contact_email = os.getenv('CONTACT_EMAIL')
         domain = os.getenv('RESEND_DOMAIN')
         
-        print(f"🔧 FORZANDO configuración desde .env:")
-        print(f"   API Key: {api_key[:10]}...")
-        print(f"   Contact Email: {contact_email}")
-        print(f"   Domain: {domain}")
+        # print(f"🔧 FORZANDO configuración desde .env:")
+        # print(f"   API Key: {api_key[:10]}...")
+        # print(f"   Contact Email: {contact_email}")
+        # print(f"   Domain: {domain}")
         
         # Reconfigurar resend forzadamente
         resend.api_key = api_key
@@ -65,8 +65,8 @@ class EmailService:
         html_content = self._generate_email_html(contact_data)
         text_content = self._generate_email_text(contact_data)
         
-        print(f"📄 HTML Content (primeros 200 chars): {html_content[:200]}...")
-        print(f"📝 Text Content (primeros 100 chars): {text_content[:100]}...")
+        # print(f"📄 HTML Content (primeros 200 chars): {html_content[:200]}...")
+        # print(f"📝 Text Content (primeros 100 chars): {text_content[:100]}...")
         
         # Lista de dominios para intentar (primero el personalizado, luego el de prueba)
         domains_to_try = [
@@ -76,8 +76,8 @@ class EmailService:
         
         for i, from_email in enumerate(domains_to_try):
             try:
-                print(f"📧 Intento {i+1}: Enviando email desde {from_email}...")
-                print(f"API Key configurada: {resend.api_key[:10]}...")
+                # print(f"📧 Intento {i+1}: Enviando email desde {from_email}...")
+                # print(f"API Key configurada: {resend.api_key[:10]}...")
                 
                 # HTML profesional y bonito
                 project_types = {
@@ -347,13 +347,13 @@ Este email fue generado por el sistema RESCUE
                     "reply_to": contact_data.get('email')
                 }
                 
-                print(f"📤 Parámetros del email: {email_params['from']} -> {email_params['to']}")
+                # print(f"📤 Parámetros del email: {email_params['from']} -> {email_params['to']}")
                 
                 # Enviar el email
                 response = resend.Emails.send(email_params)
                 
-                print(f"📬 Respuesta de Resend: {response}")
-                print(f"📬 Tipo de respuesta: {type(response)}")
+                # print(f"📬 Respuesta de Resend: {response}")
+                # print(f"📬 Tipo de respuesta: {type(response)}")
                 
                 # Procesar la respuesta
                 if response:
@@ -366,7 +366,7 @@ Este email fue generado por el sistema RESCUE
                         email_id = str(response)
                     
                     if email_id:
-                        print(f"✅ Email enviado exitosamente con {from_email}")
+                        # print(f"✅ Email enviado exitosamente con {from_email}")
                         return {
                             "success": True,
                             "email_id": email_id,
@@ -378,15 +378,15 @@ Este email fue generado por el sistema RESCUE
                     raise Exception("Respuesta vacía del servicio de email")
                     
             except Exception as e:
-                print(f"❌ Error con {from_email}: {e}")
+                # print(f"❌ Error con {from_email}: {e}")
                 
                 # Si es el último intento, propagar el error
                 if i == len(domains_to_try) - 1:
-                    print(f"❌ Todos los dominios fallaron. Último error: {e}")
+                    # print(f"❌ Todos los dominios fallaron. Último error: {e}")
                     raise e
                 
                 # Si no es el último intento, continúar con el siguiente dominio
-                print(f"🔄 Intentando con el siguiente dominio...")
+                # print(f"🔄 Intentando con el siguiente dominio...")
                 continue
         
         # Si llegamos aquí, todos los dominios fallaron

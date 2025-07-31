@@ -17,10 +17,10 @@ class Database:
             if self._client is None:
                 self._client = MongoClient(Config.MONGO_URI)
                 self._db = self._client[Config.DATABASE_NAME]
-                print(f"Conectado a MongoDB: {Config.DATABASE_NAME}")
+                # print(f"Conectado a MongoDB: {Config.DATABASE_NAME}")
             return self._db
         except Exception as e:
-            print(f"Error conectando a MongoDB: {e}")
+            # print(f"Error conectando a MongoDB: {e}")
             raise e
     
     def get_database(self):
@@ -35,7 +35,7 @@ class Database:
             self._client.close()
             self._client = None
             self._db = None
-            print("Conexión a MongoDB cerrada")
+            # print("Conexión a MongoDB cerrada")
     
     def test_connection(self):
         """Prueba la conexión a MongoDB"""
@@ -46,5 +46,5 @@ class Database:
             self._client.admin.command('ping')
             return True
         except Exception as e:
-            print(f"Error en test de conexión: {e}")
+            # print(f"Error en test de conexión: {e}")
             return False

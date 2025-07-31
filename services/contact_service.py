@@ -200,7 +200,7 @@ class ContactService:
                 }
                 
         except Exception as e:
-            print(f"Error in create_contact_and_send_email: {e}")
+            # print(f"Error in create_contact_and_send_email: {e}")
             return {
                 "success": False,
                 "error": "Error interno del servidor",

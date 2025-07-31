@@ -14,7 +14,8 @@ class HardwareRepository:
             self.collection.create_index([('empresa_id', 1)])
             self.collection.create_index([('activa', 1)])
         except Exception as exc:
-            print(f'Error creando indices de hardware: {exc}')
+            # print(f'Error creando indices de hardware: {exc}')
+            pass
 
     def create(self, hardware: Hardware):
         try:

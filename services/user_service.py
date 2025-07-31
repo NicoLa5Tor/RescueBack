@@ -69,5 +69,5 @@ class UserService:
             }
             
         except Exception as e:
-            print(f"Error obteniendo usuario: {str(e)}")
+            # print(f"Error obteniendo usuario: {str(e)}")
             return None
