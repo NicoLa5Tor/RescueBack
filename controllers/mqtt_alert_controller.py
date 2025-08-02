@@ -244,12 +244,12 @@ class MqttAlertController:
                     'message': 'El campo "descripcion" debe ser una cadena no vacía si se proporciona'
                 }), 400
             
-            # Buscar información del tipo de alarma solo para obtener el nombre y la imagen
+            # Buscar información del tipo de alarma para obtener nombre, imagen, elementos e instrucciones
             tipo_alarma_info = None
-            if 'tipo_alarma' in alert_data:
-                from repositories.tipo_alarma_repository import TipoAlarmaRepository
-                tipo_alarma_repo = TipoAlarmaRepository()
-                tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(alert_data['tipo_alarma'])
+            # Usar tipo_alerta (ya normalizado) para buscar la información
+            from repositories.tipo_alarma_repository import TipoAlarmaRepository
+            tipo_alarma_repo = TipoAlarmaRepository()
+            tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(tipo_alerta)
             
             # Buscar el hardware en la base de datos para obtener toda la información
             from repositories.hardware_repository import HardwareRepository
@@ -318,17 +318,10 @@ class MqttAlertController:
                 'url_open_maps': getattr(hardware, 'direccion_open_maps', '') or ''
             }
             
-            # Obtener imagen de la alerta desde tipo_alarma_info si existe
-            image_alert = None
-            if tipo_alarma_info and tipo_alarma_info.imagen_base64:
-                image_alert = tipo_alarma_info.imagen_base64
-            
-            # Obtener elementos necesarios e instrucciones desde tipo_alarma_info si existe
-            elementos_necesarios = []
-            instrucciones = []
-            if tipo_alarma_info:
-                elementos_necesarios = getattr(tipo_alarma_info, 'implementos_necesarios', [])
-                instrucciones = getattr(tipo_alarma_info, 'recomendaciones', [])
+            # Obtener detalles de tipo de alarma
+            image_alert = tipo_alarma_info.imagen_base64 if tipo_alarma_info else None
+            elementos_necesarios = getattr(tipo_alarma_info, 'implementos_necesarios', []) if tipo_alarma_info else []
+            instrucciones = getattr(tipo_alarma_info, 'recomendaciones', []) if tipo_alarma_info else []
             
             # Crear alerta con la información del hardware usando el método de fábrica actualizado
             alert = MqttAlert.create_from_hardware(

@@ -81,13 +81,13 @@ class EmailService:
                 
                 # HTML profesional y bonito
                 project_types = {
-                    "emergency-alerts": "🚨 Alertas de Emergencia",
-                    "security-monitoring": "🛡️ Monitoreo de Seguridad", 
-                    "industrial-safety": "🏭 Seguridad Industrial",
-                    "healthcare-emergency": "🏥 Emergencias Médicas",
-                    "educational-safety": "🎓 Seguridad Educativa",
-                    "government-alerts": "🏛️ Alertas Gubernamentales",
-                    "other": "📋 Otro"
+                    "industria-empresas": "🏭 Industria o empresas privadas",
+                    "bomberos-defensa": "🚨 Bomberos y Defensa Civil",
+                    "policia-seguridad": "🛡️ Policía y cuerpos de seguridad",
+                    "municipios-gobernaciones": "🏛️ Municipios o Gobernaciones",
+                    "gestion-riesgo": "⚠️ Entidades de gestión de riesgo",
+                    "salud-publica": "🏥 Entidades de salud pública",
+                    "otros": "📋 Otros"
                 }
                 project_display = project_types.get(contact_data.get('projectType', ''), f"📋 {contact_data.get('projectType', '')}")
                 
@@ -398,13 +398,13 @@ Este email fue generado por el sistema RESCUE
     def _generate_email_html(self, contact_data: Dict[str, Any]) -> str:
         """Generar contenido HTML del email"""
         project_types = {
-            "emergency-alerts": "Alertas de Emergencia",
-            "security-monitoring": "Monitoreo de Seguridad",
-            "industrial-safety": "Seguridad Industrial",
-            "healthcare-emergency": "Emergencias Médicas",
-            "educational-safety": "Seguridad Educativa",
-            "government-alerts": "Alertas Gubernamentales",
-            "other": "Otro"
+            "industria-empresas": "Industria o empresas privadas",
+            "bomberos-defensa": "Bomberos y Defensa Civil",
+            "policia-seguridad": "Policía y cuerpos de seguridad",
+            "municipios-gobernaciones": "Municipios o Gobernaciones",
+            "gestion-riesgo": "Entidades de gestión de riesgo",
+            "salud-publica": "Entidades de salud pública",
+            "otros": "Otros"
         }
         
         project_type_display = project_types.get(contact_data.get('projectType', ''), contact_data.get('projectType', ''))
@@ -472,13 +472,13 @@ Este email fue generado por el sistema RESCUE
     def _generate_email_text(self, contact_data: Dict[str, Any]) -> str:
         """Generar contenido de texto plano del email"""
         project_types = {
-            "emergency-alerts": "Alertas de Emergencia",
-            "security-monitoring": "Monitoreo de Seguridad",
-            "industrial-safety": "Seguridad Industrial",
-            "healthcare-emergency": "Emergencias Médicas",
-            "educational-safety": "Seguridad Educativa",
-            "government-alerts": "Alertas Gubernamentales",
-            "other": "Otro"
+            "industria-empresas": "Industria o empresas privadas",
+            "bomberos-defensa": "Bomberos y Defensa Civil",
+            "policia-seguridad": "Policía y cuerpos de seguridad",
+            "municipios-gobernaciones": "Municipios o Gobernaciones",
+            "gestion-riesgo": "Entidades de gestión de riesgo",
+            "salud-publica": "Entidades de salud pública",
+            "otros": "Otros"
         }
         
         project_type_display = project_types.get(contact_data.get('projectType', ''), contact_data.get('projectType', ''))

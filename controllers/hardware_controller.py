@@ -68,7 +68,7 @@ class HardwareController:
         try:
             data = request.get_json() or {}
             # print(f"json entrante: {data} ")
-            result = self.hardware_service.update_hardware(hardware_id, data)
+            result = self.service.update_hardware(hardware_id, data)
             # print(f"result: {result}")
             status = 200 if result.get('success') else 400
             return jsonify(result), status

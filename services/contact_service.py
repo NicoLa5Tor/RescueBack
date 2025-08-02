@@ -45,8 +45,8 @@ class ContactService:
             "projectType": {
                 "required": True,
                 "type": "string",
-                "enum": ["emergency-alerts", "security-monitoring", "industrial-safety", 
-                        "healthcare-emergency", "educational-safety", "government-alerts", "other"]
+                "enum": ["industria-empresas", "bomberos-defensa", "policia-seguridad", 
+                        "municipios-gobernaciones", "gestion-riesgo", "salud-publica", "otros"]
             },
             "message": {
                 "required": False,
