@@ -2,6 +2,7 @@ from bson import ObjectId
 from models.usuario import Usuario
 from repositories.usuario_repository import UsuarioRepository
 from repositories.empresa_repository import EmpresaRepository
+from utils.whatsapp_service_client import whatsapp_client
 
 class UsuarioService:
     def __init__(self):
@@ -85,6 +86,15 @@ class UsuarioService:
                 'nombre': empresa.nombre
             }
             
+            # Enviar plantilla de bienvenida por WhatsApp
+            whatsapp_client.enviar_broadcast_plantilla(
+                phones=[usuario.telefono],
+                template_name="bienvenida_text",
+                language="es_CO",
+                parameters=[usuario.nombre, empresa.nombre],
+                use_queue=True
+            )
+            print("usuario creado y enviado el mensaje")
             return {
                 'success': True,
                 'data': response_data,

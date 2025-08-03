@@ -31,3 +31,7 @@ class Config:
     JWT_COOKIE_CSRF_PROTECT = False  # Desactivamos CSRF protection por simplicidad
     JWT_ACCESS_COOKIE_NAME = 'auth_token'  # Nombre de la cookie
     JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 24 horas
+    
+    # Configuración del servicio de WhatsApp
+    WHATSAPP_SERVICE_URL = os.getenv('WHATSAPP_SERVICE_URL', 'http://localhost:5050/api')
+    WHATSAPP_SERVICE_TIMEOUT = int(os.getenv('WHATSAPP_SERVICE_TIMEOUT', 30))
