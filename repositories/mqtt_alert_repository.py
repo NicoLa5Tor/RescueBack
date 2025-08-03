@@ -89,7 +89,7 @@ class MqttAlertRepository:
         """Obtiene alertas activas"""
         try:
             skip = (page - 1) * limit
-            query = {'estado_activo': True}
+            query = {'activo': True}
             alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
             alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
             total = self.collection.count_documents(query)
@@ -109,6 +109,19 @@ class MqttAlertRepository:
             return alerts, total
         except Exception as e:
             # print(f"Error obteniendo alertas no autorizadas: {e}")
+            return [], 0
+    
+    def get_inactive_alerts(self, page=1, limit=50):
+        """Obtiene alertas desactivadas/inactivas"""
+        try:
+            skip = (page - 1) * limit
+            query = {'activo': False}
+            alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
+            total = self.collection.count_documents(query)
+            return alerts, total
+        except Exception as e:
+            # print(f"Error obteniendo alertas inactivas: {e}")
             return [], 0
     
     def update_alert(self, alert_id, alert):
@@ -154,12 +167,12 @@ class MqttAlertRepository:
             if not alert:
                 return False
             
-            new_status = not alert.estado_activo
+            new_status = not alert.activo
             result = self.collection.update_one(
                 {'_id': ObjectId(alert_id)},
                 {
                     '$set': {
-                        'estado_activo': new_status,
+                        'activo': new_status,
                         'fecha_actualizacion': datetime.utcnow()
                     }
                 }
@@ -218,7 +231,7 @@ class MqttAlertRepository:
         """Obtiene estadísticas de alertas"""
         try:
             total = self.collection.count_documents({})
-            active = self.collection.count_documents({'estado_activo': True})
+            active = self.collection.count_documents({'activo': True})
             authorized = self.collection.count_documents({'autorizado': True})
             unauthorized = self.collection.count_documents({'autorizado': False})
             

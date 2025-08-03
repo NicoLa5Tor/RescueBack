@@ -551,6 +551,21 @@ class MqttAlertController:
                 'message': str(e)
             }), 500
     
+    def get_inactive_alerts(self):
+        """Obtener alertas inactivas/desactivadas"""
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 50))
+            result = self.service.get_inactive_alerts(page, limit)
+            return jsonify(result), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': 'Error interno del servidor',
+                'message': str(e)
+            }), 500
+    
     def update_alert_user_status(self):
         """
         PATCH /api/mqtt-alerts/update-user-status - Actualizar estado de usuario en alerta
@@ -1047,6 +1062,7 @@ class MqttAlertController:
             alert_id = data.get('alert_id')
             desactivado_por_id = data.get('desactivado_por_id')
             desactivado_por_tipo = data.get('desactivado_por_tipo')
+            mensaje_desactivacion = data.get('mensaje_desactivacion')  # Campo opcional
             
             # Validación de alert_id
             if alert_id is None:
@@ -1097,6 +1113,19 @@ class MqttAlertController:
             alert_id = alert_id.strip()
             desactivado_por_id = desactivado_por_id.strip()
             desactivado_por_tipo = desactivado_por_tipo.strip().lower()
+            
+            # Validar y limpiar mensaje_desactivacion si se proporciona (campo opcional)
+            if mensaje_desactivacion is not None:
+                if not isinstance(mensaje_desactivacion, str):
+                    return jsonify({
+                        'success': False,
+                        'error': 'mensaje_desactivacion inválido',
+                        'message': 'El campo "mensaje_desactivacion" debe ser una cadena si se proporciona'
+                    }), 400
+                mensaje_desactivacion = mensaje_desactivacion.strip()
+                # Si queda vacío después del trim, convertir a None
+                if not mensaje_desactivacion:
+                    mensaje_desactivacion = None
             
             # print(f"🧩 Valores limpiados:")
             # print(f"  alert_id: '{alert_id}'")
@@ -1219,7 +1248,8 @@ class MqttAlertController:
                     'already_deactivated': True,
                     'numeros_telefonicos': numeros_telefonicos,
                     'desactivado_por': alert.desactivado_por,
-                    'fecha_desactivacion': alert.fecha_desactivacion.isoformat() if alert.fecha_desactivacion else None
+                    'fecha_desactivacion': alert.fecha_desactivacion.isoformat() if alert.fecha_desactivacion else None,
+                    'mensaje_desactivacion': alert.mensaje_desactivacion  # Incluir el mensaje de desactivación
                 }), 200
 
             # Obtener números telefónicos reales de la alerta existente
@@ -1268,7 +1298,7 @@ class MqttAlertController:
                         topics.append(hw.topic)
 
             # Desactivar con información de quien desactiva
-            alert.deactivate(desactivado_por_id=desactivado_por_id, desactivado_por_tipo=desactivado_por_tipo)
+            alert.deactivate(desactivado_por_id=desactivado_por_id, desactivado_por_tipo=desactivado_por_tipo, mensaje_desactivacion=mensaje_desactivacion)
             
             # Actualizar en base de datos
             success = self.service.alert_repo.update_alert(alert_id, alert)
@@ -1284,7 +1314,8 @@ class MqttAlertController:
                         'tipo': desactivado_por_tipo,
                         'fecha_desactivacion': alert.fecha_desactivacion.isoformat()
                     },
-                    'prioridad': alert.prioridad  # Incluir la prioridad de la alerta
+                    'prioridad': alert.prioridad,  # Incluir la prioridad de la alerta
+                    'mensaje_desactivacion': alert.mensaje_desactivacion  # Incluir el mensaje de desactivación
                 }), 200
             else:
                 return jsonify({

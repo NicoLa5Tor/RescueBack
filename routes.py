@@ -356,6 +356,12 @@ def get_unauthorized_alerts():
     """GET /api/mqtt-alerts/unauthorized - Obtener alertas no autorizadas"""
     return mqtt_alert_controller.get_unauthorized_alerts()
 
+@mqtt_alert_bp.route('/inactive', methods=['GET'])
+@require_empresa_token
+def get_inactive_alerts():
+    """GET /api/mqtt-alerts/inactive - Obtener alertas inactivas/desactivadas"""
+    return mqtt_alert_controller.get_inactive_alerts()
+
 @mqtt_alert_bp.route('/stats', methods=['GET'])
 @require_empresa_or_admin_token
 def get_alerts_stats():

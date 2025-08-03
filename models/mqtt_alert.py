@@ -51,6 +51,7 @@ class MqttAlert:
         self.fecha_actualizacion = datetime.utcnow()
         self.fecha_desactivacion = fecha_desactivacion  # cuando se desactivó la alerta
         self.desactivado_por = {}  # información sobre quién/qué desactivó la alerta
+        self.mensaje_desactivacion = None  # mensaje opcional de desactivación
         
     def to_dict(self):
         """Convierte el objeto a diccionario para MongoDB"""
@@ -74,7 +75,8 @@ class MqttAlert:
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
             'fecha_desactivacion': self.fecha_desactivacion,
-            'desactivado_por': self.desactivado_por
+            'desactivado_por': self.desactivado_por,
+            'mensaje_desactivacion': self.mensaje_desactivacion
         }
         if self._id:
             alert_dict['_id'] = self._id
@@ -105,6 +107,7 @@ class MqttAlert:
         alert.fecha_actualizacion = data.get('fecha_actualizacion')
         alert.fecha_desactivacion = data.get('fecha_desactivacion')
         alert.desactivado_por = data.get('desactivado_por', {})
+        alert.mensaje_desactivacion = data.get('mensaje_desactivacion')
         return alert
     
     def to_json(self):
@@ -146,13 +149,18 @@ class MqttAlert:
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
             'fecha_desactivacion': self.fecha_desactivacion.isoformat() if self.fecha_desactivacion else None,
-            'desactivado_por': self.desactivado_por
+            'desactivado_por': self.desactivado_por,
+            'mensaje_desactivacion': self.mensaje_desactivacion
         }
     
-    def deactivate(self, desactivado_por_id=None, desactivado_por_tipo=None):
+    def deactivate(self, desactivado_por_id=None, desactivado_por_tipo=None, mensaje_desactivacion=None):
         """Desactiva la alerta"""
         self.activo = False
         self.fecha_desactivacion = datetime.utcnow()
+        
+        # Agregar mensaje de desactivación si se proporciona
+        if mensaje_desactivacion:
+            self.mensaje_desactivacion = mensaje_desactivacion.strip()
         
         # Agregar información sobre quién desactivó
         if desactivado_por_id and desactivado_por_tipo:

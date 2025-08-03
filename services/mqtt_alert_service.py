@@ -367,6 +367,27 @@ class MqttAlertService:
                 'total': 0
             }
     
+    def get_inactive_alerts(self, page=1, limit=50):
+        """Obtiene alertas inactivas/desactivadas"""
+        try:
+            alerts, total = self.alert_repo.get_inactive_alerts(page, limit)
+            return {
+                'success': True,
+                'alerts': [alert.to_json() for alert in alerts],
+                'total': total,
+                'page': page,
+                'limit': limit,
+                'total_pages': (total + limit - 1) // limit
+            }
+        except Exception as e:
+            # print(f"Error obteniendo alertas inactivas: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'alerts': [],
+                'total': 0
+            }
+    
     def authorize_alert(self, alert_id, usuario_id):
         """Autoriza una alerta"""
         try:
