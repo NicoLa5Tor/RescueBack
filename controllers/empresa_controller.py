@@ -128,7 +128,7 @@ class EmpresaController:
                 activas = [e for e in result["data"] if e.get("activa", True)]
                 inactivas = [e for e in result["data"] if not e.get("activa", True)]
                 logger.info(f"Empresas activas: {len(activas)}, inactivas: {len(inactivas)}")
-                logger.info(f"Primeras empresas: {[f'{e.get("nombre", "N/A")} (activa: {e.get("activa", True)})' for e in result['data'][:5]]}")
+                logger.info("Primeras empresas: [datos disponibles]")
 
             if result["success"]:
                 return (

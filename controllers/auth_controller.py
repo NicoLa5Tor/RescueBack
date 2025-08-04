@@ -58,7 +58,7 @@ class AuthController:
                 return response
             return jsonify({'success': False, 'errors': result.get('errors', ['Credenciales inválidas'])}), 401
         except Exception as e:
-            return jsonify({'success': False, 'errors': [f'Error interno del servidor: {str(e)}']}), 500
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
     
     def logout(self):
         """Endpoint POST /auth/logout"""
@@ -83,4 +83,4 @@ class AuthController:
             return response
             
         except Exception as e:
-            return jsonify({'success': False, 'errors': [f'Error interno del servidor: {str(e)}']}), 500
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500

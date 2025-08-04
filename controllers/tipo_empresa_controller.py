@@ -139,7 +139,7 @@ def get_all_tipos_empresa_dashboard():
         activos = [t for t in result["data"] if t.get("activo", True)]
         inactivos = [t for t in result["data"] if not t.get("activo", True)]
         logger.info(f"Tipos activos: {len(activos)}, inactivos: {len(inactivos)}")
-        logger.info(f"Primeros tipos dashboard: {[f'{t.get("nombre", "N/A")} (activo: {t.get("activo", True)})' for t in result['data'][:5]]}")
+        logger.info("Primeros tipos dashboard: [datos disponibles]")
 
     return jsonify(result), 200
 
