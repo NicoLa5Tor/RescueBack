@@ -1,4 +1,4 @@
-from database import Database
+from core.database import Database
 from bson import ObjectId
 
 # Endpoints permitidos por rol si el usuario no tiene lista propia

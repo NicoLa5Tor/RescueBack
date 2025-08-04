@@ -1,4 +1,4 @@
-from database import Database
+from core.database import Database
 from models.tipo_alarma import TipoAlarma
 from bson import ObjectId
 from datetime import datetime

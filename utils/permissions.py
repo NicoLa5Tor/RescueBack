@@ -8,7 +8,7 @@ from flask_jwt_extended import (
 )
 from utils.auth_utils import get_auth_cookie, get_auth_header
 import jwt
-from config import Config
+from core.config import Config
 
 
 def require_super_admin_token(f):

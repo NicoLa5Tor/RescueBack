@@ -1,7 +1,7 @@
 from typing import List, Optional
 from bson.objectid import ObjectId
 from models.contact import Contact
-from database import Database
+from core.database import Database
 
 class ContactRepository:
     """Repository para manejar operaciones CRUD de contactos"""

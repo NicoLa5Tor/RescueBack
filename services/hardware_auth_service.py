@@ -2,7 +2,7 @@ import jwt
 import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, Any
-from database import Database
+from core.database import Database
 from bson import ObjectId
 
 

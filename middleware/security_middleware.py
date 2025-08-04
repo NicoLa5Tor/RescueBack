@@ -2,7 +2,7 @@ import hashlib
 import time
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt, get_jwt_identity
-from database import Database
+from core.database import Database
 
 class SecurityMiddleware:
     def __init__(self):

@@ -1,7 +1,7 @@
 from flask_jwt_extended import create_access_token
 import bcrypt
 from datetime import datetime
-from database import Database
+from core.database import Database
 
 # Endpoints permitidos por rol si el usuario no tiene lista propia
 ROLE_PERMISSIONS = {

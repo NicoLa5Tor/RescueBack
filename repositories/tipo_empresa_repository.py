@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from bson import ObjectId
 from models.tipo_empresa import TipoEmpresa
-from database import Database
+from core.database import Database
 
 class TipoEmpresaRepository:
     def __init__(self):

@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, request, make_response, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from config import Config
-from database import Database
-from routes import register_routes
+from core.config import Config
+from core.database import Database
+from core.routes import register_routes
 from services.activity_service import ActivityService
 
 def create_app():

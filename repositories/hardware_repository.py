@@ -1,6 +1,6 @@
 from bson import ObjectId
 from datetime import datetime
-from database import Database
+from core.database import Database
 from models.hardware import Hardware
 
 class HardwareRepository:
