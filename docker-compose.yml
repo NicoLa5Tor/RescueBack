@@ -15,8 +15,11 @@ services:
       dockerfile: Dockerfile
     image: rescue-backend:latest
     container_name: rescue-backend
-    ports:
-      - "127.0.0.1:5002:5002"  # Solo localhost
+    # No exponer puertos - Solo comunicación interna por Docker network
+    # ports:
+    #   - "127.0.0.1:5002:5002"  # Comentado para producción
+    expose:
+      - "5002"  # Solo exponer internamente en la red Docker
     environment:
       - FLASK_ENV=production
       - FLASK_DEBUG=0
@@ -26,6 +29,7 @@ services:
     volumes:
       # Logs para monitoreo
       - ./logs:/app/logs
+    command: ["/app/scripts/init.sh"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/health"]

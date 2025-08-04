@@ -19,6 +19,12 @@ def create_default_tipos_alarma():
     tipo_alarma_repo = TipoAlarmaRepository()
     empresa_repo = EmpresaRepository()
     
+    # Verificar si ya existen tipos de alarma
+    stats = tipo_alarma_repo.get_tipos_alarma_stats()
+    if stats['total'] > 0:
+        print(f"✅ Ya existen {stats['total']} tipos de alarma. Omitiendo creación...")
+        return
+    
     # Obtener todas las empresas activas
     empresas = empresa_repo.find_all()
     

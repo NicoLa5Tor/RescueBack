@@ -23,12 +23,12 @@ class Config:
         if missing_vars:
             raise ValueError(f"Variables de entorno faltantes: {', '.join(missing_vars)}. Verifica tu archivo .env")
     
-    # Configuración de cookies JWT
+    # Configuración de cookies JWT para comunicación Docker interna
     JWT_TOKEN_LOCATION = ['cookies', 'headers']  # Permitir tanto cookies como headers
-    JWT_COOKIE_SECURE = False  # False en desarrollo local (HTTP)
+    JWT_COOKIE_SECURE = True  # True para HTTPS (frontend expuesto por Cloudflare)
     JWT_COOKIE_HTTPONLY = True  # HttpOnly para seguridad
-    JWT_COOKIE_SAMESITE = 'None'  # None para desarrollo local cross-origin
-    JWT_COOKIE_CSRF_PROTECT = False  # Desactivamos CSRF protection por simplicidad
+    JWT_COOKIE_SAMESITE = 'Lax'  # Lax para producción (más seguro que None)
+    JWT_COOKIE_CSRF_PROTECT = False  # Desactivamos CSRF protection
     JWT_ACCESS_COOKIE_NAME = 'auth_token'  # Nombre de la cookie
     JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 24 horas
     

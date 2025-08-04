@@ -127,11 +127,8 @@ if __name__ == "__main__":
         
         # Verificar administradores existentes
         if verificar_admin():
-            print("\n¿Deseas crear otro administrador? (y/N): ", end="")
-            respuesta = input().strip().lower()
-            if respuesta not in ['y', 'yes', 'sí', 'si']:
-                print("👋 Saliendo sin cambios...")
-                sys.exit(0)
+            print("\n✅ Ya existe al menos un administrador. Omitiendo creación...")
+            sys.exit(0)
         
         # Crear super admin
         print("\n🚀 Creando super administrador...")

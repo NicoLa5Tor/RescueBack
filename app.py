@@ -16,6 +16,7 @@ def create_app():
     # Habilitar CORS para todos los endpoints con soporte para cookies
     CORS(app, 
          resources={r"/*": {"origins": [
+             "https://rescue.com.co",  # Dominio de producción
              "http://localhost:5000", "http://127.0.0.1:5000",
              "http://localhost:5004", "http://127.0.0.1:5004",
              "http://localhost:5050", "http://127.0.0.1:5050",
@@ -68,6 +69,7 @@ def create_app():
         # Configurar CORS para cookies
         origin = request.headers.get('Origin')
         allowed_origins = [
+            'https://rescue.com.co',  # Dominio de producción
             'http://localhost:5000', 'http://127.0.0.1:5000',
             'http://localhost:5004', 'http://127.0.0.1:5004', 
             'http://localhost:5050', 'http://127.0.0.1:5050',
