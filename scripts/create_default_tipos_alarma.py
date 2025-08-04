@@ -10,8 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.tipo_alarma import TipoAlarma
 from repositories.tipo_alarma_repository import TipoAlarmaRepository
 from repositories.empresa_repository import EmpresaRepository
-from datetime import datetime
-import base64
+
 
 def create_default_tipos_alarma():
     """Crea tipos de alarma por defecto para el sistema"""
@@ -162,7 +161,7 @@ def create_default_tipos_alarma():
             'Alarmas sonoras',
             'Señalización de evacuación'
         ],
-        'imagen_base64': 'https://media.istockphoto.com/id/1416603097/es/foto/fuego-naranja-denso-sobre-blanco.jpg?s=612x612&w=0&k=20&c=WbGEIj2G1YPmZ1rQ46tgCIdBdGXDLoNGTh-ejYGdgx8='
+        'imagen_base64': 'https://assets.rescue.com.co/Incendio.png '
     },
     {
         'nombre': 'Sanitaria',
@@ -182,7 +181,7 @@ def create_default_tipos_alarma():
             'Gafas de protección',
             'Botiquín de primeros auxilios'
         ],
-        'imagen_base64': 'https://thumbs.dreamstime.com/b/careta-antig%C3%A1s-con-lentes-y-una-capilla-peligro-de-la-sustancia-qu%C3%ADmica-muestra-105231681.jpg'
+        'imagen_base64': 'https://assets.rescue.com.co/sanitaria.png'
     },
     {
         'nombre': 'Delincuencia',
@@ -201,7 +200,7 @@ def create_default_tipos_alarma():
             'Alarmas antirrobo',
             'Botón de pánico'
         ],
-        'imagen_base64': 'https://acuglass.es/assets/protegerse-contra-los-ladrones.jpg'
+        'imagen_base64': 'https://assets.rescue.com.co/robo.png'
     },
     {
         'nombre': 'Catástrofe natural',
@@ -221,7 +220,7 @@ def create_default_tipos_alarma():
             'Silbato de emergencia',
             'Radio portátil'
         ],
-        'imagen_base64': 'https://www.shutterstock.com/image-vector/earthquake-location-icon-isolated-on-600nw-2092776469.jpg'
+        'imagen_base64': 'https://assets.rescue.com.co/catastrofe.png '
     },
     {
         'nombre': 'Accidente',
@@ -242,7 +241,7 @@ def create_default_tipos_alarma():
             'Extintor',
             'Linterna'
         ],
-        'imagen_base64': 'https://thumbs.dreamstime.com/b/signo-de-advertencia-signos-inundaci%C3%B3n-o-aislados-en-fondo-blanco-se%C3%B1ales-propensas-inundaciones-desastres-naturales-aisladas-206117198.jpg'
+        'imagen_base64': 'https://assets.rescue.com.co/accidente.png'
     }
 ]
 
@@ -267,7 +266,7 @@ def create_default_tipos_alarma():
             # Validar antes de crear
             errors = tipo_alarma.validate()
             if errors:
-    # print(f"Error validando tipo de alarma '{tipo_data['nombre']}': {errors}")
+                print(f"Error validando tipo de alarma '{tipo_data['nombre']}': {errors}")
                 continue
             
             # Crear en la base de datos
@@ -276,10 +275,10 @@ def create_default_tipos_alarma():
                 tipos_creados += 1
     # print(f"Tipo de alarma creado: {tipo_data['nombre']} ({tipo_data['tipo_alerta']})")
             else:
-    # print(f"Error creando tipo de alarma: {tipo_data['nombre']}")
+             print(f"Error creando tipo de alarma: {tipo_data['nombre']}")
                 
         except Exception as e:
-    # print(f"Error creando tipo de alarma '{tipo_data['nombre']}': {e}")
+            print(f"Error creando tipo de alarma '{tipo_data['nombre']}': {e}")
     
     # print(f"\n✅ Proceso completado. Se crearon {tipos_creados} tipos de alarma.")
     
@@ -289,7 +288,7 @@ def create_default_tipos_alarma():
     # print(f"Total: {stats['total']}")
     # print(f"Activos: {stats['active']}")
     # print(f"Inactivos: {stats['inactive']}")
-    # print(f"Por tipo de alerta: {stats['por_tipo']}")
+    print(f"Por tipo de alerta: {stats['por_tipo']}")
 
 def main():
     """Función principal"""
@@ -298,9 +297,9 @@ def main():
     
     try:
         create_default_tipos_alarma()
-    # print("\n✅ Script ejecutado exitosamente!")
+        print("\n✅ Script ejecutado exitosamente!")
     except Exception as e:
-    # print(f"\n❌ Error ejecutando script: {e}")
+        print(f"\n❌ Error ejecutando script: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
