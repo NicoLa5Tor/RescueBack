@@ -15,11 +15,8 @@ services:
       dockerfile: Dockerfile
     image: rescue-backend:latest
     container_name: rescue-backend
-    # No exponer puertos - Solo comunicación interna por Docker network
-    # ports:
-    #   - "127.0.0.1:5002:5002"  # Comentado para producción
     expose:
-      - "5002"  # Solo exponer internamente en la red Docker
+      - "5002"
     environment:
       - FLASK_ENV=production
       - FLASK_DEBUG=0
@@ -27,7 +24,6 @@ services:
     env_file:
       - .env
     volumes:
-      # Logs para monitoreo
       - ./logs:/app/logs
     command: ["/app/scripts/init.sh"]
     restart: unless-stopped
@@ -37,7 +33,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-    # Usar la red externa creada por el frontend
     networks:
       - frontend_rescue-network
     depends_on:
@@ -50,16 +45,13 @@ services:
     image: mongo:7.0
     container_name: rescue-mongodb
     ports:
-      - "127.0.0.1:27017:27017"  # Solo localhost
+      - "127.0.0.1:27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-password123}
-      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE:-rescue_db}
+      - MONGO_INITDB_ROOT_USERNAME=rescue2025admin
+      - MONGO_INITDB_ROOT_PASSWORD=rescue2025nicoLa5Tor2004
+      - MONGO_INITDB_DATABASE=rescue
     volumes:
-      # Datos persistentes
       - mongodb_data:/data/db
-      # Configuración personalizada si existe
-      - ./mongodb/mongod.conf:/etc/mongod.conf:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
@@ -67,7 +59,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    # Usar la red externa creada por el frontend
     networks:
       - frontend_rescue-network
 
