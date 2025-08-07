@@ -554,11 +554,49 @@ class MqttAlertController:
     def get_inactive_alerts(self):
         """Obtener alertas inactivas/desactivadas"""
         try:
-            page = int(request.args.get('page', 1))
+            # Obtener parámetros de paginación y filtros
             limit = int(request.args.get('limit', 50))
-            result = self.service.get_inactive_alerts(page, limit)
-            return jsonify(result), 200
+            offset = int(request.args.get('offset', 0))
+            page = (offset // limit) + 1  # Convertir offset a página
+            empresa_id = request.args.get('empresaId')  # Filtro por empresa
             
+            # Si se proporciona empresa_id, filtrar por empresa
+            if empresa_id:
+                result = self.service.get_inactive_alerts_by_empresa(empresa_id, page, limit)
+            else:
+                result = self.service.get_inactive_alerts(page, limit)
+            
+            # Transformar la respuesta para incluir paginación compatible con offset
+            if result['success']:
+                # Calcular valores de paginación basados en offset
+                total_items = result.get('total', 0)
+                total_pages = (total_items + limit - 1) // limit
+                current_page = page
+                has_next = offset + limit < total_items
+                has_prev = offset > 0
+                
+                # Restructurar respuesta
+                response = {
+                    'success': True,
+                    'data': result.get('alerts', []),
+                    'pagination': {
+                        'total_pages': total_pages,
+                        'current_page': current_page,
+                        'total_items': total_items,
+                        'has_next': has_next,
+                        'has_prev': has_prev
+                    }
+                }
+                return jsonify(response), 200
+            else:
+                return jsonify(result), 200
+            
+        except ValueError as e:
+            return jsonify({
+                'success': False,
+                'error': 'Parámetros de paginación inválidos',
+                'message': str(e)
+            }), 400
         except Exception as e:
             return jsonify({
                 'success': False,

@@ -124,6 +124,29 @@ class MqttAlertRepository:
             # print(f"Error obteniendo alertas inactivas: {e}")
             return [], 0
     
+    def get_inactive_alerts_by_empresa(self, empresa_id, page=1, limit=50):
+        """Obtiene alertas desactivadas/inactivas por empresa específica"""
+        try:
+            skip = (page - 1) * limit
+            
+            # Primero buscar la empresa por ID para obtener su nombre
+            empresa = self.db.empresas.find_one({'_id': ObjectId(empresa_id)})
+            if not empresa:
+                # print(f"Empresa no encontrada con ID: {empresa_id}")
+                return [], 0
+            
+            empresa_nombre = empresa['nombre']
+            
+            # Buscar alertas por empresa_nombre y activo=False
+            query = {'empresa_nombre': empresa_nombre, 'activo': False}
+            alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
+            total = self.collection.count_documents(query)
+            return alerts, total
+        except Exception as e:
+            # print(f"Error obteniendo alertas inactivas por empresa: {e}")
+            return [], 0
+    
     def update_alert(self, alert_id, alert):
         """Actualiza una alerta"""
         try:
