@@ -1,17 +1,47 @@
-#!/bin/bash
+#!/bin/sh
 # Script de inicialización para ejecutar scripts y luego iniciar la aplicación
+# Usa /bin/sh para mayor compatibilidad en contenedores Alpine/slim
 
 echo "🔧 Inicializando aplicación Rescue Backend..."
-echo "=" * 50
+echo "========================================"
+echo "📍 MONGO_URI: ${MONGO_URI}"
+echo "📍 DATABASE_NAME: ${DATABASE_NAME}"
+echo "========================================"
 
 # Función para esperar a que MongoDB esté disponible
 wait_for_mongo() {
     echo "⏳ Esperando a que MongoDB esté disponible..."
-    while ! python -c "from core.database import Database; db = Database(); exit(0 if db.test_connection() else 1)" 2>/dev/null; do
-        echo "   MongoDB no está listo, esperando 2 segundos..."
+    max_attempts=60  # Aumentamos a 60 intentos (2 minutos)
+    attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        # Intentar conectar usando pymongo directamente
+        if python -c "
+import sys
+from pymongo import MongoClient
+import os
+
+try:
+    uri = os.environ.get('MONGO_URI', 'mongodb://localhost:27017')
+    client = MongoClient(uri, serverSelectionTimeoutMS=2000)
+    client.admin.command('ping')
+    print('✅ MongoDB conectado exitosamente')
+    sys.exit(0)
+except Exception as e:
+    print(f'⏳ Esperando MongoDB... Error: {e}')
+    sys.exit(1)
+" 2>&1; then
+            echo "✅ MongoDB está disponible y respondiendo"
+            return 0
+        fi
+        echo "   MongoDB no está listo, intento $((attempt + 1))/$max_attempts..."
         sleep 2
+        attempt=$((attempt + 1))
     done
-    echo "✅ MongoDB está disponible"
+    
+    echo "❌ MongoDB no pudo conectarse después de $max_attempts intentos"
+    echo "   Verifica que el servicio mongodb esté corriendo"
+    exit 1
 }
 
 # Esperar a MongoDB
@@ -19,7 +49,17 @@ wait_for_mongo
 
 # Ejecutar script de tipos de alarma
 echo "🎯 Ejecutando script de tipos de alarma..."
-python /app/scripts/create_default_tipos_alarma.py
+cd /app && python -c "
+import sys
+sys.path.append('/app')
+from scripts.create_default_tipos_alarma import create_default_tipos_alarma
+try:
+    create_default_tipos_alarma()
+    print('✅ Tipos de alarma inicializados correctamente')
+except Exception as e:
+    print(f'⚠️ Error inicializando tipos de alarma: {e}')
+    # No salir, continuar con la aplicación
+"
 if [ $? -eq 0 ]; then
     echo "✅ Script de tipos de alarma completado"
 else
@@ -28,15 +68,34 @@ fi
 
 # Ejecutar script de administrador
 echo "👤 Ejecutando script de administrador..."
-python /app/scripts/init_admin.py
+cd /app && python -c "
+import sys
+sys.path.append('/app')
+from scripts.init_admin import init_admin
+try:
+    init_admin()
+    print('✅ Administrador inicializado correctamente')
+except Exception as e:
+    print(f'⚠️ Error inicializando administrador: {e}')
+    # No salir, continuar con la aplicación
+"
 if [ $? -eq 0 ]; then
     echo "✅ Script de administrador completado"
 else
     echo "⚠️  Error en script de administrador, continuando..."
 fi
 
-echo "🚀 Iniciando aplicación Flask..."
-echo "=" * 50
+echo "🚀 Iniciando aplicación con Gunicorn..."
+echo "========================================"
 
-# Iniciar la aplicación Flask
-exec flask run --host=0.0.0.0 --port=5002
+# Iniciar la aplicación con Gunicorn (configuración de producción)
+exec gunicorn \
+    --bind 0.0.0.0:5002 \
+    --workers 3 \
+    --worker-class sync \
+    --timeout 60 \
+    --keep-alive 2 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    "app:create_app()"

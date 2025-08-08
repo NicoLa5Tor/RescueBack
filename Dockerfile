@@ -40,9 +40,11 @@ COPY . .
 
 # Crear directorios necesarios y ajustar permisos
 RUN mkdir -p /app/logs /app/tmp \
+    && chmod +x /app/scripts/init.sh \
     && chown -R appuser:appgroup /app \
     && chmod -R 755 /app \
-    && find /app -name "*.py" -exec chmod 644 {} \;
+    && find /app -name "*.py" -exec chmod 644 {} \; \
+    && chmod +x /app/scripts/*.sh
 
 # Cambiar a usuario no-root
 USER appuser
