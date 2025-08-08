@@ -111,6 +111,37 @@ def verificar_admin():
     
     return count > 0
 
+def init_admin():
+    """Función principal para inicializar administrador - llamada desde el script de init"""
+    print("🔧 Inicializando usuario administrador...")
+    
+    try:
+        # Verificar conexión a la base de datos
+        db = Database()
+        if not db.test_connection():
+            print("❌ Error: No se pudo conectar a MongoDB")
+            raise Exception("No se pudo conectar a MongoDB")
+        
+        print("✅ Conexión a MongoDB exitosa")
+        
+        # Verificar administradores existentes
+        if verificar_admin():
+            print("✅ Ya existe al menos un administrador. Omitiendo creación...")
+            return True
+        
+        # Crear super admin
+        print("🚀 Creando super administrador...")
+        if crear_super_admin():
+            print("🎉 Super administrador creado exitosamente!")
+            return True
+        else:
+            print("❌ Error en la creación del administrador")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error crítico en init_admin: {str(e)}")
+        raise e
+
 if __name__ == "__main__":
     print("🔧 Inicializando usuario administrador...")
     print("=" * 50)
