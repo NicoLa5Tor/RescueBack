@@ -127,21 +127,43 @@ class MqttAlertRepository:
     def get_inactive_alerts_by_empresa(self, empresa_id, page=1, limit=50):
         """Obtiene alertas desactivadas/inactivas por empresa específica"""
         try:
+            print(f"🔍 DEBUG repo.get_inactive_alerts_by_empresa:")
+            print(f"  - empresa_id: {empresa_id}")
+            print(f"  - page: {page}, limit: {limit}")
+            
             skip = (page - 1) * limit
             
             # Primero buscar la empresa por ID para obtener su nombre
             empresa = self.db.empresas.find_one({'_id': ObjectId(empresa_id)})
             if not empresa:
-                # print(f"Empresa no encontrada con ID: {empresa_id}")
+                print(f"  ❌ Empresa no encontrada con ID: {empresa_id}")
                 return [], 0
             
             empresa_nombre = empresa['nombre']
+            print(f"  ✅ Empresa encontrada: {empresa_nombre}")
             
             # Buscar alertas por empresa_nombre y activo=False
             query = {'empresa_nombre': empresa_nombre, 'activo': False}
+            print(f"  🔍 Query MongoDB: {query}")
+            print(f"  🔍 Skip: {skip}, Limit: {limit}")
+            
             alerts_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
-            alerts = [MqttAlert.from_dict(alert_data) for alert_data in alerts_data]
+            alerts_list = list(alerts_data)  # Convertir cursor a lista
+            print(f"  📊 Documentos encontrados: {len(alerts_list)}")
+            
+            alerts = []
+            for i, alert_data in enumerate(alerts_list):
+                try:
+                    alert_obj = MqttAlert.from_dict(alert_data)
+                    alerts.append(alert_obj)
+                    if i == 0:  # Solo mostrar la primera para debug
+                        print(f"  📄 Primera alerta: ID={alert_obj._id}, activo={alert_obj.activo}")
+                except Exception as e:
+                    print(f"  ⚠️ Error convirtiendo alerta {i}: {e}")
+            
             total = self.collection.count_documents(query)
+            print(f"  📊 Total en DB: {total}, Convertidos a objetos: {len(alerts)}")
+            
             return alerts, total
         except Exception as e:
             # print(f"Error obteniendo alertas inactivas por empresa: {e}")

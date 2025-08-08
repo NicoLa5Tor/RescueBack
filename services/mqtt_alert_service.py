@@ -391,7 +391,18 @@ class MqttAlertService:
     def get_inactive_alerts_by_empresa(self, empresa_id, page=1, limit=50):
         """Obtiene alertas inactivas/desactivadas por empresa específica"""
         try:
+            print(f"🔍 DEBUG service.get_inactive_alerts_by_empresa:")
+            print(f"  - empresa_id: {empresa_id}")
+            print(f"  - page: {page}, limit: {limit}")
+            
             alerts, total = self.alert_repo.get_inactive_alerts_by_empresa(empresa_id, page, limit)
+            
+            print(f"  📊 Respuesta del repositorio:")
+            print(f"    - Total encontrado: {total}")
+            print(f"    - Alertas obtenidas: {len(alerts)}")
+            if alerts:
+                print(f"    - Primera alerta ID: {alerts[0]._id if alerts else 'N/A'}")
+            
             return {
                 'success': True,
                 'alerts': [alert.to_json() for alert in alerts],

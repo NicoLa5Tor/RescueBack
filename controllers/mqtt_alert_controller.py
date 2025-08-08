@@ -560,11 +560,21 @@ class MqttAlertController:
             page = (offset // limit) + 1  # Convertir offset a página
             empresa_id = request.args.get('empresaId')  # Filtro por empresa
             
+            print(f"🔍 DEBUG get_inactive_alerts:")
+            print(f"  - limit: {limit}")
+            print(f"  - offset: {offset}")
+            print(f"  - page: {page}")
+            print(f"  - empresa_id: {empresa_id}")
+            
             # Si se proporciona empresa_id, filtrar por empresa
             if empresa_id:
+                print(f"  ➡️ Buscando alertas inactivas por empresa ID: {empresa_id}")
                 result = self.service.get_inactive_alerts_by_empresa(empresa_id, page, limit)
+                print(f"  📊 Resultado del servicio: success={result.get('success')}, total={result.get('total')}, alerts_count={len(result.get('alerts', []))}")
             else:
+                print(f"  ➡️ Buscando todas las alertas inactivas")
                 result = self.service.get_inactive_alerts(page, limit)
+                print(f"  📊 Resultado del servicio: success={result.get('success')}, total={result.get('total')}, alerts_count={len(result.get('alerts', []))}")
             
             # Transformar la respuesta para incluir paginación compatible con offset
             if result['success']:
