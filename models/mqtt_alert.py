@@ -230,9 +230,21 @@ class MqttAlert:
     @classmethod
     def create_from_user(cls, empresa_nombre, sede, usuario_id, usuario_nombre, tipo_alerta, 
                         descripcion, prioridad='media', data=None, **kwargs):
-        """Crea una alerta desde usuario"""
+        """Crea una alerta desde usuario o empresa"""
+        
+        # Detectar tipo de activación basado en los datos proporcionados
+        # Si data contiene creador_tipo, usarlo; sino, detectar por el nombre
+        tipo_activacion = 'usuario'  # Por defecto
+        
+        if data and isinstance(data, dict):
+            creador_tipo = data.get('creador_tipo')
+            if creador_tipo == 'empresa':
+                tipo_activacion = 'empresa'
+            elif usuario_nombre and usuario_nombre.startswith('Empresa '):
+                tipo_activacion = 'empresa'
+        
         activacion_alerta = {
-            'tipo_activacion': 'usuario',
+            'tipo_activacion': tipo_activacion,
             'nombre': usuario_nombre,
             'id': usuario_id
         }

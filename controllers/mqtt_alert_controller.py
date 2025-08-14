@@ -777,8 +777,8 @@ class MqttAlertController:
                     'error': 'Campo creador requerido',
                     'message': 'El campo "creador" es obligatorio',
                     'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                        'usuario': {'creador': {'usuario_id': 'string', 'tipo': 'usuario'}, 'ubicacion': {'latitud': 'string', 'longitud': 'string'} },
+                        'empresa': {'creador': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}}
                     }
                 }), 400
             
@@ -788,62 +788,61 @@ class MqttAlertController:
                     'error': 'Formato de creador inválido',
                     'message': 'El campo "creador" debe ser un objeto',
                     'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
+                        'usuario': {'creador': {'usuario_id': 'string', 'tipo': 'usuario'}, 'ubicacion': {'latitud': 'string', 'longitud': 'string'} },
+                        'empresa': {'creador': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}}
                     }
                 }), 400
             
-            # Validación del campo ubicacion
-            if ubicacion is None:
-                return jsonify({
-                    'success': False,
-                    'error': 'Campo ubicacion requerido',
-                    'message': 'El campo "ubicacion" es obligatorio',
-                    'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
-                    }
-                }), 400
-            
-            if not isinstance(ubicacion, dict):
-                return jsonify({
-                    'success': False,
-                    'error': 'Formato de ubicacion inválido',
-                    'message': 'El campo "ubicacion" debe ser un objeto',
-                    'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
-                    }
-                }), 400
-            
-            # Validar objeto creador
-            usuario_id = creador.get('usuario_id')
+            # Obtener tipo de creador para determinar validaciones
             tipo_creador = creador.get('tipo', 'usuario')  # Por defecto 'usuario'
             
-            if not usuario_id:
+            # Validar que el tipo de creador sea válido
+            tipos_creador_validos = ['usuario', 'empresa']
+            if tipo_creador not in tipos_creador_validos:
                 return jsonify({
                     'success': False,
-                    'error': 'El ID de usuario en creador es obligatorio',
-                    'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
-                    }
+                    'error': f'Tipo de creador inválido. Tipos válidos: {tipos_creador_validos}'
                 }), 400
             
-            # Validar objeto ubicación
-            latitud = ubicacion.get('latitud')
-            longitud = ubicacion.get('longitud')
+            # Validaciones específicas según el tipo de creador
+            if tipo_creador == 'usuario':
+                # Para usuarios: validar ubicacion si se proporciona, pero no es obligatoria
+                if ubicacion is not None and not isinstance(ubicacion, dict):
+                    return jsonify({
+                        'success': False,
+                        'error': 'Formato de ubicacion inválido',
+                        'message': 'El campo "ubicacion" debe ser un objeto si se proporciona',
+                        'estructura_esperada': {'latitud': 'string', 'longitud': 'string'}
+                    }), 400
+                    
+                # Validar que usuario_id esté presente
+                usuario_id = creador.get('usuario_id')
+                if not usuario_id:
+                    return jsonify({
+                        'success': False,
+                        'error': 'El ID de usuario en creador es obligatorio para tipo usuario'
+                    }), 400
+                    
+            elif tipo_creador == 'empresa':
+                # Para empresas: validar empresa_id y sede obligatorios
+                empresa_id = creador.get('empresa_id')
+                sede_empresa = creador.get('sede')
+                
+                if not empresa_id:
+                    return jsonify({
+                        'success': False,
+                        'error': 'El ID de empresa en creador es obligatorio para tipo empresa',
+                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}
+                    }), 400
+                    
+                if not sede_empresa:
+                    return jsonify({
+                        'success': False,
+                        'error': 'La sede es obligatoria cuando el creador es una empresa',
+                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}
+                    }), 400
             
-            if not latitud or not longitud:
-                return jsonify({
-                    'success': False,
-                    'error': 'Latitud y longitud en ubicacion son obligatorias',
-                    'estructura_esperada': {
-                        'creador': {'usuario_id': 'string', 'tipo': 'usuario'},
-                        'ubicacion': {'latitud': 'string', 'longitud': 'string'}
-                    }
-                }), 400
-            
+            # Validar campos obligatorios básicos
             if not tipo_alerta:
                 return jsonify({
                     'success': False,
@@ -856,39 +855,118 @@ class MqttAlertController:
                     'error': 'La descripción es obligatoria'
                 }), 400
             
-            # Validar que el tipo de creador sea válido
-            tipos_creador_validos = ['usuario', 'empresa']
-            if tipo_creador not in tipos_creador_validos:
-                return jsonify({
-                    'success': False,
-                    'error': f'Tipo de creador inválido. Tipos válidos: {tipos_creador_validos}'
-                }), 400
+            # Variables para almacenar información según el tipo de creador
+            usuario = None
+            empresa = None
+            sede = None
+            usuario_id = None
+            latitud = None
+            longitud = None
             
-            # Buscar usuario por ID
-            from repositories.usuario_repository import UsuarioRepository
-            usuario_repo = UsuarioRepository()
-            usuario = usuario_repo.find_by_id(usuario_id)
-            
-            if not usuario:
-                return jsonify({
-                    'success': False,
-                    'error': 'Usuario no encontrado',
-                    'message': f'No existe un usuario con el ID {usuario_id}'
-                }), 404
-            
-            # Obtener empresa del usuario
-            from repositories.empresa_repository import EmpresaRepository
-            empresa_repo = EmpresaRepository()
-            empresa = empresa_repo.find_by_id(usuario.empresa_id)
-            
-            if not empresa:
-                return jsonify({
-                    'success': False,
-                    'error': 'Empresa no encontrada para el usuario'
-                }), 404
-            
-            # Obtener sede del usuario (por defecto usar la sede del usuario o 'Principal')
-            sede = getattr(usuario, 'sede', 'Principal')
+            # Procesar según el tipo de creador
+            if tipo_creador == 'usuario':
+                # Validar ubicación para usuarios (si se proporciona)
+                if ubicacion is not None:
+                    latitud = ubicacion.get('latitud')
+                    longitud = ubicacion.get('longitud')
+                    
+                    if not latitud or not longitud:
+                        return jsonify({
+                            'success': False,
+                            'error': 'Si se proporciona ubicación, latitud y longitud son obligatorias',
+                            'estructura_esperada': {'latitud': 'string', 'longitud': 'string'}
+                        }), 400
+                
+                # Buscar usuario por ID
+                usuario_id = creador.get('usuario_id')
+                from repositories.usuario_repository import UsuarioRepository
+                usuario_repo = UsuarioRepository()
+                usuario = usuario_repo.find_by_id(usuario_id)
+                
+                if not usuario:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Usuario no encontrado',
+                        'message': f'No existe un usuario con el ID {usuario_id}'
+                    }), 404
+                
+                # Obtener empresa del usuario
+                from repositories.empresa_repository import EmpresaRepository
+                empresa_repo = EmpresaRepository()
+                empresa = empresa_repo.find_by_id(usuario.empresa_id)
+                
+                if not empresa:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Empresa no encontrada para el usuario'
+                    }), 404
+                
+                # Obtener sede del usuario (por defecto usar la sede del usuario o 'Principal')
+                sede = getattr(usuario, 'sede', 'Principal')
+                
+            elif tipo_creador == 'empresa':
+                # Para empresas: verificar empresa y usar ubicación de la botonera
+                empresa_id_creador = creador.get('empresa_id')
+                sede = creador.get('sede')
+                
+                # Verificar que la empresa sea legítima
+                from repositories.empresa_repository import EmpresaRepository
+                empresa_repo = EmpresaRepository()
+                empresa = empresa_repo.find_by_id(empresa_id_creador)
+                
+                if not empresa:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Empresa no encontrada',
+                        'message': f'No existe una empresa con el ID {empresa_id_creador}'
+                    }), 404
+                
+                # Buscar la botonera de esa empresa y sede para obtener su ubicación
+                from repositories.hardware_repository import HardwareRepository
+                hardware_repo = HardwareRepository()
+                
+                # Buscar botonera en la empresa y sede especificadas
+                all_hardware_sede = hardware_repo.find_with_filters({
+                    'empresa_id': empresa._id,
+                    'sede': sede,
+                    'activa': True
+                })
+                
+                # Filtrar por tipo botonera
+                botonera = None
+                for hw in all_hardware_sede:
+                    if hw.tipo.upper() == 'BOTONERA':
+                        botonera = hw
+                        break
+                
+                if not botonera:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Botonera no encontrada',
+                        'message': f'No se encontró una botonera activa en la sede "{sede}" de la empresa "{empresa.nombre}"'
+                    }), 404
+                
+                # Usar las coordenadas de la botonera (si las tiene)
+                if hasattr(botonera, 'latitud') and hasattr(botonera, 'longitud') and botonera.latitud and botonera.longitud:
+                    latitud = str(botonera.latitud)
+                    longitud = str(botonera.longitud)
+                else:
+                    # Si la botonera no tiene coordenadas, intentar extraer de URLs existentes o usar por defecto
+                    if botonera.direccion_url and 'place/' in botonera.direccion_url:
+                        # Extraer coordenadas del URL de Google Maps
+                        try:
+                            coords = botonera.direccion_url.split('place/')[-1].split(',')[:2]
+                            latitud = coords[0]
+                            longitud = coords[1]
+                        except:
+                            latitud = "4.7113151"  # Coordenadas de ejemplo (Mosquera)
+                            longitud = "-74.2269883"
+                    else:
+                        latitud = "4.7113151"  # Coordenadas de ejemplo (Mosquera)
+                        longitud = "-74.2269883"
+                
+                # Para empresas, no necesitamos un usuario_id específico, usaremos el ID de la empresa
+                usuario_id = empresa_id_creador
             
             # Obtener prioridad (opcional)
             prioridad = data.get('prioridad', 'media')
@@ -1000,24 +1078,34 @@ class MqttAlertController:
             
             # Preparar datos adicionales simplificados sin redundancias
             data_adicional = {
-                'origen': 'usuario_movil',
-                'usuario_id_origen': usuario_id,
+                'origen': 'usuario_movil' if tipo_creador == 'usuario' else 'empresa_web',
+                'creador_id': usuario_id,
+                'creador_tipo': tipo_creador,
                 'timestamp_creacion': datetime.utcnow().isoformat(),
                 'topics_notificacion': topics,  # Guardar topics para notificaciones
                 'botonera_ubicacion': botonera_ubicacion,  # Guardar ubicación de botonera
                 'metadatos': {
                     'tipo_procesamiento': 'manual',
-                    'plataforma': 'mobile_app'
+                    'plataforma': 'mobile_app' if tipo_creador == 'usuario' else 'web_app'
                 }
             }
             
-            # Preparar información de ubicación desde la botonera
-            # Generar URLs de mapas
-            ubicacion_info = {
-                'direccion': '',
-                'url_maps': generar_url_google_maps(latitud, longitud),
-                'url_open_maps': generar_url_openstreetmap(latitud, longitud)
-            }
+            # Preparar información de ubicación
+            ubicacion_info = {}
+            if latitud and longitud:
+                # Si tenemos coordenadas (de usuario o botonera), generar URLs
+                ubicacion_info = {
+                    'direccion': botonera.direccion if tipo_creador == 'empresa' and botonera else '',
+                    'url_maps': generar_url_google_maps(latitud, longitud),
+                    'url_open_maps': generar_url_openstreetmap(latitud, longitud)
+                }
+            else:
+                # Si no hay coordenadas, ubicación vacía
+                ubicacion_info = {
+                    'direccion': '',
+                    'url_maps': '',
+                    'url_open_maps': ''
+                }
             
             # Obtener imagen desde tipo_alarma_info si existe
             image_alert = None
@@ -1031,14 +1119,22 @@ class MqttAlertController:
                 elementos_necesarios = getattr(tipo_alarma_info, 'implementos_necesarios', [])
                 instrucciones = getattr(tipo_alarma_info, 'recomendaciones', [])
             
+            # Preparar nombre y usuario_id para la creación de la alerta
+            if tipo_creador == 'usuario':
+                creador_nombre = usuario.nombre
+                creador_id_final = str(usuario._id)
+            else:  # tipo_creador == 'empresa'
+                creador_nombre = f"Empresa {empresa.nombre}"
+                creador_id_final = str(empresa._id)
+            
             # Crear alerta usando el método de fábrica para usuarios actualizado
             alert = MqttAlert.create_from_user(
                 empresa_nombre=empresa.nombre,
                 sede=sede,
-                usuario_id=str(usuario._id),
-                usuario_nombre=usuario.nombre,
+                usuario_id=creador_id_final,
+                usuario_nombre=creador_nombre,
                 tipo_alerta=tipo_alerta,
-                nombre_alerta=tipo_alarma_info.nombre if tipo_alarma_info else None, # <-- CAMBIO AÑADIDO
+                nombre_alerta=tipo_alarma_info.nombre if tipo_alarma_info else None,
                 descripcion=descripcion,
                 prioridad=prioridad,
                 image_alert=image_alert,
