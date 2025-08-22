@@ -36,7 +36,8 @@ POST /api/mqtt-alerts/user-alert
   "creador": {
     "empresa_id": "string",        // ID de la empresa (OBLIGATORIO)
     "tipo": "empresa",             // Tipo de creador (OBLIGATORIO)
-    "sede": "string"               // Sede de la empresa (OBLIGATORIO)
+    "sede": "string",              // Sede de la empresa (OBLIGATORIO)
+    "direccion": "string"          // Dirección de texto para geocodificar (OBLIGATORIO)
   },
   "tipo_alerta": "string",         // Tipo de alerta (OBLIGATORIO)
   "descripcion": "string",         // Descripción de la alerta (OBLIGATORIO)
@@ -52,17 +53,17 @@ POST /api/mqtt-alerts/user-alert
 - Si un usuario proporciona ubicación, debe incluir tanto `latitud` como `longitud`
 
 ### 2. Soporte para Empresas como Creadoras
-- **Nuevo**: Las empresas pueden crear alertas especificando la sede
+- **Nuevo**: Las empresas pueden crear alertas especificando la sede y dirección
 - **Validaciones**:
   - Verifica que la empresa exista en la base de datos
-  - Verifica que la sede tenga una botonera activa
-  - Usa automáticamente la ubicación de la botonera de esa sede
+  - Valida que la dirección sea geocodificable
+  - Usa geocodificación para obtener coordenadas de la dirección proporcionada
 
-### 3. Ubicación Automática para Empresas
+### 3. Geocodificación Automática para Empresas
 - Cuando una empresa crea una alerta, el sistema:
-  1. Busca la botonera activa en la sede especificada
-  2. Usa las coordenadas de la botonera (o valores por defecto si no las tiene)
-  3. Usa la dirección de la botonera para los mapas
+  1. Geocodifica la dirección proporcionada usando Nominatim (OpenStreetMap)
+  2. Obtiene coordenadas (latitud, longitud) de la dirección
+  3. Genera URLs de Google Maps y OpenStreetMap automáticamente
 
 ## Ejemplos de Uso
 
@@ -101,13 +102,14 @@ curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \
 
 ### Ejemplo 3: Empresa Creando Alerta
 ```bash
-curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \\
+  -H "Content-Type: application/json" \\
   -d '{
     "creador": {
       "empresa_id": "64a1b2c3d4e5f6789012350",
       "tipo": "empresa",
-      "sede": "Principal"
+      "sede": "Principal",
+      "direccion": "Universidad de Cundinamarca, Facativá"
     },
     "tipo_alerta": "evacuacion",
     "descripcion": "Simulacro de evacuación programado",
@@ -125,8 +127,9 @@ curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \
 
 ### Para Empresas (`tipo: "empresa"`)
 1. **Campo `empresa_id`**: Obligatorio, debe existir en la base de datos
-2. **Campo `sede`**: Obligatorio, debe tener una botonera activa
-3. **Campo `ubicacion`**: No se acepta (se usa la de la botonera)
+2. **Campo `sede`**: Obligatorio, nombre de la sede de la empresa
+3. **Campo `direccion`**: Obligatorio, dirección de texto que debe ser geocodificable
+4. **Campo `ubicacion`**: No se acepta (se geocodifica automáticamente desde la dirección)
 
 ### Validaciones Comunes
 1. **`tipo_alerta`**: Obligatorio, string no vacío
@@ -145,9 +148,9 @@ curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \
 
 ### Para Empresas
 1. Verifica que la empresa exista y sea legítima
-2. Busca la botonera activa en la sede especificada
-3. Usa automáticamente las coordenadas de la botonera
-4. Usa la dirección de la botonera para generar URLs de mapas
+2. Geocodifica la dirección proporcionada usando Nominatim (OpenStreetMap)
+3. Extrae coordenadas (latitud, longitud) de la geocodificación
+4. Genera URLs de Google Maps y OpenStreetMap automáticamente
 
 ### Procesamiento Común
 1. Obtiene todos los usuarios de la empresa/sede para notificaciones
@@ -213,11 +216,11 @@ curl -X POST http://localhost:5000/api/mqtt-alerts/user-alert \
 ## Notas Importantes
 
 1. **Ubicación Opcional**: Los usuarios ya no están obligados a proporcionar ubicación
-2. **Empresas Usan Botoneras**: Las empresas utilizan automáticamente la ubicación de su botonera
-3. **Validación de Empresas**: Se verifica que la empresa existe y tiene botonera en la sede
+2. **Empresas Usan Geocodificación**: Las empresas proporcionan una dirección de texto que se geocodifica automáticamente
+3. **Servicio de Geocodificación**: Se usa Nominatim (OpenStreetMap) con rate limit de 1 request por segundo
 4. **Sin Autenticación**: El endpoint permanece sin autenticación para facilitar el acceso desde apps móviles
 5. **Flexibilidad**: Soporta tanto usuarios individuales como empresas como creadoras
-6. **Coordenadas por Defecto**: Si una botonera no tiene coordenadas, se usan valores por defecto (0.0, 0.0)
+6. **URLs Automáticas**: Se generan URLs de Google Maps y OpenStreetMap automáticamente
 
 ## Códigos de Estado HTTP
 - `201`: Alerta creada exitosamente

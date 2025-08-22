@@ -824,22 +824,30 @@ class MqttAlertController:
                     }), 400
                     
             elif tipo_creador == 'empresa':
-                # Para empresas: validar empresa_id y sede obligatorios
+                # Para empresas: validar empresa_id, sede y direccion obligatorios
                 empresa_id = creador.get('empresa_id')
                 sede_empresa = creador.get('sede')
+                direccion_empresa = creador.get('direccion')
                 
                 if not empresa_id:
                     return jsonify({
                         'success': False,
                         'error': 'El ID de empresa en creador es obligatorio para tipo empresa',
-                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}
+                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string', 'direccion': 'string'}
                     }), 400
                     
                 if not sede_empresa:
                     return jsonify({
                         'success': False,
                         'error': 'La sede es obligatoria cuando el creador es una empresa',
-                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string'}
+                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string', 'direccion': 'string'}
+                    }), 400
+                    
+                if not direccion_empresa:
+                    return jsonify({
+                        'success': False,
+                        'error': 'La dirección es obligatoria cuando el creador es una empresa',
+                        'estructura_esperada': {'empresa_id': 'string', 'tipo': 'empresa', 'sede': 'string', 'direccion': 'string'}
                     }), 400
             
             # Validar campos obligatorios básicos
@@ -905,9 +913,10 @@ class MqttAlertController:
                 sede = getattr(usuario, 'sede', 'Principal')
                 
             elif tipo_creador == 'empresa':
-                # Para empresas: verificar empresa y usar ubicación de la botonera
+                # Para empresas: verificar empresa y usar geocodificación de dirección
                 empresa_id_creador = creador.get('empresa_id')
                 sede = creador.get('sede')
+                direccion_empresa = creador.get('direccion')
                 
                 # Verificar que la empresa sea legítima
                 from repositories.empresa_repository import EmpresaRepository
@@ -921,49 +930,35 @@ class MqttAlertController:
                         'message': f'No existe una empresa con el ID {empresa_id_creador}'
                     }), 404
                 
-                # Buscar la botonera de esa empresa y sede para obtener su ubicación
-                from repositories.hardware_repository import HardwareRepository
-                hardware_repo = HardwareRepository()
+                # Geocodificar la dirección proporcionada
+                from utils.geocoding import procesar_direccion_para_hardware
+                direccion_url_google, direccion_url_openstreetmap, coordenadas_string, direccion_error = procesar_direccion_para_hardware(direccion_empresa)
                 
-                # Buscar botonera en la empresa y sede especificadas
-                all_hardware_sede = hardware_repo.find_with_filters({
-                    'empresa_id': empresa._id,
-                    'sede': sede,
-                    'activa': True
-                })
-                
-                # Filtrar por tipo botonera
-                botonera = None
-                for hw in all_hardware_sede:
-                    if hw.tipo.upper() == 'BOTONERA':
-                        botonera = hw
-                        break
-                
-                if not botonera:
+                if direccion_error:
                     return jsonify({
                         'success': False,
-                        'error': 'Botonera no encontrada',
-                        'message': f'No se encontró una botonera activa en la sede "{sede}" de la empresa "{empresa.nombre}"'
-                    }), 404
+                        'error': 'Error procesando dirección',
+                        'message': direccion_error
+                    }), 400
                 
-                # Usar las coordenadas de la botonera (si las tiene)
-                if hasattr(botonera, 'latitud') and hasattr(botonera, 'longitud') and botonera.latitud and botonera.longitud:
-                    latitud = str(botonera.latitud)
-                    longitud = str(botonera.longitud)
+                # Extraer coordenadas del string "lat,lon"
+                if coordenadas_string:
+                    try:
+                        lat_lon = coordenadas_string.split(',')
+                        latitud = lat_lon[0].strip()
+                        longitud = lat_lon[1].strip()
+                    except (IndexError, ValueError):
+                        return jsonify({
+                            'success': False,
+                            'error': 'Error extrayendo coordenadas',
+                            'message': f'No se pudieron extraer coordenadas válidas de: {coordenadas_string}'
+                        }), 500
                 else:
-                    # Si la botonera no tiene coordenadas, intentar extraer de URLs existentes o usar por defecto
-                    if botonera.direccion_url and 'place/' in botonera.direccion_url:
-                        # Extraer coordenadas del URL de Google Maps
-                        try:
-                            coords = botonera.direccion_url.split('place/')[-1].split(',')[:2]
-                            latitud = coords[0]
-                            longitud = coords[1]
-                        except:
-                            latitud = "4.7113151"  # Coordenadas de ejemplo (Mosquera)
-                            longitud = "-74.2269883"
-                    else:
-                        latitud = "4.7113151"  # Coordenadas de ejemplo (Mosquera)
-                        longitud = "-74.2269883"
+                    return jsonify({
+                        'success': False,
+                        'error': 'No se obtuvieron coordenadas',
+                        'message': 'La geocodificación no devolvió coordenadas válidas'
+                    }), 500
                 
                 # Para empresas, no necesitamos un usuario_id específico, usaremos el ID de la empresa
                 usuario_id = empresa_id_creador
@@ -971,77 +966,13 @@ class MqttAlertController:
             # Obtener prioridad (opcional)
             prioridad = data.get('prioridad', 'media')
             
-            # Buscar SOLO la botonera de la misma empresa y sede
+            # Obtener topics de otros hardware (excluir botoneras) para notificaciones
             from repositories.hardware_repository import HardwareRepository
             hardware_repo = HardwareRepository()
-            
-            # Buscar específicamente una botonera en la empresa y sede del usuario
-            # print(f"🔍 Buscando botonera para empresa_id: {empresa._id}, sede: {sede}")
-            
-            # Primero buscar TODO el hardware de esa empresa y sede para ver qué hay
-            all_hardware_debug = hardware_repo.find_with_filters({
-                'empresa_id': empresa._id,
-                'sede': sede,
-                'activa': True
-            })
-            # print(f"🔍 TODO el hardware activo en empresa {empresa.nombre}, sede {sede}:")
-            for hw in all_hardware_debug:
-                # print(f"  - {hw.nombre} | Tipo: {hw.tipo} | Sede: {hw.sede}")
-                pass
-            
-            botonera = None
-            # Buscar botonera con filtro case-insensitive
-            all_hardware_sede = hardware_repo.find_with_filters({
-                'empresa_id': empresa._id,
-                'sede': sede,
-                'activa': True
-            })
-            
-            # Filtrar manualmente por tipo botonera (case-insensitive)
-            hardware_empresa = []
-            for hw in all_hardware_sede:
-                if hw.tipo.upper() == 'BOTONERA':
-                    hardware_empresa.append(hw)
-            
-            # print(f"🔍 Hardware tipo BOTONERA encontrado: {len(hardware_empresa) if hardware_empresa else 0} elementos")
-            for hw in hardware_empresa:
-                # print(f"  - Botonera: {hw.nombre}, Tipo: {hw.tipo}, Sede: {hw.sede}")
-                # print(f"    Direccion: {hw.direccion}")
-                # print(f"    Direccion URL (Google): {hw.direccion_url}")
-                # print(f"    Direccion Open Maps: {getattr(hw, 'direccion_open_maps', 'No disponible')}")
-                pass
-            
-            # Tomar la primera botonera encontrada (debería haber solo una por sede)
-            if hardware_empresa:
-                botonera = hardware_empresa[0]
-                # print(f"✅ Botonera encontrada: {botonera.nombre}")
-            else:
-                # print(f"❌ No se encontró botonera para empresa {empresa.nombre} en sede {sede}")
-                # print(f"❌ Tipos disponibles en la sede: {[hw.tipo for hw in all_hardware_debug]}")
-                pass
-            
-            # Preparar ubicación de la botonera
-            botonera_ubicacion = None
-            if botonera:
-                botonera_ubicacion = {
-                    'hardware_nombre': botonera.nombre,
-                    'hardware_id': str(botonera._id),
-                    'direccion': botonera.direccion,
-                    'direccion_url': botonera.direccion_url,  # Este es el de Google Maps
-                    'direccion_open_maps': getattr(botonera, 'direccion_open_maps', None),
-                    'topic': botonera.topic,
-                    'tipo': botonera.tipo
-                }
-                # print(f"📍 Ubicación de botonera preparada: {botonera_ubicacion}")
-            else:
-                # print(f"📍 botonera_ubicacion será NULL porque no se encontró botonera")
-                pass
-            
-            # Obtener topics de otros hardware (excluir botoneras) para notificaciones
             todos_hardware = hardware_repo.find_with_filters({
                 'empresa_id': empresa._id,
                 'sede': sede,
-                'activa': True  # Corregido: campo correcto es 'activa'
+                'activa': True  # Solo hardware activo
             })
             
             topics = []
@@ -1083,7 +1014,6 @@ class MqttAlertController:
                 'creador_tipo': tipo_creador,
                 'timestamp_creacion': datetime.utcnow().isoformat(),
                 'topics_notificacion': topics,  # Guardar topics para notificaciones
-                'botonera_ubicacion': botonera_ubicacion,  # Guardar ubicación de botonera
                 'metadatos': {
                     'tipo_procesamiento': 'manual',
                     'plataforma': 'mobile_app' if tipo_creador == 'usuario' else 'web_app'
@@ -1093,9 +1023,9 @@ class MqttAlertController:
             # Preparar información de ubicación
             ubicacion_info = {}
             if latitud and longitud:
-                # Si tenemos coordenadas (de usuario o botonera), generar URLs
+                # Si tenemos coordenadas (de usuario o empresa geocodificada), generar URLs
                 ubicacion_info = {
-                    'direccion': botonera.direccion if tipo_creador == 'empresa' and botonera else '',
+                    'direccion': direccion_empresa if tipo_creador == 'empresa' else '',
                     'url_maps': generar_url_google_maps(latitud, longitud),
                     'url_open_maps': generar_url_openstreetmap(latitud, longitud)
                 }
