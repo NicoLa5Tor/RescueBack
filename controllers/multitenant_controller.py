@@ -1,10 +1,12 @@
 from flask import request, jsonify
 from services.usuario_service import UsuarioService
+from utils.permissions import require_empresa_or_admin_token
 
 class MultiTenantController:
     def __init__(self):
         self.usuario_service = UsuarioService()
     
+    @require_empresa_or_admin_token
     def create_usuario_for_empresa(self, empresa_id):
         """
         Endpoint: POST /empresas/<empresa_id>/usuarios
@@ -42,6 +44,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def get_usuarios_by_empresa(self, empresa_id):
         """
         Endpoint: GET /empresas/<empresa_id>/usuarios
@@ -69,6 +72,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def get_usuario_by_empresa(self, empresa_id, usuario_id):
         """
         Endpoint: GET /empresas/<empresa_id>/usuarios/<usuario_id>
@@ -94,6 +98,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def update_usuario_by_empresa(self, empresa_id, usuario_id):
         """
         Endpoint: PUT /empresas/<empresa_id>/usuarios/<usuario_id>
@@ -128,6 +133,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def delete_usuario_by_empresa(self, empresa_id, usuario_id):
         """
         Endpoint: DELETE /empresas/<empresa_id>/usuarios/<usuario_id>
@@ -153,6 +159,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def toggle_usuario_status(self, empresa_id, usuario_id):
         """
         Endpoint: PATCH /empresas/<empresa_id>/usuarios/<usuario_id>/toggle-status
@@ -182,6 +189,7 @@ class MultiTenantController:
                 'errors': [f'Error interno del servidor: {str(e)}']
             }), 500
     
+    @require_empresa_or_admin_token
     def get_usuarios_by_empresa_including_inactive(self, empresa_id):
         """
         Endpoint: GET /empresas/<empresa_id>/usuarios/including-inactive

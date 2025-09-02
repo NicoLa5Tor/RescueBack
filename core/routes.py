@@ -22,6 +22,11 @@ def logout():
     """POST /auth/logout - Cerrar sesión"""
     return auth_controller.logout()
 
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+    """POST /auth/refresh - Renovar access token"""
+    return auth_controller.refresh()
+
 # ========== BLUEPRINT DE EMPRESAS ==========
 empresa_bp = Blueprint('empresas', __name__, url_prefix='/api/empresas')
 empresa_controller = EmpresaController()

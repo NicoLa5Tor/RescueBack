@@ -56,6 +56,7 @@ class EmpresaController:
                 500,
             )
 
+    @require_empresa_or_admin_token
     def get_empresa(self, empresa_id):
         """Endpoint para obtener una empresa por ID"""
         try:
@@ -77,6 +78,7 @@ class EmpresaController:
                 500,
             )
 
+    @require_empresa_or_admin_token
     def get_all_empresas(self):
         """Endpoint para obtener todas las empresas activas (para formularios)"""
         try:
@@ -115,6 +117,7 @@ class EmpresaController:
                 500,
             )
 
+    @require_super_admin_token
     def get_all_empresas_dashboard(self):
         """Endpoint para obtener TODAS las empresas (activas e inactivas) para dashboards"""
         try:
@@ -256,6 +259,7 @@ class EmpresaController:
                 500,
             )
 
+    @require_empresa_or_admin_token
     def search_empresas_by_ubicacion(self):
         """Endpoint para buscar empresas por ubicación"""
         try:
@@ -343,6 +347,7 @@ class EmpresaController:
                 500,
             )
     
+    @require_empresa_or_admin_token
     def get_empresa_statistics(self, empresa_id):
         """Endpoint para obtener estadísticas de una empresa específica"""
         try:

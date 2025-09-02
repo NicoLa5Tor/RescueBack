@@ -22,18 +22,19 @@ class AuthController:
             # print(f"Lo que viene de login es: {result}")
 
             if result['success']:
-                # Crear respuesta exitosa con cookie segura
-                token = result['token']
+                # Crear respuesta exitosa con cookies seguras
+                access_token = result['access_token']
+                refresh_token = result['refresh_token']
                 response_data = {
                     'success': True, 
                     'user': result['data'],
-                    'message': 'Token enviado en cookie segura'
+                    'message': 'Tokens enviados en cookies seguras'
                 }
                 
                 response = make_response(jsonify(response_data), 200)
                 
-                # Decode token to get JWT ID (jti)
-                decoded_token = decode_token(token)
+                # Decode access token to get JWT ID (jti)
+                decoded_token = decode_token(access_token)
                 jti = decoded_token.get('jti', None)
                 
                 # Create secure session record
@@ -43,16 +44,28 @@ class AuthController:
                     jti=jti
                 )
                 
-                # Configurar cookie para desarrollo HTTP
+                # Configurar cookie de access token para desarrollo HTTP
                 response.set_cookie(
                     'auth_token',
-                    token,
-                    max_age=24 * 60 * 60,  # 24 horas en segundos
+                    access_token,
+                    max_age=15 * 60,       # 15 minutos en segundos
                     httponly=True,         # Cookie no accesible desde JavaScript
                     secure=False,          # False para desarrollo HTTP local
                     samesite='Lax',        # Lax para desarrollo HTTP local
                     domain=None,           # Solo para el dominio actual
                     path='/'               # Disponible en toda la aplicación
+                )
+                
+                # Configurar cookie de refresh token para desarrollo HTTP
+                response.set_cookie(
+                    'refresh_token',
+                    refresh_token,
+                    max_age=7 * 24 * 60 * 60,  # 7 días en segundos
+                    httponly=True,             # Cookie no accesible desde JavaScript
+                    secure=False,              # False para desarrollo HTTP local
+                    samesite='Lax',            # Lax para desarrollo HTTP local
+                    domain=None,               # Solo para el dominio actual
+                    path='/'                   # Disponible en toda la aplicación
                 )
                 
                 return response
@@ -68,7 +81,7 @@ class AuthController:
                 'message': 'Sesión cerrada exitosamente'
             }), 200)
             
-            # Limpiar cookie estableciendo expiración en el pasado
+            # Limpiar cookies estableciendo expiración en el pasado
             response.set_cookie(
                 'auth_token',
                 '',
@@ -80,7 +93,57 @@ class AuthController:
                 path='/'
             )
             
+            response.set_cookie(
+                'refresh_token',
+                '',
+                max_age=0,
+                httponly=True,
+                secure=False,          # False para desarrollo HTTP local
+                samesite='Lax',        # Lax para desarrollo HTTP local
+                domain=None,
+                path='/'
+            )
+            
             return response
+            
+        except Exception as e:
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
+
+    def refresh(self):
+        """Endpoint POST /auth/refresh"""
+        try:
+            # Obtener refresh token desde cookie
+            refresh_token = request.cookies.get('refresh_token')
+            
+            if not refresh_token:
+                return jsonify({'success': False, 'errors': ['Refresh token faltante']}), 401
+            
+            # Generar nuevo access token
+            result = self.auth_service.refresh_token(refresh_token)
+            
+            if result['success']:
+                response_data = {
+                    'success': True,
+                    'message': 'Access token renovado exitosamente'
+                }
+                
+                response = make_response(jsonify(response_data), 200)
+                
+                # Configurar nueva cookie de access token
+                response.set_cookie(
+                    'auth_token',
+                    result['access_token'],
+                    max_age=15 * 60,       # 15 minutos en segundos
+                    httponly=True,         # Cookie no accesible desde JavaScript
+                    secure=False,          # False para desarrollo HTTP local
+                    samesite='Lax',        # Lax para desarrollo HTTP local
+                    domain=None,           # Solo para el dominio actual
+                    path='/'               # Disponible en toda la aplicación
+                )
+                
+                return response
+            
+            return jsonify({'success': False, 'errors': result.get('errors', ['Refresh token inválido'])}), 401
             
         except Exception as e:
             return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500

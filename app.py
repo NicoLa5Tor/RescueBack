@@ -5,6 +5,7 @@ from core.config import Config
 from core.database import Database
 from core.routes import register_routes
 from services.activity_service import ActivityService
+from core.swagger_config import api_bp
 
 def create_app():
     """Factory function para crear la aplicación Flask"""
@@ -96,6 +97,9 @@ def create_app():
     # Registrar rutas
     register_routes(app)
     
+    # Registrar Swagger API
+    app.register_blueprint(api_bp)
+    
     # Ruta de salud de la aplicación
     @app.route('/health', methods=['GET'])
     def health_check():
@@ -172,9 +176,6 @@ if __name__ == '__main__':
             debug=Config.DEBUG
         )
     except ValueError as e:
-        # print(f"❌ Error de configuración: {e}")
-        # print("💡 Asegúrate de que tu archivo .env contenga todas las variables requeridas.")
         exit(1)
     except Exception as e:
-        # print(f"❌ Error al iniciar la aplicación: {e}")
         exit(1)

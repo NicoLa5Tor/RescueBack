@@ -52,7 +52,6 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
 
-    @require_empresa_or_admin_token
     def get_hardware(self, hardware_id):
         try:
             # Use get_hardware_including_inactive to fetch by ID including inactive
@@ -63,7 +62,7 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
 
-    @require_empresa_or_admin_token
+    @require_super_admin_token
     def update_hardware(self, hardware_id):
         try:
             data = request.get_json() or {}
@@ -75,7 +74,7 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
 
-    @require_empresa_or_admin_token
+    @require_super_admin_token
     def delete_hardware(self, hardware_id):
         try:
             result = self.service.delete_hardware(hardware_id)
@@ -84,7 +83,6 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
 
-    @require_empresa_or_admin_token
     def get_hardware_by_empresa(self, empresa_id):
         try:
             result = self.service.get_hardware_by_empresa(empresa_id)
@@ -144,7 +142,6 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
 
-    @require_empresa_or_admin_token
     def get_hardware_by_empresa_including_inactive(self, empresa_id):
         """Obtener hardware de una empresa incluyendo inactivos"""
         try:
@@ -154,7 +151,6 @@ class HardwareController:
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500
     
-    @require_empresa_or_admin_token
     def get_hardware_direccion_url(self, hardware_id):
         """Obtener solo la URL de dirección de un hardware específico"""
         try:

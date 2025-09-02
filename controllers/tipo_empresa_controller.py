@@ -28,6 +28,7 @@ def create_tipo_empresa():
 
 
 @tipo_empresa_controller.route('/tipos_empresa/<tipo_empresa_id>', methods=['GET'])
+@require_super_admin_token
 def get_tipo_empresa(tipo_empresa_id):
     """Obtiene un tipo de empresa por su ID incluyendo las empresas asociadas"""
     # SIEMPRE incluir las empresas asociadas por defecto
@@ -36,6 +37,7 @@ def get_tipo_empresa(tipo_empresa_id):
 
 
 @tipo_empresa_controller.route('/tipos_empresa', methods=['GET'])
+@require_super_admin_token
 def get_all_tipos_empresa():
     """Obtiene todos los tipos de empresa activos (para formularios)"""
     logger.info("=== GET ALL TIPOS EMPRESA (SOLO ACTIVOS) ===")
@@ -72,6 +74,7 @@ def delete_tipo_empresa(tipo_empresa_id):
 
 
 @tipo_empresa_controller.route('/tipos_empresa/search', methods=['GET'])
+@require_super_admin_token
 def search_tipos_empresa():
     """Busca tipos de empresa por nombre o descripción"""
     query = request.args.get('query', '')
@@ -82,6 +85,7 @@ def search_tipos_empresa():
 
 
 @tipo_empresa_controller.route('/tipos_empresa/activos', methods=['GET'])
+@require_super_admin_token
 def get_tipos_empresa_activos():
     """Obtiene solo los tipos de empresa activos (para selects/dropdowns)"""
     result = tipo_empresa_service.get_tipos_empresa_activos()
@@ -89,6 +93,7 @@ def get_tipos_empresa_activos():
 
 
 @tipo_empresa_controller.route('/tipos_empresa/estadisticas', methods=['GET'])
+@require_super_admin_token
 def get_estadisticas_tipos_empresa():
     """Obtiene estadísticas de tipos de empresa incluyendo promedio de características"""
     result = tipo_empresa_service.get_estadisticas_tipos_empresa()
@@ -127,6 +132,7 @@ def get_all_tipos_empresa_including_inactive():
 
 
 @tipo_empresa_controller.route('/tipos_empresa/dashboard/all', methods=['GET'])
+@require_super_admin_token
 def get_all_tipos_empresa_dashboard():
     """Obtiene TODOS los tipos de empresa (activos e inactivos) para dashboards"""
     logger.info("=== GET ALL TIPOS EMPRESA DASHBOARD (TODAS) ===")
@@ -175,6 +181,7 @@ def get_total_empresas_categorizadas():
 
 
 @tipo_empresa_controller.route('/tipos_empresa/<tipo_empresa_id>/empresas', methods=['GET'])
+@require_super_admin_token
 def get_empresas_by_tipo(tipo_empresa_id):
     """Obtiene todas las empresas asociadas a un tipo de empresa específico"""
     try:
