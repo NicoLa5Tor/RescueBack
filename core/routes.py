@@ -27,6 +27,21 @@ def refresh():
     """POST /auth/refresh - Renovar access token"""
     return auth_controller.refresh()
 
+@auth_bp.route('/sessions', methods=['GET'])
+def get_my_sessions():
+    """GET /auth/sessions - Obtener sesiones activas del usuario actual"""
+    return auth_controller.get_my_sessions()
+
+@auth_bp.route('/sessions/<session_id>', methods=['DELETE'])
+def logout_session(session_id):
+    """DELETE /auth/sessions/<session_id> - Cerrar sesión específica"""
+    return auth_controller.logout_session(session_id)
+
+@auth_bp.route('/logout-all', methods=['POST'])
+def logout_all_sessions():
+    """POST /auth/logout-all - Cerrar todas las sesiones del usuario"""
+    return auth_controller.logout_all_sessions()
+
 # ========== BLUEPRINT DE EMPRESAS ==========
 empresa_bp = Blueprint('empresas', __name__, url_prefix='/api/empresas')
 empresa_controller = EmpresaController()

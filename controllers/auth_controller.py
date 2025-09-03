@@ -18,8 +18,13 @@ class AuthController:
             if not usuario or not password:
                 return jsonify({'success': False, 'errors': ['Credenciales inválidas']}), 401
 
-            result = self.auth_service.login(usuario, password)
-            # print(f"Lo que viene de login es: {result}")
+            # Preparar datos de la request para el sistema de sesiones
+            request_data = {
+                'remote_addr': request.environ.get('REMOTE_ADDR'),
+                'user_agent': request.headers.get('User-Agent')
+            }
+            
+            result = self.auth_service.login(usuario, password, request_data)
 
             if result['success']:
                 # Crear respuesta exitosa con cookies seguras
@@ -76,6 +81,14 @@ class AuthController:
     def logout(self):
         """Endpoint POST /auth/logout"""
         try:
+            # Obtener refresh token para invalidar la sesión
+            refresh_token = request.cookies.get('refresh_token')
+            
+            # Invalidar sesión en base de datos si existe refresh token
+            if refresh_token:
+                logout_result = self.auth_service.logout(refresh_token)
+                # Continuamos aunque falle el logout en DB
+            
             response = make_response(jsonify({
                 'success': True,
                 'message': 'Sesión cerrada exitosamente'
@@ -118,8 +131,14 @@ class AuthController:
             if not refresh_token:
                 return jsonify({'success': False, 'errors': ['Refresh token faltante']}), 401
             
+            # Preparar datos de la request para validación de sesión
+            request_data = {
+                'remote_addr': request.environ.get('REMOTE_ADDR'),
+                'user_agent': request.headers.get('User-Agent')
+            }
+            
             # Generar nuevo access token
-            result = self.auth_service.refresh_token(refresh_token)
+            result = self.auth_service.refresh_token(refresh_token, request_data)
             
             if result['success']:
                 response_data = {
@@ -145,5 +164,90 @@ class AuthController:
             
             return jsonify({'success': False, 'errors': result.get('errors', ['Refresh token inválido'])}), 401
             
+        except Exception as e:
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
+    
+    def get_my_sessions(self):
+        """Endpoint GET /auth/sessions - Obtener sesiones activas del usuario actual"""
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+            
+            # Verificar que hay un token válido
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+            
+            if not user_id:
+                return jsonify({'success': False, 'errors': ['Token inválido']}), 401
+            
+            # Obtener sesiones activas
+            result = self.auth_service.get_user_sessions(user_id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'data': result['data'],
+                    'count': result['count']
+                }), 200
+            else:
+                return jsonify(result), 500
+                
+        except Exception as e:
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
+    
+    def logout_session(self, session_id):
+        """Endpoint DELETE /auth/sessions/<session_id> - Cerrar sesión específica"""
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+            
+            # Verificar que hay un token válido
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+            
+            if not user_id:
+                return jsonify({'success': False, 'errors': ['Token inválido']}), 401
+            
+            # Invalidar sesión específica
+            result = self.auth_service.invalidate_session(session_id=session_id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': 'Sesión cerrada exitosamente'
+                }), 200
+            else:
+                return jsonify(result), 404
+                
+        except Exception as e:
+            return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
+    
+    def logout_all_sessions(self):
+        """Endpoint POST /auth/logout-all - Cerrar todas las sesiones del usuario"""
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
+            
+            # Verificar que hay un token válido
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+            current_jti = get_jwt().get('jti')
+            
+            if not user_id:
+                return jsonify({'success': False, 'errors': ['Token inválido']}), 401
+            
+            # Cerrar todas las sesiones excepto la actual (opcional)
+            data = request.get_json() or {}
+            keep_current = data.get('keep_current', False)
+            keep_current_jti = current_jti if keep_current else None
+            
+            result = self.auth_service.logout_all_sessions(user_id, keep_current_jti)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': f"{result.get('invalidated_count', 0)} sesiones cerradas",
+                    'invalidated_count': result.get('invalidated_count', 0)
+                }), 200
+            else:
+                return jsonify(result), 500
+                
         except Exception as e:
             return jsonify({'success': False, 'errors': ['Error interno del servidor']}), 500
