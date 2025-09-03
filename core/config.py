@@ -32,7 +32,7 @@ class Config:
     
     # Configuración de Access Token
     JWT_ACCESS_COOKIE_NAME = 'auth_token'  # Nombre de la cookie de access token
-    JWT_ACCESS_TOKEN_EXPIRES = 30 # 15 minutos para access token
+    JWT_ACCESS_TOKEN_EXPIRES = 15 * 60  # 15 minutos para access token (900 segundos)
     
     # Configuración de Refresh Token
     JWT_REFRESH_COOKIE_NAME = 'refresh_token'  # Nombre de la cookie de refresh token
