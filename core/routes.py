@@ -5,6 +5,7 @@ from controllers.auth_controller import AuthController
 from controllers.hardware_controller import HardwareController
 from controllers.hardware_type_controller import HardwareTypeController
 from controllers.tipo_empresa_controller import tipo_empresa_controller
+from controllers.tipo_alarma_controller import tipo_alarma_bp
 from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
 from utils.permissions import require_empresa_or_admin_token, require_empresa_token
 
@@ -484,4 +485,5 @@ def register_routes(app):
     app.register_blueprint(hardware_auth_bp)
     app.register_blueprint(phone_lookup_bp)  # Búsqueda por teléfono
     app.register_blueprint(contact_bp)  # Formulario de contacto
+    app.register_blueprint(tipo_alarma_bp, url_prefix='/api')
     app.register_blueprint(tipo_empresa_controller, url_prefix='/api')

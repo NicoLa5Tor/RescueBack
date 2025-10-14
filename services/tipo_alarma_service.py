@@ -183,17 +183,17 @@ class TipoAlarmaService:
     def get_all_tipos_alarma(self, page=1, limit=50):
         """
         Obtiene todos los tipos de alarma
-        
+
         Args:
             page (int): Página
             limit (int): Límite por página
-            
+
         Returns:
             dict: Resultado de la operación
         """
         try:
             tipos_alarma, total = self.tipo_alarma_repo.get_all_tipos_alarma(page, limit)
-            
+
             return {
                 'success': True,
                 'data': [tipo.to_json() for tipo in tipos_alarma],
@@ -204,7 +204,63 @@ class TipoAlarmaService:
                     'pages': (total + limit - 1) // limit
                 }
             }
-            
+
+        except Exception as e:
+            return {'success': False, 'error': f'Error interno: {str(e)}'}
+
+    def get_active_tipos_alarma(self, page=1, limit=50):
+        """
+        Obtiene solo tipos de alarma activos
+
+        Args:
+            page (int): Página
+            limit (int): Límite por página
+
+        Returns:
+            dict: Resultado de la operación
+        """
+        try:
+            tipos_alarma, total = self.tipo_alarma_repo.get_active_tipos_alarma(page, limit)
+
+            return {
+                'success': True,
+                'data': [tipo.to_json() for tipo in tipos_alarma],
+                'pagination': {
+                    'page': page,
+                    'limit': limit,
+                    'total': total,
+                    'pages': (total + limit - 1) // limit
+                }
+            }
+
+        except Exception as e:
+            return {'success': False, 'error': f'Error interno: {str(e)}'}
+
+    def get_inactive_tipos_alarma(self, page=1, limit=50):
+        """
+        Obtiene solo tipos de alarma inactivos
+
+        Args:
+            page (int): Página
+            limit (int): Límite por página
+
+        Returns:
+            dict: Resultado de la operación
+        """
+        try:
+            tipos_alarma, total = self.tipo_alarma_repo.get_inactive_tipos_alarma(page, limit)
+
+            return {
+                'success': True,
+                'data': [tipo.to_json() for tipo in tipos_alarma],
+                'pagination': {
+                    'page': page,
+                    'limit': limit,
+                    'total': total,
+                    'pages': (total + limit - 1) // limit
+                }
+            }
+
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
     

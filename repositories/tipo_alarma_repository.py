@@ -94,6 +94,19 @@ class TipoAlarmaRepository:
         except Exception as e:
             # print(f"Error obteniendo tipos de alarma activos: {e}")
             return [], 0
+
+    def get_inactive_tipos_alarma(self, page=1, limit=50):
+        """Obtiene tipos de alarma inactivos"""
+        try:
+            skip = (page - 1) * limit
+            query = {'activo': False}
+            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
+            total = self.collection.count_documents(query)
+            return tipos_alarma, total
+        except Exception as e:
+            # print(f"Error obteniendo tipos de alarma inactivos: {e}")
+            return [], 0
     
     def get_tipos_alarma_by_empresa_and_tipo(self, empresa_id, tipo_alerta):
         """Obtiene tipos de alarma por empresa y tipo de alerta"""

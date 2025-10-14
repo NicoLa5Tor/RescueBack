@@ -167,7 +167,8 @@ def create_default_tipos_alarma():
             'Alarmas sonoras',
             'Señalización de evacuación'
         ],
-        'imagen_base64': 'https://assets.rescue.com.co/Incendio.png '
+        'imagen_base64': 'https://assets.rescue.com.co/Incendio.png ',
+        'sonido_link': 'https://assets.rescue.com.co/sonidos/incendio.mp3'
     },
     {
         'nombre': 'Sanitaria',
@@ -187,7 +188,8 @@ def create_default_tipos_alarma():
             'Gafas de protección',
             'Botiquín de primeros auxilios'
         ],
-        'imagen_base64': 'https://assets.rescue.com.co/sanitaria.png'
+        'imagen_base64': 'https://assets.rescue.com.co/sanitaria.png',
+        'sonido_link': 'https://assets.rescue.com.co/sonidos/sanitaria.mp3'
     },
     {
         'nombre': 'Delincuencia',
@@ -206,7 +208,8 @@ def create_default_tipos_alarma():
             'Alarmas antirrobo',
             'Botón de pánico'
         ],
-        'imagen_base64': 'https://assets.rescue.com.co/robo.png'
+        'imagen_base64': 'https://assets.rescue.com.co/robo.png',
+        'sonido_link': 'https://assets.rescue.com.co/sonidos/delincuencia.mp3'
     },
     {
         'nombre': 'Catástrofe natural',
@@ -226,7 +229,8 @@ def create_default_tipos_alarma():
             'Silbato de emergencia',
             'Radio portátil'
         ],
-        'imagen_base64': 'https://assets.rescue.com.co/catastrofe.png '
+        'imagen_base64': 'https://assets.rescue.com.co/catastrofe.png ',
+        'sonido_link': 'https://assets.rescue.com.co/sonidos/catastrofe.mp3'
     },
     {
         'nombre': 'Accidente',
@@ -247,7 +251,8 @@ def create_default_tipos_alarma():
             'Extintor',
             'Linterna'
         ],
-        'imagen_base64': 'https://assets.rescue.com.co/accidente.png'
+        'imagen_base64': 'https://assets.rescue.com.co/accidente.png',
+        'sonido_link': 'https://assets.rescue.com.co/sonidos/accidente.mp3'
     }
 ]
 
@@ -266,6 +271,7 @@ def create_default_tipos_alarma():
                 recomendaciones=tipo_data['recomendaciones'],
                 implementos_necesarios=tipo_data['implementos_necesarios'],
                 imagen_base64=tipo_data['imagen_base64'],
+                sonido_link=tipo_data.get('sonido_link'),
                 empresa_id=None  # Tipo de alarma global
             )
             

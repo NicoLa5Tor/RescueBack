@@ -14,11 +14,13 @@
 .env.staging
 .env.development
 CLAUDE.md
+AGENTS.md
 # Archivos de configuración con secretos
 config/secrets.py
 config/production.py
 secrets.json
 credentials.json
+
 
 # ==========================================
 # PYTHON
