@@ -14,7 +14,7 @@ class TipoAlarma:
     }
     
     def __init__(self, nombre=None, descripcion=None, tipo_alerta=None, color_alerta=None, 
-                 imagen_base64=None, recomendaciones=None, implementos_necesarios=None, 
+                 imagen_base64=None, sonido_link=None, recomendaciones=None, implementos_necesarios=None, 
                  empresa_id=None, activo=True, _id=None):
         self._id = _id or ObjectId()
         self.nombre = nombre
@@ -22,6 +22,7 @@ class TipoAlarma:
         self.tipo_alerta = tipo_alerta
         self.color_alerta = color_alerta
         self.imagen_base64 = imagen_base64
+        self.sonido_link = sonido_link
         self.recomendaciones = recomendaciones or []
         self.implementos_necesarios = implementos_necesarios or []
         self.empresa_id = ObjectId(empresa_id) if empresa_id else None
@@ -37,6 +38,7 @@ class TipoAlarma:
             'tipo_alerta': self.tipo_alerta,
             'color_alerta': self.color_alerta,
             'imagen_base64': self.imagen_base64,
+            'sonido_link': self.sonido_link,
             'recomendaciones': self.recomendaciones,
             'implementos_necesarios': self.implementos_necesarios,
             'empresa_id': self.empresa_id,
@@ -58,6 +60,7 @@ class TipoAlarma:
         tipo_alarma.tipo_alerta = data.get('tipo_alerta')
         tipo_alarma.color_alerta = data.get('color_alerta')
         tipo_alarma.imagen_base64 = data.get('imagen_base64')
+        tipo_alarma.sonido_link = data.get('sonido_link')
         tipo_alarma.recomendaciones = data.get('recomendaciones', [])
         tipo_alarma.implementos_necesarios = data.get('implementos_necesarios', [])
         tipo_alarma.empresa_id = data.get('empresa_id')
@@ -75,6 +78,7 @@ class TipoAlarma:
             'tipo_alerta': self.tipo_alerta,
             'color_alerta': self.color_alerta,
             'imagen_base64': self.imagen_base64,
+            'sonido_link': self.sonido_link,
             'recomendaciones': self.recomendaciones,
             'implementos_necesarios': self.implementos_necesarios,
             'empresa_id': str(self.empresa_id) if self.empresa_id else None,
@@ -110,13 +114,22 @@ class TipoAlarma:
         
         if not self.color_alerta or len(self.color_alerta.strip()) == 0:
             errors.append("El color de alerta es obligatorio")
-        
-        if self.imagen_base64 and len(self.imagen_base64) > 10485760:  # 10MB limite
-            errors.append("La imagen en base64 no puede exceder 10MB")
-        
+
+        if self.imagen_base64 and not isinstance(self.imagen_base64, str):
+            errors.append("La imagen debe ser una cadena de texto")
+        elif isinstance(self.imagen_base64, str) and len(self.imagen_base64.strip()) == 0:
+            errors.append("La imagen no puede estar vacía si se proporciona")
+        elif isinstance(self.imagen_base64, str) and len(self.imagen_base64) > 2048:
+            errors.append("La imagen no puede exceder 2048 caracteres")
+
+        if self.sonido_link and not isinstance(self.sonido_link, str):
+            errors.append("El enlace de sonido debe ser una cadena")
+        elif self.sonido_link and len(self.sonido_link.strip()) == 0:
+            errors.append("El enlace de sonido no puede estar vacío si se proporciona")
+
         if self.recomendaciones and not isinstance(self.recomendaciones, list):
             errors.append("Las recomendaciones deben ser una lista")
-        
+
         if self.implementos_necesarios and not isinstance(self.implementos_necesarios, list):
             errors.append("Los implementos necesarios deben ser una lista")
         
@@ -156,6 +169,10 @@ class TipoAlarma:
             self.tipo_alerta = self.tipo_alerta.upper().strip()
         if self.color_alerta:
             self.color_alerta = self.color_alerta.strip()
+        if self.imagen_base64 and isinstance(self.imagen_base64, str):
+            self.imagen_base64 = self.imagen_base64.strip()
+        if self.sonido_link and isinstance(self.sonido_link, str):
+            self.sonido_link = self.sonido_link.strip()
         if self.recomendaciones and isinstance(self.recomendaciones, list):
             self.recomendaciones = [rec.strip() for rec in self.recomendaciones if isinstance(rec, str) and rec.strip()]
         if self.implementos_necesarios and isinstance(self.implementos_necesarios, list):

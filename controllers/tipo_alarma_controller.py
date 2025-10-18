@@ -93,6 +93,15 @@ def list_tipos_alarma_by_empresa(empresa_id):
     return jsonify(result), _status_from_result(result)
 
 
+@tipo_alarma_bp.route('/tipos-alarma/empresa/<empresa_id>/todos', methods=['GET'])
+def list_tipos_alarma_by_empresa_full(empresa_id):
+    """GET /api/tipos-alarma/empresa/<empresa_id>/todos - Lista sin paginación (SIN AUTENTICACIÓN)"""
+    solo_activos_raw = (request.args.get('solo_activos') or '').strip().lower()
+    solo_activos = solo_activos_raw in ('true', '1', 'yes', 'on')
+    result = tipo_alarma_service.get_tipos_alarma_by_empresa_full(empresa_id, solo_activos=solo_activos)
+    return jsonify(result), _status_from_result(result)
+
+
 @tipo_alarma_bp.route('/tipos-alarma/tipo-alerta/<tipo_alerta>', methods=['GET'])
 @require_empresa_or_admin_token
 def list_tipos_alarma_by_tipo_alerta(tipo_alerta):

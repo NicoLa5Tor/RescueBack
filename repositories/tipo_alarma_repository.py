@@ -1,3 +1,5 @@
+import re
+
 from core.database import Database
 from models.tipo_alarma import TipoAlarma
 from bson import ObjectId
@@ -56,7 +58,19 @@ class TipoAlarmaRepository:
         except Exception as e:
             # print(f"Error obteniendo tipos de alarma por empresa: {e}")
             return [], 0
-    
+
+    def get_tipos_alarma_by_empresa_all(self, empresa_id, only_active=False):
+        """Obtiene todos los tipos de alarma de una empresa sin paginación"""
+        try:
+            query = {'empresa_id': ObjectId(empresa_id)}
+            if only_active:
+                query['activo'] = True
+            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1)
+            return [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
+        except Exception as e:
+            # print(f"Error obteniendo tipos de alarma por empresa (sin paginación): {e}")
+            return []
+
     def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50):
         """Obtiene tipos de alarma por tipo de alerta (color)"""
         try:
@@ -80,6 +94,38 @@ class TipoAlarmaRepository:
             return None
         except Exception as e:
             # print(f"Error buscando tipo de alarma por tipo de alerta: {e}")
+            return None
+
+    def find_by_tipo_alerta_case_insensitive(self, tipo_alerta):
+        """Busca un tipo de alarma activo por tipo_alerta sin importar mayúsculas/minúsculas."""
+        try:
+            if not tipo_alerta or not str(tipo_alerta).strip():
+                return None
+
+            regex = {'$regex': f'^{re.escape(str(tipo_alerta).strip())}$', '$options': 'i'}
+            query = {'tipo_alerta': regex, 'activo': True}
+            tipo_alarma_data = self.collection.find_one(query)
+            if tipo_alarma_data:
+                return TipoAlarma.from_dict(tipo_alarma_data)
+            return None
+        except Exception as e:
+            # print(f"Error buscando tipo de alarma (case-insensitive): {e}")
+            return None
+
+    def find_by_nombre(self, nombre):
+        """Busca un tipo de alarma activo por nombre (insensible a mayúsculas)."""
+        try:
+            if not nombre or not str(nombre).strip():
+                return None
+
+            regex = {'$regex': f'^{re.escape(str(nombre).strip())}$', '$options': 'i'}
+            query = {'nombre': regex, 'activo': True}
+            tipo_alarma_data = self.collection.find_one(query)
+            if tipo_alarma_data:
+                return TipoAlarma.from_dict(tipo_alarma_data)
+            return None
+        except Exception as e:
+            # print(f"Error buscando tipo de alarma por nombre: {e}")
             return None
     
     def get_active_tipos_alarma(self, page=1, limit=50):

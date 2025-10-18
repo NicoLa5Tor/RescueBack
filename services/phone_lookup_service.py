@@ -61,6 +61,7 @@ class PhoneLookupService:
                 'data': {
                     'id': str(usuario._id),
                     'nombre': usuario.nombre,
+                    'empresa_id': str(empresa._id) if getattr(empresa, '_id', None) else None,
                     'empresa': empresa.nombre,
                     'sede': usuario.sede,
                     'telefono': usuario.telefono,
