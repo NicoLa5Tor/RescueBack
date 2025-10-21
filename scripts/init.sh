@@ -1,5 +1,5 @@
 #!/bin/sh
-# Script de inicialización para ejecutar scripts y luego iniciar la aplicación
+# Script de inicialización: espera la base y crea el admin antes de iniciar la app
 # Usa /bin/sh para mayor compatibilidad en contenedores Alpine/slim
 
 echo "🔧 Inicializando aplicación Rescue Backend..."
@@ -47,27 +47,8 @@ except Exception as e:
 # Esperar a MongoDB
 wait_for_mongo
 
-# Ejecutar script de tipos de alarma
-echo "🎯 Ejecutando script de tipos de alarma..."
-cd /app && python -c "
-import sys
-sys.path.append('/app')
-from scripts.create_default_tipos_alarma import create_default_tipos_alarma
-try:
-    create_default_tipos_alarma()
-    print('✅ Tipos de alarma inicializados correctamente')
-except Exception as e:
-    print(f'⚠️ Error inicializando tipos de alarma: {e}')
-    # No salir, continuar con la aplicación
-"
-if [ $? -eq 0 ]; then
-    echo "✅ Script de tipos de alarma completado"
-else
-    echo "⚠️  Error en script de tipos de alarma, continuando..."
-fi
-
 # Ejecutar script de administrador
-echo "👤 Ejecutando script de administrador..."
+echo "👤 Verificando administrador por defecto..."
 cd /app && python -c "
 import sys
 sys.path.append('/app')
@@ -77,12 +58,11 @@ try:
     print('✅ Administrador inicializado correctamente')
 except Exception as e:
     print(f'⚠️ Error inicializando administrador: {e}')
-    # No salir, continuar con la aplicación
 "
 if [ $? -eq 0 ]; then
-    echo "✅ Script de administrador completado"
+    echo "✅ Administrador listo"
 else
-    echo "⚠️  Error en script de administrador, continuando..."
+    echo "⚠️  Error al preparar el administrador, continuando..."
 fi
 
 echo "🚀 Iniciando aplicación con Gunicorn..."

@@ -1,7 +1,3 @@
-# ==========================================
-# Docker Compose para RESCUE Backend
-# Flask + MongoDB con conexión a red externa
-# ==========================================
 
 version: '3.8'
 
@@ -22,7 +18,7 @@ services:
       - FLASK_DEBUG=0
       - PYTHONUNBUFFERED=1
     env_file:
-      - .env
+      - .env.production
     volumes:
       - ./logs:/app/logs
     command: ["/app/scripts/init.sh"]
@@ -34,46 +30,14 @@ services:
       retries: 3
       start_period: 15s
     networks:
-      - frontend_rescue-network
-    depends_on:
-      - mongodb
-
-  # ==========================================
-  # Base de datos MongoDB
-  # ==========================================
-  mongodb:
-    image: mongo:7.0
-    container_name: rescue-mongodb
-    ports:
-      - "127.0.0.1:27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=rescue2025admin
-      - MONGO_INITDB_ROOT_PASSWORD=rescue2025nicoLa5Tor2004
-      - MONGO_INITDB_DATABASE=rescue
-    volumes:
-      - mongodb_data:/data/db
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    networks:
-      - frontend_rescue-network
+      - global-network
+      - rescue-network
 
 # ==========================================
-# Usar la red externa creada por el frontend
+# Usar la red externa provista por la infraestructura
 # ==========================================
 networks:
-  frontend_rescue-network:
+  global-network:
     external: true
-
-# ==========================================
-# Volúmenes para persistencia de datos
-# ==========================================
-volumes:
-  mongodb_data:
-    driver: local
-  rescue-backend-logs:
-    driver: local
+  rescue-network:
+    external: true
