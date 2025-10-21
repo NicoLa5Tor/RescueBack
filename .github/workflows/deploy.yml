@@ -27,7 +27,7 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT }}
           script: |
             set -e
-            DEPLOY_PATH: /root/opt/projects/RESCUE/RescueBack
+            DEPLOY_PATH:"/root/opt/projects/RESCUE/RescueBack"
             cd "$DEPLOY_PATH"
             git fetch --prune
             git reset --hard origin/main
