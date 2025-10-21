@@ -55,6 +55,9 @@ class TipoAlarmaService:
                 if not validation_result['valid']:
                     return {'success': False, 'error': validation_result['error']}
             
+            # Normalizar color en mayúsculas
+            tipo_alarma_data['color_alerta'] = tipo_alarma_data['color_alerta'].strip().upper()
+
             # Crear objeto TipoAlarma
             tipo_alarma = TipoAlarma(
                 nombre=tipo_alarma_data['nombre'],
@@ -321,7 +324,10 @@ class TipoAlarmaService:
                 tipo_alarma.tipo_alerta = update_data['tipo_alerta']
             
             if 'color_alerta' in update_data:
-                tipo_alarma.color_alerta = update_data['color_alerta']
+                color_alerta_value = update_data['color_alerta']
+                if isinstance(color_alerta_value, str):
+                    color_alerta_value = color_alerta_value.strip().upper()
+                tipo_alarma.color_alerta = color_alerta_value
 
             if 'imagen_base64' in update_data:
                 imagen_base64 = update_data['imagen_base64']

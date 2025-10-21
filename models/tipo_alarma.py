@@ -168,7 +168,7 @@ class TipoAlarma:
         if self.tipo_alerta:
             self.tipo_alerta = self.tipo_alerta.upper().strip()
         if self.color_alerta:
-            self.color_alerta = self.color_alerta.strip()
+            self.color_alerta = self.color_alerta.strip().upper()
         if self.imagen_base64 and isinstance(self.imagen_base64, str):
             self.imagen_base64 = self.imagen_base64.strip()
         if self.sonido_link and isinstance(self.sonido_link, str):
