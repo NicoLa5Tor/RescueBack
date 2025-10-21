@@ -456,6 +456,7 @@ class MqttAlertController:
                         'numero': usuario['telefono'],
                         'nombre': usuario.get('nombre', ''),
                         'usuario_id': str(usuario.get('_id')),
+                        'rol': usuario.get('rol_detalle'),
                         'disponible': False,  # Por defecto False para alertas de hardware
                         'embarcado': False    # Por defecto False
                     })
@@ -1215,6 +1216,7 @@ class MqttAlertController:
                         'numero': usr['telefono'],
                         'nombre': usr.get('nombre', ''),
                         'usuario_id': str(usr.get('_id')),
+                        'rol': usr.get('rol_detalle'),
                         'disponible': es_creador,  # True si es el creador, False para otros
                         'embarcado': False  # Por defecto False para todos
                     })
@@ -1553,6 +1555,7 @@ class MqttAlertController:
                                 'numero': usr['telefono'],
                                 'nombre': usr.get('nombre', ''),
                                 'usuario_id': str(usr.get('_id')),
+                                'rol': usr.get('rol_detalle'),
                                 'disponible': False,  # Fallback por defecto
                                 'embarcado': False    # Fallback por defecto
                             })
@@ -1583,6 +1586,7 @@ class MqttAlertController:
                             'numero': usr['telefono'],
                             'nombre': usr.get('nombre', ''),
                             'usuario_id': str(usr.get('_id')),
+                            'rol': usr.get('rol_detalle'),
                             'disponible': False,  # Fallback por defecto
                             'embarcado': False    # Fallback por defecto
                         })

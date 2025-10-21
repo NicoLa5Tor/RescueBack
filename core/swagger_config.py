@@ -153,7 +153,7 @@ hardware_type_response_model = api.model('HardwareTypeResponse', {
 multitenant_user_model = api.model('MultitenantUser', {
     'nombre': fields.String(required=True, description='Nombre del usuario'),
     'cedula': fields.String(required=True, description='Número de cédula'),
-    'rol': fields.String(required=True, description='Rol del usuario', enum=['operador', 'supervisor'])
+    'rol': fields.String(required=True, description='Rol del usuario (debe existir en la empresa)')
 })
 
 multitenant_user_response_model = api.model('MultitenantUserResponse', {
@@ -171,3 +171,4 @@ from controllers.swagger_users_controller import *
 from controllers.swagger_hardware_controller import *
 from controllers.swagger_admin_controller import *
 from controllers.swagger_multitenant_controller import *
+

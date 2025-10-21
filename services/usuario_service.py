@@ -2,6 +2,7 @@ from bson import ObjectId
 from models.usuario import Usuario
 from repositories.usuario_repository import UsuarioRepository
 from repositories.empresa_repository import EmpresaRepository
+from utils.role_utils import is_role_allowed, normalize_role_name
 from utils.whatsapp_service_client import whatsapp_client
 
 class UsuarioService:
@@ -42,11 +43,27 @@ class UsuarioService:
                     'status_code': 400
                 }
             
-            # 3. Crear objeto Usuario
+            # 3. Verificar rol contra los definidos en la empresa
+            rol_usuario = usuario_data.get('rol')
+            if not rol_usuario:
+                return {
+                    'success': False,
+                    'errors': ['El rol del usuario es obligatorio'],
+                    'status_code': 400
+                }
+
+            if not is_role_allowed(rol_usuario, empresa.roles):
+                return {
+                    'success': False,
+                    'errors': ['El rol no está permitido para esta empresa'],
+                    'status_code': 400
+                }
+
+            # 4. Crear objeto Usuario
             usuario = Usuario(
                 nombre=usuario_data.get('nombre'),
                 cedula=usuario_data.get('cedula'),
-                rol=usuario_data.get('rol'),
+                rol=normalize_role_name(rol_usuario),
                 empresa_id=empresa_id_obj,
                 especialidades=usuario_data.get('especialidades'),
                 certificaciones=usuario_data.get('certificaciones'),
@@ -56,7 +73,7 @@ class UsuarioService:
                 sede=sede
             )
             
-            # 4. Validar datos del usuario
+            # 5. Validar datos del usuario
             validation_errors = usuario.validate()
             if validation_errors:
                 return {
@@ -65,7 +82,7 @@ class UsuarioService:
                     'status_code': 400
                 }
             
-            # 5. Verificar que no exista un usuario con la misma cédula en la empresa
+            # 6. Verificar que no exista un usuario con la misma cédula en la empresa
             existing_usuario = self.usuario_repository.find_by_cedula_and_empresa(
                 usuario.cedula, empresa_id_obj
             )
@@ -76,10 +93,10 @@ class UsuarioService:
                     'status_code': 400
                 }
             
-            # 6. Crear usuario
+            # 7. Crear usuario
             created_usuario = self.usuario_repository.create(usuario)
             
-            # 7. Incluir información de la empresa en la respuesta
+            # 8. Incluir información de la empresa en la respuesta
             response_data = created_usuario.to_json()
             response_data['empresa'] = {
                 'id': str(empresa.empresa_id) if hasattr(empresa, 'empresa_id') else str(empresa._id),
@@ -259,27 +276,38 @@ class UsuarioService:
             
             existing_usuario = self.usuario_repository.find_by_id(usuario_id)
             
+            empresa_info = existing_result['data']['empresa']
+            if isinstance(empresa_info['id'], str):
+                empresa_id_obj = ObjectId(empresa_info['id'])
+            else:
+                empresa_id_obj = empresa_info['id']
+
+            empresa = self.empresa_repository.find_by_id(empresa_id_obj)
+
             # Verificar sede si se cambia
             nueva_sede = usuario_data.get('sede', existing_usuario.sede)
-            if nueva_sede and nueva_sede != existing_usuario.sede:
-                if isinstance(existing_result['data']['empresa']['id'], str):
-                    empresa_id_obj = ObjectId(existing_result['data']['empresa']['id'])
-                else:
-                    empresa_id_obj = existing_result['data']['empresa']['id']
-                
-                empresa = self.empresa_repository.find_by_id(empresa_id_obj)
-                if empresa and nueva_sede not in empresa.sedes:
+            if empresa and nueva_sede and nueva_sede != existing_usuario.sede:
+                if nueva_sede not in empresa.sedes:
                     return {
                         'success': False,
                         'errors': ['La sede especificada no pertenece a esta empresa'],
                         'status_code': 400
                     }
-            
+
+            # Verificar rol si se actualiza
+            nuevo_rol = usuario_data.get('rol', existing_usuario.rol)
+            if nuevo_rol and not is_role_allowed(nuevo_rol, empresa.roles if empresa else []):
+                return {
+                    'success': False,
+                    'errors': ['El rol no está permitido para esta empresa'],
+                    'status_code': 400
+                }
+
             # Crear objeto Usuario con datos actualizados
             updated_usuario = Usuario(
                 nombre=usuario_data.get('nombre', existing_usuario.nombre),
                 cedula=usuario_data.get('cedula', existing_usuario.cedula),
-                rol=usuario_data.get('rol', existing_usuario.rol),
+                rol=normalize_role_name(nuevo_rol),
                 empresa_id=existing_usuario.empresa_id,
                 especialidades=usuario_data.get('especialidades', existing_usuario.especialidades),
                 certificaciones=usuario_data.get('certificaciones', existing_usuario.certificaciones),

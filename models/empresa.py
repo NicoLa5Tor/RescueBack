@@ -1,6 +1,8 @@
 from datetime import datetime
 from bson import ObjectId
 
+from utils.role_utils import sanitize_roles
+
 class Empresa:
     def __init__(
         self,
@@ -27,7 +29,7 @@ class Empresa:
         self.email = email
         self.password_hash = password_hash
         self.sedes = sedes or []
-        self.roles = roles or []
+        self.roles = sanitize_roles(roles)
         self.last_login = last_login
         self.tipo_empresa_id = tipo_empresa_id
         self.fecha_creacion = datetime.utcnow()
@@ -69,7 +71,7 @@ class Empresa:
         empresa.email = data.get('email')
         empresa.password_hash = data.get('password_hash')
         empresa.sedes = data.get('sedes', [])
-        empresa.roles = data.get('roles', [])
+        empresa.roles = sanitize_roles(data.get('roles', []))
         empresa.last_login = data.get('last_login')
         empresa.tipo_empresa_id = data.get('tipo_empresa_id')
         empresa.fecha_creacion = data.get('fecha_creacion')
@@ -155,8 +157,15 @@ class Empresa:
                 errors.append("Los roles deben ser una lista")
             else:
                 for rol in self.roles:
-                    if not isinstance(rol, str) or len(rol.strip()) == 0:
-                        errors.append("Cada rol debe ser una cadena no vacía")
+                    if not isinstance(rol, dict):
+                        errors.append("Cada rol debe ser un objeto con nombre e is_creator")
+                        break
+                    nombre = rol.get('nombre')
+                    if not nombre or not isinstance(nombre, str) or len(nombre.strip()) == 0:
+                        errors.append("Cada rol debe tener un nombre válido")
+                        break
+                    if not isinstance(rol.get('is_creator', False), bool):
+                        errors.append("El campo is_creator de cada rol debe ser booleano")
                         break
 
         return errors
@@ -179,5 +188,4 @@ class Empresa:
             self.email = self.email.strip()
         if self.sedes and isinstance(self.sedes, list):
             self.sedes = [sede.strip() for sede in self.sedes if isinstance(sede, str)]
-        if self.roles and isinstance(self.roles, list):
-            self.roles = [rol.strip() for rol in self.roles if isinstance(rol, str)]
+        self.roles = sanitize_roles(self.roles)

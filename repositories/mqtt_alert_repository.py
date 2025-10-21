@@ -3,6 +3,8 @@ from models.mqtt_alert import MqttAlert
 from bson import ObjectId
 from datetime import datetime
 
+from utils.role_utils import sanitize_roles, normalize_role_name
+
 class MqttAlertRepository:
     """Repositorio para operaciones de alertas MQTT"""
     
@@ -326,6 +328,12 @@ class MqttAlertRepository:
             if not empresa:
                 return []
             
+            # Catalogar roles de la empresa
+            catalogo_roles = sanitize_roles(empresa.get('roles'))
+            roles_lookup = {
+                entry['nombre']: entry for entry in catalogo_roles
+            }
+
             # Buscar usuarios de esa empresa y sede
             query = {
                 'empresa_id': empresa['_id'],
@@ -333,15 +341,25 @@ class MqttAlertRepository:
                 'activo': True
             }
             
-            usuarios = self.db.usuarios.find(query, {
+            usuarios_cursor = self.db.usuarios.find(query, {
                 'nombre': 1,
                 'telefono': 1,
                 'email': 1,
                 'rol': 1,
                 'especialidades': 1
             })
-            
-            return list(usuarios)
+
+            usuarios = []
+            for usuario in usuarios_cursor:
+                rol_name = normalize_role_name(usuario.get('rol')) or None
+                rol_info = roles_lookup.get(rol_name) if rol_name else None
+                usuario['rol_detalle'] = {
+                    'nombre': rol_info['nombre'] if rol_info else rol_name,
+                    'is_creator': rol_info['is_creator'] if rol_info else False
+                }
+                usuarios.append(usuario)
+
+            return usuarios
         except Exception as e:
             # print(f"Error obteniendo usuarios por empresa y sede: {e}")
             return []

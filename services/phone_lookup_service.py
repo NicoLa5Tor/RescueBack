@@ -55,6 +55,20 @@ class PhoneLookupService:
                     'message': 'La empresa asociada al usuario no fue encontrada'
                 }
             
+            # Determinar detalles del rol, buscando en la empresa
+            rol_detalle = next(
+                (
+                    {
+                        'nombre': entry.get('nombre'),
+                        'is_creator': bool(entry.get('is_creator', False))
+                    }
+                    for entry in (empresa.roles or [])
+                    if isinstance(entry, dict)
+                    and (entry.get('nombre') or '').strip().lower() == (usuario.rol or '').strip().lower()
+                ),
+                None
+            )
+
             # Construir respuesta con la información solicitada
             return {
                 'success': True,
@@ -66,7 +80,7 @@ class PhoneLookupService:
                     'sede': usuario.sede,
                     'telefono': usuario.telefono,
                     'cedula': usuario.cedula,
-                    'rol': usuario.rol,
+                    'rol': rol_detalle or usuario.rol,
                     'email': usuario.email
                 }
             }

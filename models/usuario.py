@@ -167,7 +167,7 @@ class Usuario:
         if self.cedula:
             self.cedula = str(self.cedula).strip()
         if self.rol:
-            self.rol = self.rol.strip()
+            self.rol = self.rol.strip().lower()
         if self.sede:
             self.sede = self.sede.strip()
         if self.especialidades and isinstance(self.especialidades, list):

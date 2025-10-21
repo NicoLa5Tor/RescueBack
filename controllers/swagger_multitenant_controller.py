@@ -22,7 +22,7 @@ class MultitenantUsersAPI(Resource):
     **Campos obligatorios:**
     - nombre: Nombre del usuario
     - cedula: Número de cédula único
-    - rol: Rol del usuario (operador, supervisor)
+    - rol: Rol del usuario (debe existir en la empresa)
     
     **Nota:**
     - Estos usuarios no pueden iniciar sesión en la API
@@ -37,6 +37,7 @@ class MultitenantUsersAPI(Resource):
             return response
         except Exception as e:
             return {'success': False, 'errors': [str(e)]}, 500
+
 
     @multitenant_ns.response(200, 'Usuarios de empresa', [multitenant_user_response_model])
     @multitenant_ns.response(404, 'Empresa no encontrada', error_response_model)
@@ -92,3 +93,4 @@ class MultitenantUserDetailAPI(Resource):
             return response
         except Exception as e:
             return {'success': False, 'errors': [str(e)]}, 500
+

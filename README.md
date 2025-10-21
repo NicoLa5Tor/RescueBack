@@ -232,6 +232,10 @@ Crear empresa (requiere super admin). Las empresas actúan como usuarios con rol
   "descripcion": "Empresa de ejemplo",
   "ubicacion": "Bogotá",
   "sedes": ["Principal"],
+  "roles": [
+    { "nombre": "operador", "is_creator": false },
+    { "nombre": "supervisor", "is_creator": false }
+  ],
   "username": "miempresa",
   "email": "empresa@example.com",
   "password": "secreto"
@@ -352,7 +356,7 @@ curl http://localhost:5000/api/admin/distribution \
 Los usuarios creados en este apartado pertenecen a una empresa y no pueden iniciar sesión en la API.
 
 ### `POST /empresas/<empresa_id>/usuarios`
-Crear usuario para una empresa.
+Crear usuario para una empresa. El campo `rol` debe coincidir con alguno de los roles configurados en la empresa (`roles[].nombre`).
 
 **Curl**
 ```bash
