@@ -33,11 +33,14 @@ class TipoAlarmaService:
             
             if not tipo_alarma_data.get('color_alerta'):
                 return {'success': False, 'error': 'El color de alerta es obligatorio'}
-            
+
             # Validar tipo de alerta
             if tipo_alarma_data['tipo_alerta'] not in TipoAlarma.TIPOS_ALERTA.values():
                 return {'success': False, 'error': f'Tipo de alerta inválido. Debe ser uno de: {", ".join(TipoAlarma.TIPOS_ALERTA.values())}'}
-            
+
+            # Normalizar color en mayúsculas para validaciones
+            color_alerta_normalized = tipo_alarma_data['color_alerta'].strip().upper()
+
             # Validar empresa si se proporciona
             empresa_id = tipo_alarma_data.get('empresa_id')
             if empresa_id:
@@ -47,16 +50,19 @@ class TipoAlarmaService:
                 # Verificar duplicados para la empresa
                 if self.tipo_alarma_repo.check_duplicate_name(tipo_alarma_data['nombre'], empresa_id):
                     return {'success': False, 'error': 'Ya existe un tipo de alarma con ese nombre para esta empresa'}
-            
+
+                if self.tipo_alarma_repo.check_duplicate_color(color_alerta_normalized, empresa_id):
+                    return {'success': False, 'error': 'Ya existe un tipo de alarma con ese color para esta empresa'}
+
             # Validar imagen si se proporciona
             imagen_base64 = tipo_alarma_data.get('imagen_base64')
             if imagen_base64:
                 validation_result = self._validate_image_value(imagen_base64)
                 if not validation_result['valid']:
                     return {'success': False, 'error': validation_result['error']}
-            
+
             # Normalizar color en mayúsculas
-            tipo_alarma_data['color_alerta'] = tipo_alarma_data['color_alerta'].strip().upper()
+            tipo_alarma_data['color_alerta'] = color_alerta_normalized
 
             # Crear objeto TipoAlarma
             tipo_alarma = TipoAlarma(
@@ -327,6 +333,13 @@ class TipoAlarmaService:
                 color_alerta_value = update_data['color_alerta']
                 if isinstance(color_alerta_value, str):
                     color_alerta_value = color_alerta_value.strip().upper()
+
+                if color_alerta_value and tipo_alarma.empresa_id:
+                    current_color = (tipo_alarma.color_alerta or '').strip().upper()
+                    if color_alerta_value != current_color:
+                        if self.tipo_alarma_repo.check_duplicate_color(color_alerta_value, tipo_alarma.empresa_id, tipo_alarma_id):
+                            return {'success': False, 'error': 'Ya existe un tipo de alarma con ese color para esta empresa'}
+
                 tipo_alarma.color_alerta = color_alerta_value
 
             if 'imagen_base64' in update_data:

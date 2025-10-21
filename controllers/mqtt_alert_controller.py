@@ -50,7 +50,7 @@ class MqttAlertController:
 
         return tipo_alerta_id, tipo_alerta_value
 
-    def _resolve_tipo_alerta(self, raw_tipo_alerta):
+    def _resolve_tipo_alerta(self, raw_tipo_alerta, empresa_id=None):
         """Normaliza y busca la información asociada al tipo de alerta."""
         tipo_alerta_id, tipo_alerta_value = self._extract_tipo_alerta_identifiers(raw_tipo_alerta)
         has_identifier = bool(tipo_alerta_id or (tipo_alerta_value and tipo_alerta_value.strip()))
@@ -64,33 +64,42 @@ class MqttAlertController:
 
         if tipo_alerta_id:
             tipo_alarma_info = tipo_alarma_repo.get_tipo_alarma_by_id(tipo_alerta_id)
+            if tipo_alarma_info and empresa_id and not self._tipo_alarma_matches_empresa(tipo_alarma_info, empresa_id):
+                tipo_alarma_info = None
 
-        if not tipo_alarma_info and normalized_value:
-            tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(normalized_value)
+        search_values = []
+        if normalized_value:
+            search_values.append(normalized_value)
+        if tipo_alerta_value and isinstance(tipo_alerta_value, str):
+            alt_value = tipo_alerta_value.strip().upper()
+            if alt_value and alt_value not in search_values:
+                search_values.append(alt_value)
 
-        if not tipo_alarma_info and tipo_alerta_value:
-            tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta_case_insensitive(tipo_alerta_value)
+        if empresa_id:
+            for value in search_values:
+                tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_color(empresa_id, value)
+                if tipo_alarma_info:
+                    break
+        else:
+            if not tipo_alarma_info and normalized_value:
+                tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(normalized_value)
 
-        if not tipo_alarma_info and tipo_alerta_value:
-            tipo_alarma_info = tipo_alarma_repo.find_by_nombre(tipo_alerta_value)
+            if not tipo_alarma_info and tipo_alerta_value:
+                tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta_case_insensitive(tipo_alerta_value)
+
+            if not tipo_alarma_info and tipo_alerta_value:
+                tipo_alarma_info = tipo_alarma_repo.find_by_nombre(tipo_alerta_value)
 
         resolved_value = None
         resolved_id = tipo_alerta_id
         tipo_alarma_payload = None
 
         if tipo_alarma_info:
-            resolved_value = tipo_alarma_info.tipo_alerta
+            resolved_value = (tipo_alarma_info.color_alerta or tipo_alarma_info.tipo_alerta)
+            if isinstance(resolved_value, str):
+                resolved_value = resolved_value.strip().upper()
             resolved_id = str(tipo_alarma_info._id) if getattr(tipo_alarma_info, '_id', None) else resolved_id
-            tipo_alarma_payload = {
-                '_id': resolved_id,
-                'nombre': getattr(tipo_alarma_info, 'nombre', None),
-                'descripcion': getattr(tipo_alarma_info, 'descripcion', None),
-                'tipo_alerta': getattr(tipo_alarma_info, 'tipo_alerta', None),
-                'color_alerta': getattr(tipo_alarma_info, 'color_alerta', None),
-                'imagen_base64': getattr(tipo_alarma_info, 'imagen_base64', None),
-                'implementos_necesarios': getattr(tipo_alarma_info, 'implementos_necesarios', []),
-                'recomendaciones': getattr(tipo_alarma_info, 'recomendaciones', [])
-            }
+            tipo_alarma_payload = self._build_tipo_alarma_payload(tipo_alarma_info)
         elif normalized_value:
             resolved_value = normalized_value
 
@@ -101,6 +110,36 @@ class MqttAlertController:
             'tipo_alerta_input': tipo_alerta_value,
             'has_identifier': has_identifier,
             'tipo_alarma_payload': tipo_alarma_payload
+        }
+
+    def _tipo_alarma_matches_empresa(self, tipo_alarma_info, empresa_id):
+        """Verifica si un tipo de alarma pertenece a la empresa indicada."""
+        if not tipo_alarma_info or not empresa_id:
+            return False
+
+        tipo_empresa_id = getattr(tipo_alarma_info, 'empresa_id', None)
+
+        if not tipo_empresa_id:
+            return False
+
+        return str(tipo_empresa_id) == str(empresa_id)
+
+    def _build_tipo_alarma_payload(self, tipo_alarma_info):
+        """Construye el payload enriquecido para el tipo de alarma."""
+        if not tipo_alarma_info:
+            return None
+
+        resolved_id = str(tipo_alarma_info._id) if getattr(tipo_alarma_info, '_id', None) else None
+
+        return {
+            '_id': resolved_id,
+            'nombre': getattr(tipo_alarma_info, 'nombre', None),
+            'descripcion': getattr(tipo_alarma_info, 'descripcion', None),
+            'tipo_alerta': getattr(tipo_alarma_info, 'tipo_alerta', None),
+            'color_alerta': getattr(tipo_alarma_info, 'color_alerta', None),
+            'imagen_base64': getattr(tipo_alarma_info, 'imagen_base64', None),
+            'implementos_necesarios': getattr(tipo_alarma_info, 'implementos_necesarios', []),
+            'recomendaciones': getattr(tipo_alarma_info, 'recomendaciones', [])
         }
 
     def process_mqtt_message(self):
@@ -315,24 +354,16 @@ class MqttAlertController:
             )
             print(f"📝 TIPO_ALERTA FOUND: {raw_tipo_alerta}")
 
-            tipo_alerta_details = self._resolve_tipo_alerta(raw_tipo_alerta)
+            tipo_alerta_id_temp, tipo_alerta_value_temp = self._extract_tipo_alerta_identifiers(raw_tipo_alerta)
+            has_tipo_alerta_identifier = bool(
+                tipo_alerta_id_temp or (tipo_alerta_value_temp and str(tipo_alerta_value_temp).strip())
+            )
 
-            if not tipo_alerta_details['has_identifier']:
+            if not has_tipo_alerta_identifier:
                 return jsonify({
                     'success': False,
                     'error': 'Campo tipo_alerta requerido',
                     'message': 'El campo "data.tipo_alerta" o "data.tipo_alarma" es obligatorio'
-                }), 400
-
-            resolved_tipo_alerta = tipo_alerta_details['tipo_alerta_resolved']
-            if not resolved_tipo_alerta and tipo_alerta_details['tipo_alerta_input']:
-                resolved_tipo_alerta = tipo_alerta_details['tipo_alerta_input'].upper()
-
-            if not resolved_tipo_alerta:
-                return jsonify({
-                    'success': False,
-                    'error': 'tipo_alerta inválido',
-                    'message': 'No se pudo determinar un tipo de alerta válido a partir del payload recibido'
                 }), 400
 
             # Validar descripción si se proporciona
@@ -343,29 +374,6 @@ class MqttAlertController:
                     'error': 'Descripción inválida',
                     'message': 'El campo "descripcion" debe ser una cadena no vacía si se proporciona'
                 }), 400
-            
-            # Buscar información del tipo de alarma para obtener nombre, imagen, elementos e instrucciones
-            tipo_alarma_info = tipo_alerta_details['tipo_alarma_info']
-            tipo_alarma_payload = tipo_alerta_details['tipo_alarma_payload']
-
-            # Normalizar y dejar trazabilidad en los datos originales
-            alert_data['tipo_alerta'] = resolved_tipo_alerta
-            if tipo_alerta_details['tipo_alerta_id']:
-                alert_data['tipo_alerta_id'] = tipo_alerta_details['tipo_alerta_id']
-            alert_data['tipo_alerta_normalizada'] = resolved_tipo_alerta
-            if tipo_alerta_details['tipo_alerta_input']:
-                alert_data['tipo_alerta_original'] = tipo_alerta_details['tipo_alerta_input']
-
-            if tipo_alarma_payload:
-                alert_data.setdefault('tipo_alarma_detalle', tipo_alarma_payload)
-                if tipo_alarma_payload.get('nombre') and not alert_data.get('nombre_alerta'):
-                    alert_data['nombre_alerta'] = tipo_alarma_payload['nombre']
-                if tipo_alarma_payload.get('imagen_base64') and not alert_data.get('image_alert'):
-                    alert_data['image_alert'] = tipo_alarma_payload['imagen_base64']
-                if tipo_alarma_payload.get('implementos_necesarios') and not alert_data.get('elementos_necesarios'):
-                    alert_data['elementos_necesarios'] = tipo_alarma_payload['implementos_necesarios']
-                if tipo_alarma_payload.get('recomendaciones') and not alert_data.get('instrucciones'):
-                    alert_data['instrucciones'] = tipo_alarma_payload['recomendaciones']
             
             # Buscar el hardware en la base de datos para obtener toda la información
             from repositories.hardware_repository import HardwareRepository
@@ -389,6 +397,51 @@ class MqttAlertController:
                     'success': False,
                     'error': 'Empresa no encontrada para el hardware'
                 }), 404
+
+            # Resolver tipo de alerta validando empresa y color
+            tipo_alerta_details = self._resolve_tipo_alerta(raw_tipo_alerta, empresa._id)
+
+            tipo_alarma_info = tipo_alerta_details['tipo_alarma_info']
+            if not tipo_alarma_info:
+                return jsonify({
+                    'success': False,
+                    'error': 'Tipo de alerta no permitido',
+                    'message': 'El color de alerta no está registrado para la empresa del hardware'
+                }), 400
+
+            resolved_tipo_alerta = tipo_alerta_details['tipo_alerta_resolved']
+            if not resolved_tipo_alerta and tipo_alerta_details['tipo_alerta_input']:
+                input_value = tipo_alerta_details['tipo_alerta_input']
+                if isinstance(input_value, str) and input_value.strip():
+                    resolved_tipo_alerta = input_value.strip().upper()
+
+            if not resolved_tipo_alerta:
+                return jsonify({
+                    'success': False,
+                    'error': 'tipo_alerta inválido',
+                    'message': 'No se pudo determinar un tipo de alerta válido a partir del payload recibido'
+                }), 400
+
+            tipo_alarma_payload = tipo_alerta_details['tipo_alarma_payload']
+
+            # Normalizar y dejar trazabilidad en los datos originales
+            alert_data['tipo_alerta'] = resolved_tipo_alerta
+            if tipo_alerta_details['tipo_alerta_id']:
+                alert_data['tipo_alerta_id'] = tipo_alerta_details['tipo_alerta_id']
+            alert_data['tipo_alerta_normalizada'] = resolved_tipo_alerta
+            if tipo_alerta_details['tipo_alerta_input'] and isinstance(tipo_alerta_details['tipo_alerta_input'], str):
+                alert_data['tipo_alerta_original'] = tipo_alerta_details['tipo_alerta_input']
+
+            if tipo_alarma_payload:
+                alert_data.setdefault('tipo_alarma_detalle', tipo_alarma_payload)
+                if tipo_alarma_payload.get('nombre') and not alert_data.get('nombre_alerta'):
+                    alert_data['nombre_alerta'] = tipo_alarma_payload['nombre']
+                if tipo_alarma_payload.get('imagen_base64') and not alert_data.get('image_alert'):
+                    alert_data['image_alert'] = tipo_alarma_payload['imagen_base64']
+                if tipo_alarma_payload.get('implementos_necesarios') and not alert_data.get('elementos_necesarios'):
+                    alert_data['elementos_necesarios'] = tipo_alarma_payload['implementos_necesarios']
+                if tipo_alarma_payload.get('recomendaciones') and not alert_data.get('instrucciones'):
+                    alert_data['instrucciones'] = tipo_alarma_payload['recomendaciones']
             
             # Buscar automáticamente los números telefónicos de usuarios de esa empresa y sede
             usuarios_relacionados = self.service.alert_repo.get_users_by_empresa_sede(

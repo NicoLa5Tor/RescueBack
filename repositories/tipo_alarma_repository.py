@@ -164,7 +164,36 @@ class TipoAlarmaRepository:
         except Exception as e:
             # print(f"Error obteniendo tipos de alarma por empresa y tipo: {e}")
             return []
-    
+
+    def find_by_empresa_and_color(self, empresa_id, color_alerta):
+        """Busca un tipo de alarma activo por color dentro de una empresa específica."""
+        try:
+            if not empresa_id or not color_alerta or not str(color_alerta).strip():
+                return None
+
+            normalized_color = str(color_alerta).strip().upper()
+
+            base_filters = {
+                'empresa_id': ObjectId(empresa_id),
+                'activo': True
+            }
+
+            # Intentar coincidencia directa por color_alerta
+            color_query = {**base_filters, 'color_alerta': normalized_color}
+            tipo_alarma_data = self.collection.find_one(color_query)
+            if tipo_alarma_data:
+                return TipoAlarma.from_dict(tipo_alarma_data)
+
+            # Como respaldo, intentar con tipo_alerta si la empresa no usa color_alerta
+            tipo_query = {**base_filters, 'tipo_alerta': normalized_color}
+            tipo_alarma_data = self.collection.find_one(tipo_query)
+            if tipo_alarma_data:
+                return TipoAlarma.from_dict(tipo_alarma_data)
+
+            return None
+        except Exception:
+            return None
+
     def update_tipo_alarma(self, tipo_alarma_id, tipo_alarma):
         """Actualiza un tipo de alarma"""
         try:
@@ -260,6 +289,22 @@ class TipoAlarmaRepository:
             return existing is not None
         except Exception as e:
             # print(f"Error verificando duplicado: {e}")
+            return False
+
+    def check_duplicate_color(self, color_alerta, empresa_id, exclude_id=None):
+        """Verifica si ya existe un tipo de alarma con el mismo color para la empresa"""
+        try:
+            normalized_color = str(color_alerta).strip().upper()
+            query = {
+                'color_alerta': normalized_color,
+                'empresa_id': ObjectId(empresa_id)
+            }
+            if exclude_id:
+                query['_id'] = {'$ne': ObjectId(exclude_id)}
+
+            existing = self.collection.find_one(query)
+            return existing is not None
+        except Exception:
             return False
     
     def search_tipos_alarma(self, search_term, page=1, limit=50):
