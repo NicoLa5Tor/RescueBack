@@ -9,7 +9,25 @@ class TipoAlarmaService:
     def __init__(self):
         self.tipo_alarma_repo = TipoAlarmaRepository()
         self.empresa_repo = EmpresaRepository()
-    
+
+    def _parse_empresa_id(self, raw_empresa_id):
+        """Normaliza un valor de empresa y valida su formato."""
+        if raw_empresa_id in (None, False):
+            return None, None
+
+        if isinstance(raw_empresa_id, str):
+            trimmed = raw_empresa_id.strip()
+        else:
+            trimmed = str(raw_empresa_id).strip()
+
+        if not trimmed:
+            return None, None
+
+        if not ObjectId.is_valid(trimmed):
+            return None, 'ID de empresa inválido'
+
+        return trimmed, None
+
     def create_tipo_alarma(self, tipo_alarma_data):
         """
         Crea un nuevo tipo de alarma
@@ -42,17 +60,23 @@ class TipoAlarmaService:
             color_alerta_normalized = tipo_alarma_data['color_alerta'].strip().upper()
 
             # Validar empresa si se proporciona
-            empresa_id = tipo_alarma_data.get('empresa_id')
-            if empresa_id:
-                if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id):
+            empresa_id_raw = tipo_alarma_data.get('empresa_id')
+            empresa_id_normalized, empresa_error = self._parse_empresa_id(empresa_id_raw)
+            if empresa_error:
+                return {'success': False, 'error': empresa_error}
+
+            if empresa_id_normalized:
+                if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id_normalized):
                     return {'success': False, 'error': 'La empresa especificada no existe'}
                 
                 # Verificar duplicados para la empresa
-                if self.tipo_alarma_repo.check_duplicate_name(tipo_alarma_data['nombre'], empresa_id):
+                if self.tipo_alarma_repo.check_duplicate_name(tipo_alarma_data['nombre'], empresa_id_normalized):
                     return {'success': False, 'error': 'Ya existe un tipo de alarma con ese nombre para esta empresa'}
 
-                if self.tipo_alarma_repo.check_duplicate_color(color_alerta_normalized, empresa_id):
+                if self.tipo_alarma_repo.check_duplicate_color(color_alerta_normalized, empresa_id_normalized):
                     return {'success': False, 'error': 'Ya existe un tipo de alarma con ese color para esta empresa'}
+
+            empresa_id = empresa_id_normalized
 
             # Validar imagen si se proporciona
             imagen_base64 = tipo_alarma_data.get('imagen_base64')
@@ -121,27 +145,34 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
     
-    def get_tipos_alarma_by_empresa(self, empresa_id, page=1, limit=50):
+    def get_tipos_alarma_by_empresa(self, empresa_id, page=1, limit=50, exclude_globales=False):
         """
         Obtiene tipos de alarma por empresa
-        
+
         Args:
             empresa_id (str): ID de la empresa
             page (int): Página
             limit (int): Límite por página
-            
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
+
         Returns:
             dict: Resultado de la operación
         """
         try:
             if not ObjectId.is_valid(empresa_id):
                 return {'success': False, 'error': 'ID de empresa inválido'}
-            
+
             if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id):
                 return {'success': False, 'error': 'La empresa no existe'}
-            
-            tipos_alarma, total = self.tipo_alarma_repo.get_tipos_alarma_by_empresa(empresa_id, page, limit)
-            
+
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.get_tipos_alarma_by_empresa(
+                empresa_id,
+                page,
+                limit,
+                include_globales=include_globales
+            )
+
             return {
                 'success': True,
                 'data': [tipo.to_json() for tipo in tipos_alarma],
@@ -156,7 +187,7 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
     
-    def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50):
+    def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50, exclude_globales=False):
         """
         Obtiene tipos de alarma por tipo de alerta
 
@@ -164,6 +195,7 @@ class TipoAlarmaService:
             tipo_alerta (str): Tipo de alerta
             page (int): Página
             limit (int): Límite por página
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
 
         Returns:
             dict: Resultado de la operación
@@ -172,7 +204,13 @@ class TipoAlarmaService:
             if tipo_alerta not in TipoAlarma.TIPOS_ALERTA.values():
                 return {'success': False, 'error': f'Tipo de alerta inválido. Debe ser uno de: {", ".join(TipoAlarma.TIPOS_ALERTA.values())}'}
 
-            tipos_alarma, total = self.tipo_alarma_repo.get_tipos_alarma_by_tipo_alerta(tipo_alerta, page, limit)
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.get_tipos_alarma_by_tipo_alerta(
+                tipo_alerta,
+                page,
+                limit,
+                include_globales=include_globales
+            )
 
             return {
                 'success': True,
@@ -188,7 +226,7 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
 
-    def get_tipos_alarma_by_empresa_full(self, empresa_id, solo_activos=False):
+    def get_tipos_alarma_by_empresa_full(self, empresa_id, solo_activos=False, exclude_globales=False):
         """Obtiene todos los tipos de alarma de una empresa sin paginación"""
         try:
             if not ObjectId.is_valid(empresa_id):
@@ -197,7 +235,12 @@ class TipoAlarmaService:
             if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id):
                 return {'success': False, 'error': 'La empresa no existe'}
 
-            tipos_alarma = self.tipo_alarma_repo.get_tipos_alarma_by_empresa_all(empresa_id, only_active=solo_activos)
+            include_globales = not exclude_globales
+            tipos_alarma = self.tipo_alarma_repo.get_tipos_alarma_by_empresa_all(
+                empresa_id,
+                only_active=solo_activos,
+                include_globales=include_globales
+            )
 
             return {
                 'success': True,
@@ -208,19 +251,25 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
 
-    def get_all_tipos_alarma(self, page=1, limit=50):
+    def get_all_tipos_alarma(self, page=1, limit=50, exclude_globales=False):
         """
         Obtiene todos los tipos de alarma
 
         Args:
             page (int): Página
             limit (int): Límite por página
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
 
         Returns:
             dict: Resultado de la operación
         """
         try:
-            tipos_alarma, total = self.tipo_alarma_repo.get_all_tipos_alarma(page, limit)
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.get_all_tipos_alarma(
+                page,
+                limit,
+                include_globales=include_globales
+            )
 
             return {
                 'success': True,
@@ -236,19 +285,25 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
 
-    def get_active_tipos_alarma(self, page=1, limit=50):
+    def get_active_tipos_alarma(self, page=1, limit=50, exclude_globales=False):
         """
         Obtiene solo tipos de alarma activos
 
         Args:
             page (int): Página
             limit (int): Límite por página
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
 
         Returns:
             dict: Resultado de la operación
         """
         try:
-            tipos_alarma, total = self.tipo_alarma_repo.get_active_tipos_alarma(page, limit)
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.get_active_tipos_alarma(
+                page,
+                limit,
+                include_globales=include_globales
+            )
 
             return {
                 'success': True,
@@ -264,19 +319,25 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
 
-    def get_inactive_tipos_alarma(self, page=1, limit=50):
+    def get_inactive_tipos_alarma(self, page=1, limit=50, exclude_globales=False):
         """
         Obtiene solo tipos de alarma inactivos
 
         Args:
             page (int): Página
             limit (int): Límite por página
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
 
         Returns:
             dict: Resultado de la operación
         """
         try:
-            tipos_alarma, total = self.tipo_alarma_repo.get_inactive_tipos_alarma(page, limit)
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.get_inactive_tipos_alarma(
+                page,
+                limit,
+                include_globales=include_globales
+            )
 
             return {
                 'success': True,
@@ -315,28 +376,28 @@ class TipoAlarmaService:
             # Resolver empresa destino y validar cambios
             current_empresa_id = tipo_alarma.empresa_id
             target_empresa_id = current_empresa_id
-            target_empresa_id_str = str(target_empresa_id) if target_empresa_id else None
+            target_empresa_id_str = str(current_empresa_id) if current_empresa_id else None
             empresa_changed = False
 
             if 'empresa_id' in update_data:
                 raw_empresa_id = update_data['empresa_id']
+                parsed_empresa_id, empresa_error = self._parse_empresa_id(raw_empresa_id)
 
-                if raw_empresa_id in (None, '', False):
+                if empresa_error:
+                    return {'success': False, 'error': empresa_error}
+
+                if parsed_empresa_id is None:
                     empresa_changed = current_empresa_id is not None
                     target_empresa_id = None
                     target_empresa_id_str = None
                 else:
-                    empresa_id_str = str(raw_empresa_id).strip()
-                    if not ObjectId.is_valid(empresa_id_str):
-                        return {'success': False, 'error': 'ID de empresa inválido'}
-
-                    if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id_str):
+                    if not self.tipo_alarma_repo.verify_empresa_exists(parsed_empresa_id):
                         return {'success': False, 'error': 'La empresa especificada no existe'}
 
                     current_empresa_str = str(current_empresa_id) if current_empresa_id else None
-                    empresa_changed = current_empresa_str != empresa_id_str
-                    target_empresa_id = ObjectId(empresa_id_str)
-                    target_empresa_id_str = empresa_id_str
+                    empresa_changed = current_empresa_str != parsed_empresa_id
+                    target_empresa_id = ObjectId(parsed_empresa_id)
+                    target_empresa_id_str = parsed_empresa_id
 
             nombre_candidato = update_data.get('nombre', tipo_alarma.nombre)
             color_candidato = update_data.get('color_alerta', tipo_alarma.color_alerta)
@@ -482,24 +543,31 @@ class TipoAlarmaService:
         except Exception as e:
             return {'success': False, 'error': f'Error interno: {str(e)}'}
     
-    def search_tipos_alarma(self, search_term, page=1, limit=50):
+    def search_tipos_alarma(self, search_term, page=1, limit=50, exclude_globales=False):
         """
         Busca tipos de alarma por nombre o descripción
-        
+
         Args:
             search_term (str): Término de búsqueda
             page (int): Página
             limit (int): Límite por página
-            
+            exclude_globales (bool): Si es True no incluye tipos sin empresa asociada
+
         Returns:
             dict: Resultado de la operación
         """
         try:
             if not search_term or len(search_term.strip()) < 2:
                 return {'success': False, 'error': 'El término de búsqueda debe tener al menos 2 caracteres'}
-            
-            tipos_alarma, total = self.tipo_alarma_repo.search_tipos_alarma(search_term.strip(), page, limit)
-            
+
+            include_globales = not exclude_globales
+            tipos_alarma, total = self.tipo_alarma_repo.search_tipos_alarma(
+                search_term.strip(),
+                page,
+                limit,
+                include_globales=include_globales
+            )
+
             return {
                 'success': True,
                 'data': [tipo.to_json() for tipo in tipos_alarma],

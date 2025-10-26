@@ -22,6 +22,12 @@ def _get_pagination_params():
     return max(page, 1), max(limit, 1)
 
 
+def _should_exclude_globales():
+    """Determina si se deben excluir los tipos globales según query param."""
+    raw_value = (request.args.get('excluir_globales') or '').strip().lower()
+    return raw_value in ('true', '1', 'yes', 'on')
+
+
 def _status_from_result(result, success_code=200, not_found_code=404):
     """Determina el código de estado HTTP según el resultado del servicio"""
     if result.get('success'):
@@ -47,7 +53,12 @@ def create_tipo_alarma():
 def list_tipos_alarma():
     """Obtiene todos los tipos de alarma con paginación"""
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.get_all_tipos_alarma(page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_all_tipos_alarma(
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -89,7 +100,13 @@ def toggle_tipo_alarma_status(tipo_alarma_id):
 def list_tipos_alarma_by_empresa(empresa_id):
     """Obtiene tipos de alarma asociados a una empresa específica"""
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.get_tipos_alarma_by_empresa(empresa_id, page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_tipos_alarma_by_empresa(
+        empresa_id,
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -98,7 +115,12 @@ def list_tipos_alarma_by_empresa_full(empresa_id):
     """GET /api/tipos-alarma/empresa/<empresa_id>/todos - Lista sin paginación (SIN AUTENTICACIÓN)"""
     solo_activos_raw = (request.args.get('solo_activos') or '').strip().lower()
     solo_activos = solo_activos_raw in ('true', '1', 'yes', 'on')
-    result = tipo_alarma_service.get_tipos_alarma_by_empresa_full(empresa_id, solo_activos=solo_activos)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_tipos_alarma_by_empresa_full(
+        empresa_id,
+        solo_activos=solo_activos,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -107,7 +129,13 @@ def list_tipos_alarma_by_empresa_full(empresa_id):
 def list_tipos_alarma_by_tipo_alerta(tipo_alerta):
     """Obtiene tipos de alarma filtrados por tipo de alerta"""
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.get_tipos_alarma_by_tipo_alerta(tipo_alerta.upper(), page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_tipos_alarma_by_tipo_alerta(
+        tipo_alerta.upper(),
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -116,7 +144,12 @@ def list_tipos_alarma_by_tipo_alerta(tipo_alerta):
 def list_tipos_alarma_activos():
     """Obtiene únicamente tipos de alarma activos"""
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.get_active_tipos_alarma(page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_active_tipos_alarma(
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -125,7 +158,12 @@ def list_tipos_alarma_activos():
 def list_tipos_alarma_inactivos():
     """Obtiene únicamente tipos de alarma inactivos"""
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.get_inactive_tipos_alarma(page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.get_inactive_tipos_alarma(
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 
@@ -135,7 +173,13 @@ def search_tipos_alarma():
     """Busca tipos de alarma por nombre o descripción"""
     query = request.args.get('query', '')
     page, limit = _get_pagination_params()
-    result = tipo_alarma_service.search_tipos_alarma(query, page=page, limit=limit)
+    exclude_globales = _should_exclude_globales()
+    result = tipo_alarma_service.search_tipos_alarma(
+        query,
+        page=page,
+        limit=limit,
+        exclude_globales=exclude_globales
+    )
     return jsonify(result), _status_from_result(result)
 
 

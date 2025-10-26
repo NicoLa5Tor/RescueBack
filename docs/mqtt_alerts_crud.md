@@ -196,6 +196,11 @@ GET /api/mqtt-alerts/test-flow
 - Normalización de datos antes de guardar
 - Verificación de empresa y sede asociadas
 
+## Tipos de Alarma Globales
+
+- Los tipos de alarma sin `empresa_id` se tratan como **globales** y se incluyen por defecto en los listados (`GET /api/tipos-alarma/*`).
+- Todos los endpoints de lectura aceptan el query param opcional `excluir_globales=true` para obtener exclusivamente tipos asociados a empresas.
+
 ## Ejemplo de Uso Completo
 
 ### 1. Obtener Token de Hardware

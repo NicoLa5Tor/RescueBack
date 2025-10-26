@@ -11,7 +11,23 @@ class TipoAlarmaRepository:
     def __init__(self):
         self.db = Database().get_database()
         self.collection = self.db.tipos_alarma
-    
+
+    def _global_conditions(self):
+        """Devuelve condiciones OR para tipos sin empresa asociada."""
+        return [
+            {'empresa_id': {'$exists': False}},
+            {'empresa_id': None}
+        ]
+
+    def _non_global_filter(self):
+        """Filtro que asegura que el tipo pertenece a alguna empresa."""
+        return {
+            'empresa_id': {
+                '$exists': True,
+                '$ne': None
+            }
+        }
+
     def create_tipo_alarma(self, tipo_alarma):
         """Crea un nuevo tipo de alarma"""
         try:
@@ -34,24 +50,48 @@ class TipoAlarmaRepository:
             # print(f"Error obteniendo tipo de alarma por ID: {e}")
             return None
     
-    def get_all_tipos_alarma(self, page=1, limit=50):
+    def get_all_tipos_alarma(self, page=1, limit=50, include_globales=True):
         """Obtiene todos los tipos de alarma con paginación"""
         try:
             skip = (page - 1) * limit
-            tipos_alarma_data = self.collection.find().sort('fecha_creacion', -1).skip(skip).limit(limit)
+            query = {}
+            if not include_globales:
+                query.update(self._non_global_filter())
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
-            total = self.collection.count_documents({})
+            total = self.collection.count_documents(query)
             return tipos_alarma, total
         except Exception as e:
             # print(f"Error obteniendo tipos de alarma: {e}")
             return [], 0
-    
-    def get_tipos_alarma_by_empresa(self, empresa_id, page=1, limit=50):
+
+    def get_tipos_alarma_by_empresa(self, empresa_id, page=1, limit=50, include_globales=True):
         """Obtiene tipos de alarma por empresa"""
         try:
             skip = (page - 1) * limit
-            query = {'empresa_id': ObjectId(empresa_id)}
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            if include_globales:
+                query = {
+                    '$or': [
+                        {'empresa_id': ObjectId(empresa_id)}
+                    ] + self._global_conditions()
+                }
+            else:
+                query = {'empresa_id': ObjectId(empresa_id)}
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             total = self.collection.count_documents(query)
             return tipos_alarma, total
@@ -59,24 +99,44 @@ class TipoAlarmaRepository:
             # print(f"Error obteniendo tipos de alarma por empresa: {e}")
             return [], 0
 
-    def get_tipos_alarma_by_empresa_all(self, empresa_id, only_active=False):
+    def get_tipos_alarma_by_empresa_all(self, empresa_id, only_active=False, include_globales=True):
         """Obtiene todos los tipos de alarma de una empresa sin paginación"""
         try:
-            query = {'empresa_id': ObjectId(empresa_id)}
+            if include_globales:
+                query = {
+                    '$or': [
+                        {'empresa_id': ObjectId(empresa_id)}
+                    ] + self._global_conditions()
+                }
+            else:
+                query = {'empresa_id': ObjectId(empresa_id)}
             if only_active:
                 query['activo'] = True
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1)
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+            )
             return [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
         except Exception as e:
             # print(f"Error obteniendo tipos de alarma por empresa (sin paginación): {e}")
             return []
 
-    def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50):
+    def get_tipos_alarma_by_tipo_alerta(self, tipo_alerta, page=1, limit=50, include_globales=True):
         """Obtiene tipos de alarma por tipo de alerta (color)"""
         try:
             skip = (page - 1) * limit
             query = {'tipo_alerta': tipo_alerta}
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            if not include_globales:
+                query.update(self._non_global_filter())
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             total = self.collection.count_documents(query)
             return tipos_alarma, total
@@ -128,12 +188,21 @@ class TipoAlarmaRepository:
             # print(f"Error buscando tipo de alarma por nombre: {e}")
             return None
     
-    def get_active_tipos_alarma(self, page=1, limit=50):
+    def get_active_tipos_alarma(self, page=1, limit=50, include_globales=True):
         """Obtiene tipos de alarma activos"""
         try:
             skip = (page - 1) * limit
             query = {'activo': True}
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            if not include_globales:
+                query.update(self._non_global_filter())
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             total = self.collection.count_documents(query)
             return tipos_alarma, total
@@ -141,12 +210,21 @@ class TipoAlarmaRepository:
             # print(f"Error obteniendo tipos de alarma activos: {e}")
             return [], 0
 
-    def get_inactive_tipos_alarma(self, page=1, limit=50):
+    def get_inactive_tipos_alarma(self, page=1, limit=50, include_globales=True):
         """Obtiene tipos de alarma inactivos"""
         try:
             skip = (page - 1) * limit
             query = {'activo': False}
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            if not include_globales:
+                query.update(self._non_global_filter())
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             total = self.collection.count_documents(query)
             return tipos_alarma, total
@@ -154,10 +232,23 @@ class TipoAlarmaRepository:
             # print(f"Error obteniendo tipos de alarma inactivos: {e}")
             return [], 0
     
-    def get_tipos_alarma_by_empresa_and_tipo(self, empresa_id, tipo_alerta):
+    def get_tipos_alarma_by_empresa_and_tipo(self, empresa_id, tipo_alerta, include_globales=True):
         """Obtiene tipos de alarma por empresa y tipo de alerta"""
         try:
-            query = {'empresa_id': ObjectId(empresa_id), 'tipo_alerta': tipo_alerta, 'activo': True}
+            if include_globales:
+                query = {
+                    'tipo_alerta': tipo_alerta,
+                    'activo': True,
+                    '$or': [
+                        {'empresa_id': ObjectId(empresa_id)}
+                    ] + self._global_conditions()
+                }
+            else:
+                query = {
+                    'empresa_id': ObjectId(empresa_id),
+                    'tipo_alerta': tipo_alerta,
+                    'activo': True
+                }
             tipos_alarma_data = self.collection.find(query)
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             return tipos_alarma
@@ -307,7 +398,7 @@ class TipoAlarmaRepository:
         except Exception:
             return False
     
-    def search_tipos_alarma(self, search_term, page=1, limit=50):
+    def search_tipos_alarma(self, search_term, page=1, limit=50, include_globales=True):
         """Busca tipos de alarma por nombre o descripción"""
         try:
             skip = (page - 1) * limit
@@ -317,7 +408,16 @@ class TipoAlarmaRepository:
                     {'descripcion': {'$regex': search_term, '$options': 'i'}}
                 ]
             }
-            tipos_alarma_data = self.collection.find(query).sort('fecha_creacion', -1).skip(skip).limit(limit)
+            if not include_globales:
+                query.update(self._non_global_filter())
+
+            tipos_alarma_data = (
+                self.collection
+                .find(query)
+                .sort('fecha_creacion', -1)
+                .skip(skip)
+                .limit(limit)
+            )
             tipos_alarma = [TipoAlarma.from_dict(tipo_data) for tipo_data in tipos_alarma_data]
             total = self.collection.count_documents(query)
             return tipos_alarma, total
