@@ -106,7 +106,7 @@ class UsuarioService:
             # Enviar plantilla de bienvenida por WhatsApp
             whatsapp_client.enviar_broadcast_plantilla(
                 phones=[usuario.telefono],
-                template_name="bienvenida",
+                template_name="bienvenido",
                 language="es_CO",
                 parameters=[usuario.nombre, empresa.nombre],
                 use_queue=True
