@@ -312,35 +312,62 @@ class TipoAlarmaService:
             if not tipo_alarma:
                 return {'success': False, 'error': 'Tipo de alarma no encontrado'}
             
+            # Resolver empresa destino y validar cambios
+            current_empresa_id = tipo_alarma.empresa_id
+            target_empresa_id = current_empresa_id
+            target_empresa_id_str = str(target_empresa_id) if target_empresa_id else None
+            empresa_changed = False
+
+            if 'empresa_id' in update_data:
+                raw_empresa_id = update_data['empresa_id']
+
+                if raw_empresa_id in (None, '', False):
+                    empresa_changed = current_empresa_id is not None
+                    target_empresa_id = None
+                    target_empresa_id_str = None
+                else:
+                    empresa_id_str = str(raw_empresa_id).strip()
+                    if not ObjectId.is_valid(empresa_id_str):
+                        return {'success': False, 'error': 'ID de empresa inválido'}
+
+                    if not self.tipo_alarma_repo.verify_empresa_exists(empresa_id_str):
+                        return {'success': False, 'error': 'La empresa especificada no existe'}
+
+                    current_empresa_str = str(current_empresa_id) if current_empresa_id else None
+                    empresa_changed = current_empresa_str != empresa_id_str
+                    target_empresa_id = ObjectId(empresa_id_str)
+                    target_empresa_id_str = empresa_id_str
+
+            nombre_candidato = update_data.get('nombre', tipo_alarma.nombre)
+            color_candidato = update_data.get('color_alerta', tipo_alarma.color_alerta)
+            if isinstance(color_candidato, str):
+                color_candidato = color_candidato.strip().upper()
+
+            if target_empresa_id_str and (('nombre' in update_data) or empresa_changed):
+                if self.tipo_alarma_repo.check_duplicate_name(nombre_candidato, target_empresa_id_str, tipo_alarma_id):
+                    return {'success': False, 'error': 'Ya existe un tipo de alarma con ese nombre para esta empresa'}
+
+            if target_empresa_id_str and color_candidato and (('color_alerta' in update_data) or empresa_changed):
+                if self.tipo_alarma_repo.check_duplicate_color(color_candidato, target_empresa_id_str, tipo_alarma_id):
+                    return {'success': False, 'error': 'Ya existe un tipo de alarma con ese color para esta empresa'}
+
             # Actualizar campos
             if 'nombre' in update_data:
-                # Verificar duplicados si se cambia el nombre
-                if (update_data['nombre'] != tipo_alarma.nombre and 
-                    tipo_alarma.empresa_id and 
-                    self.tipo_alarma_repo.check_duplicate_name(update_data['nombre'], tipo_alarma.empresa_id, tipo_alarma_id)):
-                    return {'success': False, 'error': 'Ya existe un tipo de alarma con ese nombre para esta empresa'}
-                tipo_alarma.nombre = update_data['nombre']
-            
+                tipo_alarma.nombre = nombre_candidato
+
             if 'descripcion' in update_data:
                 tipo_alarma.descripcion = update_data['descripcion']
-            
+
             if 'tipo_alerta' in update_data:
                 if update_data['tipo_alerta'] not in TipoAlarma.TIPOS_ALERTA.values():
                     return {'success': False, 'error': f'Tipo de alerta inválido. Debe ser uno de: {", ".join(TipoAlarma.TIPOS_ALERTA.values())}'}
                 tipo_alarma.tipo_alerta = update_data['tipo_alerta']
-            
+
             if 'color_alerta' in update_data:
-                color_alerta_value = update_data['color_alerta']
-                if isinstance(color_alerta_value, str):
-                    color_alerta_value = color_alerta_value.strip().upper()
+                tipo_alarma.color_alerta = color_candidato
 
-                if color_alerta_value and tipo_alarma.empresa_id:
-                    current_color = (tipo_alarma.color_alerta or '').strip().upper()
-                    if color_alerta_value != current_color:
-                        if self.tipo_alarma_repo.check_duplicate_color(color_alerta_value, tipo_alarma.empresa_id, tipo_alarma_id):
-                            return {'success': False, 'error': 'Ya existe un tipo de alarma con ese color para esta empresa'}
-
-                tipo_alarma.color_alerta = color_alerta_value
+            if 'empresa_id' in update_data:
+                tipo_alarma.empresa_id = target_empresa_id
 
             if 'imagen_base64' in update_data:
                 imagen_base64 = update_data['imagen_base64']
