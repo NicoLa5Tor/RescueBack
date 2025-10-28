@@ -151,12 +151,19 @@ class MqttAlertService:
             
             # Preparar números telefónicos desde usuarios_notificados
             numeros_telefonicos = []
-            for usuario in usuarios_notificados:
-                if usuario.get('telefono'):
-                    numeros_telefonicos.append({
-                        'numero': usuario['telefono'],
-                        'nombre': usuario.get('nombre', '')
-                    })
+            for usuario in usuarios:
+                telefono = usuario.get('telefono')
+                if not telefono:
+                    continue
+
+                numeros_telefonicos.append({
+                    'numero': telefono,
+                    'nombre': usuario.get('nombre', ''),
+                    'usuario_id': str(usuario.get('_id')),
+                    'rol': usuario.get('rol_detalle'),
+                    'disponible': False,
+                    'embarcado': False
+                })
             
             # Extraer topics de otros hardware (vacío por ahora para MQTT)
             topics_otros_hardware = []
