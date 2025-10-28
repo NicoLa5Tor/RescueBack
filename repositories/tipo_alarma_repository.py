@@ -265,8 +265,10 @@ class TipoAlarmaRepository:
             normalized_color = str(color_alerta).strip().upper()
 
             base_filters = {
-                'empresa_id': ObjectId(empresa_id),
-                'activo': True
+                'activo': True,
+                '$or': [
+                    {'empresa_id': ObjectId(empresa_id)}
+                ] + self._global_conditions()
             }
 
             # Intentar coincidencia directa por color_alerta
