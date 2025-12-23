@@ -348,9 +348,10 @@ class MqttAlertController:
             
             # Validar campos obligatorios dentro de data
             raw_tipo_alerta = (
-                alert_data.get('tipo_alerta')
+                alert_data.get('tipo_alerta_id')
+                or alert_data.get('tipo_alerta_color')
+                or alert_data.get('tipo_alerta')
                 or alert_data.get('tipo_alarma')
-                or alert_data.get('tipo_alerta_id')
             )
             print(f"📝 TIPO_ALERTA FOUND: {raw_tipo_alerta}")
 
@@ -968,9 +969,10 @@ class MqttAlertController:
             creador = data.get('creador')
             ubicacion = data.get('ubicacion')
             raw_tipo_alerta = (
-                data.get('tipo_alerta')
+                data.get('tipo_alerta_id')
+                or data.get('tipo_alerta_color')
+                or data.get('tipo_alerta')
                 or data.get('tipo_alarma')
-                or data.get('tipo_alerta_id')
             )
             descripcion = data.get('descripcion')
             
