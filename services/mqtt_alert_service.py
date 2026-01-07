@@ -142,12 +142,18 @@ class MqttAlertService:
             image_alert = None
             # TODO: Implementar búsqueda de tipo_alarma_info si es necesario
             
-            # Preparar información de ubicación (vacía por ahora para MQTT)
+            # Preparar información de ubicación desde el hardware asociado (si existe)
             ubicacion_info = {
                 'direccion': '',
                 'url_maps': '',
                 'url_open_maps': ''
             }
+            if verification_info.get('hardware_exists') and hardware_data:
+                ubicacion_info = {
+                    'direccion': hardware_data.get('direccion') or '',
+                    'url_maps': hardware_data.get('direccion_url') or '',
+                    'url_open_maps': hardware_data.get('direccion_open_maps') or ''
+                }
             
             # Preparar números telefónicos desde usuarios_notificados
             numeros_telefonicos = []
