@@ -135,6 +135,7 @@ hardware_response_model = api.model('HardwareResponse', {
     'tipo': fields.String(description='Tipo de hardware'),
     'sede': fields.String(description='Sede donde está ubicado'),
     'datos': fields.Raw(description='Datos adicionales'),
+    'physical_status': fields.Raw(description='Estado físico del hardware'),
     'activo': fields.Boolean(description='Estado del hardware')
 })
 
@@ -171,4 +172,3 @@ from controllers.swagger_users_controller import *
 from controllers.swagger_hardware_controller import *
 from controllers.swagger_admin_controller import *
 from controllers.swagger_multitenant_controller import *
-

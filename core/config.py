@@ -10,6 +10,10 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     PORT = int(os.getenv('PORT', 5000))
+    INTERNAL_TOKEN = os.getenv('INTERNAL_TOKEN')
+    INTERNAL_TOKEN_HEADER = os.getenv('INTERNAL_TOKEN_HEADER', 'X-Internal-Token')
+    HARDWARE_STATUS_EXCLUDED_TYPES = os.getenv('HARDWARE_STATUS_EXCLUDED_TYPES', '')
+    HARDWARE_STATUS_STALE_MINUTES = int(os.getenv('HARDWARE_STATUS_STALE_MINUTES', 10))
     
     # Validar variables de entorno críticas
     @classmethod

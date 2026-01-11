@@ -1,10 +1,12 @@
 from bson import ObjectId
+from datetime import datetime, timedelta
 from models.hardware import Hardware
 from repositories.hardware_repository import HardwareRepository
 from repositories.empresa_repository import EmpresaRepository
 from repositories.mqtt_alert_repository import MqttAlertRepository
 from services.hardware_type_service import HardwareTypeService
 from utils.geocoding import procesar_direccion_para_hardware
+from core.config import Config
 
 class HardwareService:
     def __init__(self):
@@ -255,6 +257,7 @@ class HardwareService:
             updated.direccion_open_maps = direccion_url_openstreetmap
             updated.coordenadas = coordenadas
             updated.fecha_creacion = existing.fecha_creacion
+            updated.physical_status = existing.physical_status or {}
             
             # Regenerar topic con los nuevos datos
             empresa_nombre_final = nombre_empresa if nombre_empresa else (empresa.nombre if empresa else None)
@@ -337,5 +340,73 @@ class HardwareService:
             }
             
             return {'success': True, 'data': direccion_data}
+        except Exception as exc:
+            return {'success': False, 'errors': [str(exc)]}
+
+    def update_physical_status_by_topic(self, topic, physical_status):
+        """Actualiza solo el campo physical_status usando el topic"""
+        try:
+            if not topic:
+                return {'success': False, 'errors': ['El topic es obligatorio']}
+            if physical_status is None or not isinstance(physical_status, dict):
+                return {'success': False, 'errors': ['physical_status debe ser un objeto JSON']}
+
+            physical_status['updated_at'] = datetime.utcnow().isoformat()
+            updated = self.hardware_repo.update_physical_status_by_topic(topic, physical_status)
+            if not updated:
+                return {'success': False, 'errors': ['Hardware no encontrado']}
+
+            result = updated.to_json()
+            empresa = self.empresa_repo.find_by_id(updated.empresa_id) if updated.empresa_id else None
+            result['empresa_nombre'] = empresa.nombre if empresa else None
+            return {'success': True, 'data': result}
+        except Exception as exc:
+            return {'success': False, 'errors': [str(exc)]}
+
+    def check_physical_status_stale(self, empresa_id=None):
+        """Marca como desactivado el hardware con status vencido"""
+        try:
+            excluded_types = [
+                item.strip().upper()
+                for item in (Config.HARDWARE_STATUS_EXCLUDED_TYPES or '').split(',')
+                if item.strip()
+            ]
+            stale_minutes = Config.HARDWARE_STATUS_STALE_MINUTES
+            now = datetime.utcnow()
+
+            if empresa_id:
+                hardware_list = self.hardware_repo.find_by_empresa(empresa_id)
+            else:
+                hardware_list = self.hardware_repo.find_all()
+
+            updated_hardware = []
+            for hardware in hardware_list:
+                tipo = (hardware.tipo or '').upper()
+                if tipo in excluded_types:
+                    continue
+
+                physical_status = hardware.physical_status or {}
+                updated_at = physical_status.get('updated_at')
+                last_update = None
+                if isinstance(updated_at, str):
+                    try:
+                        last_update = datetime.fromisoformat(updated_at)
+                    except ValueError:
+                        last_update = None
+
+                is_stale = not last_update or (now - last_update) > timedelta(minutes=stale_minutes)
+                if not is_stale:
+                    continue
+
+                if physical_status.get('estado') != 'Desactivado':
+                    physical_status['estado'] = 'Desactivado'
+                updated = self.hardware_repo.update_physical_status_by_id(hardware._id, physical_status)
+                if updated:
+                    result = updated.to_json()
+                    empresa = self.empresa_repo.find_by_id(updated.empresa_id) if updated.empresa_id else None
+                    result['empresa_nombre'] = empresa.nombre if empresa else None
+                    updated_hardware.append(result)
+
+            return {'success': True, 'data': updated_hardware, 'count': len(updated_hardware)}
         except Exception as exc:
             return {'success': False, 'errors': [str(exc)]}

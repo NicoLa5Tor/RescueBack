@@ -3,7 +3,7 @@ from bson import ObjectId
 
 class Hardware:
     """Modelo generico para cualquier hardware"""
-    def __init__(self, nombre=None, tipo=None, empresa_id=None, sede=None, datos=None, _id=None, activa=True, topic=None):
+    def __init__(self, nombre=None, tipo=None, empresa_id=None, sede=None, datos=None, _id=None, activa=True, topic=None, physical_status=None):
         self._id = _id or ObjectId()
         self.nombre = nombre
         self.tipo = tipo
@@ -14,6 +14,7 @@ class Hardware:
         self.direccion_url = None  # Nueva propiedad de URL de dirección (Google Maps)
         self.direccion_open_maps = None  # Nueva propiedad de URL de dirección (OpenStreetMap)
         self.topic = topic  # Campo topic generado automáticamente
+        self.physical_status = physical_status or {}
         self.fecha_creacion = datetime.utcnow()
         self.fecha_actualizacion = datetime.utcnow()
         self.activa = activa
@@ -29,6 +30,7 @@ class Hardware:
             'direccion_url': self.direccion_url,  # Nueva URL de dirección (Google Maps)
             'direccion_open_maps': self.direccion_open_maps,  # Nueva URL de dirección (OpenStreetMap)
             'topic': self.topic,
+            'physical_status': self.physical_status,
             'fecha_creacion': self.fecha_creacion,
             'fecha_actualizacion': self.fecha_actualizacion,
             'activa': self.activa
@@ -50,6 +52,7 @@ class Hardware:
         hw.direccion_url = data.get('direccion_url')  # Nueva URL de dirección (Google Maps)
         hw.direccion_open_maps = data.get('direccion_open_maps')  # Nueva URL de dirección (OpenStreetMap)
         hw.topic = data.get('topic')
+        hw.physical_status = data.get('physical_status', {})
         hw.fecha_creacion = data.get('fecha_creacion')
         hw.fecha_actualizacion = data.get('fecha_actualizacion')
         hw.activa = data.get('activa', True)
@@ -67,6 +70,7 @@ class Hardware:
             'direccion_url': self.direccion_url,  # Nueva URL de dirección (Google Maps)
             'direccion_open_maps': self.direccion_open_maps,  # Nueva URL de dirección (OpenStreetMap)
             'topic': self.topic,
+            'physical_status': self.physical_status,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None,
             'activa': self.activa

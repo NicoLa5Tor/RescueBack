@@ -214,6 +214,44 @@ class HardwareRepository:
         except Exception as exc:
             raise Exception(f'Error filtrando hardware (incluyendo inactivos): {str(exc)}')
 
+    def find_by_topic_including_inactive(self, topic):
+        """Find hardware by topic including inactive ones"""
+        try:
+            data = self.collection.find_one({'topic': topic})
+            return Hardware.from_dict(data) if data else None
+        except Exception as exc:
+            raise Exception(f'Error buscando hardware por topic (incluyendo inactivos): {str(exc)}')
+
+    def update_physical_status_by_topic(self, topic, physical_status):
+        """Update physical_status by hardware topic"""
+        try:
+            update_data = {
+                'physical_status': physical_status,
+                'fecha_actualizacion': datetime.utcnow()
+            }
+            result = self.collection.update_one({'topic': topic}, {'$set': update_data})
+            if result.matched_count > 0:
+                return self.find_by_topic_including_inactive(topic)
+            return None
+        except Exception as exc:
+            raise Exception(f'Error actualizando physical_status por topic: {str(exc)}')
+
+    def update_physical_status_by_id(self, hardware_id, physical_status):
+        """Update physical_status by hardware ID"""
+        try:
+            if isinstance(hardware_id, str):
+                hardware_id = ObjectId(hardware_id)
+            update_data = {
+                'physical_status': physical_status,
+                'fecha_actualizacion': datetime.utcnow()
+            }
+            result = self.collection.update_one({'_id': hardware_id}, {'$set': update_data})
+            if result.matched_count > 0:
+                return self.find_by_id_including_inactive(hardware_id)
+            return None
+        except Exception as exc:
+            raise Exception(f'Error actualizando physical_status por ID: {str(exc)}')
+
     def update(self, hardware_id, hardware: Hardware):
         try:
             if isinstance(hardware_id, str):

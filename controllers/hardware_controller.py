@@ -1,5 +1,6 @@
-from flask import request, jsonify
+from flask import request, jsonify, g
 from services.hardware_service import HardwareService
+from decorators.internal_token_decorator import require_internal_token
 from utils.permissions import require_empresa_or_admin_token, require_super_admin_token
 
 class HardwareController:
@@ -156,6 +157,33 @@ class HardwareController:
         try:
             result = self.service.get_hardware_direccion_url(hardware_id)
             status = 200 if result.get('success') else 404
+            return jsonify(result), status
+        except Exception as exc:
+            return jsonify({'success': False, 'errors': [str(exc)]}), 500
+
+    @require_internal_token
+    def update_physical_status_by_topic(self):
+        """Actualizar physical_status por topic (token interno)"""
+        try:
+            data = request.get_json() or {}
+            topic = data.get('topic')
+            physical_status = data.get('physical_status')
+            result = self.service.update_physical_status_by_topic(topic, physical_status)
+            if result.get('success'):
+                return jsonify(result), 200
+            if 'Hardware no encontrado' in result.get('errors', []):
+                return jsonify(result), 404
+            return jsonify(result), 400
+        except Exception as exc:
+            return jsonify({'success': False, 'errors': [str(exc)]}), 500
+
+    @require_empresa_or_admin_token
+    def check_physical_status_stale(self):
+        """Revisar hardware vencido y marcar estado desactivado"""
+        try:
+            empresa_id = g.user_id if g.role == 'empresa' else None
+            result = self.service.check_physical_status_stale(empresa_id)
+            status = 200 if result.get('success') else 500
             return jsonify(result), status
         except Exception as exc:
             return jsonify({'success': False, 'errors': [str(exc)]}), 500

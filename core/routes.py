@@ -157,6 +157,16 @@ def toggle_hardware_status(hardware_id):
     """PATCH /api/hardware/<id>/toggle-status - Activar/desactivar hardware"""
     return hardware_controller.toggle_hardware_status(hardware_id)
 
+@hardware_bp.route('/physical-status', methods=['PUT'])
+def update_physical_status_by_topic():
+    """PUT /api/hardware/physical-status - Actualizar physical_status por topic (token interno)"""
+    return hardware_controller.update_physical_status_by_topic()
+
+@hardware_bp.route('/physical-status/check', methods=['POST'])
+def check_physical_status_stale():
+    """POST /api/hardware/physical-status/check - Marcar hardware con status vencido"""
+    return hardware_controller.check_physical_status_stale()
+
 @hardware_bp.route('/all-including-inactive', methods=['GET'])
 def get_all_hardware_including_inactive():
     """GET /api/hardware/all-including-inactive - Obtener todos los hardware incluyendo inactivos"""

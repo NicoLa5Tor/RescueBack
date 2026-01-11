@@ -80,8 +80,11 @@ def create_app():
             response.headers['Access-Control-Allow-Origin'] = origin
             response.headers['Access-Control-Allow-Credentials'] = 'true'
         
-        response.headers.setdefault('Access-Control-Allow-Headers',
-                                   'Content-Type,Authorization')
+        internal_header = Config.INTERNAL_TOKEN_HEADER or 'X-Internal-Token'
+        response.headers.setdefault(
+            'Access-Control-Allow-Headers',
+            f'Content-Type,Authorization,{internal_header}'
+        )
         response.headers.setdefault('Access-Control-Allow-Methods',
                                    'GET,POST,PUT,DELETE,OPTIONS')
         return response
