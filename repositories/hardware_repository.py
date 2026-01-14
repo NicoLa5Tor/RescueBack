@@ -5,7 +5,8 @@ from models.hardware import Hardware
 
 class HardwareRepository:
     def __init__(self):
-        self.collection = Database().get_database().hardware
+        self.db = Database().get_database()
+        self.collection = self.db.hardware
         self._create_indexes()
 
     def _create_indexes(self):
