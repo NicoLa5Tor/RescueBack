@@ -347,11 +347,21 @@ class HardwareService:
         """Actualiza solo el campo physical_status usando empresa + hardware"""
         try:
             if not (empresa_nombre and hardware_nombre):
+                print(
+                    "⚠️ physical-status missing empresa_nombre/hardware_nombre",
+                    f"empresa_nombre={empresa_nombre}",
+                    f"hardware_nombre={hardware_nombre}"
+                )
                 return {
                     'success': False,
                     'errors': ['Debe enviar empresa_nombre y hardware_nombre']
                 }
             if physical_status is None or not isinstance(physical_status, dict):
+                print(
+                    "⚠️ physical-status invalid physical_status",
+                    f"type={type(physical_status)}",
+                    f"value={physical_status}"
+                )
                 return {'success': False, 'errors': ['physical_status debe ser un objeto JSON']}
 
             physical_status['updated_at'] = datetime.utcnow().isoformat()
