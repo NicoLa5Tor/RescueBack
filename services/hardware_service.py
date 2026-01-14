@@ -343,26 +343,23 @@ class HardwareService:
         except Exception as exc:
             return {'success': False, 'errors': [str(exc)]}
 
-    def update_physical_status(self, topic, empresa_nombre, hardware_nombre, physical_status):
-        """Actualiza solo el campo physical_status usando topic o empresa + hardware"""
+    def update_physical_status(self, empresa_nombre, hardware_nombre, physical_status):
+        """Actualiza solo el campo physical_status usando empresa + hardware"""
         try:
-            if not topic and not (empresa_nombre and hardware_nombre):
+            if not (empresa_nombre and hardware_nombre):
                 return {
                     'success': False,
-                    'errors': ['Debe enviar topic o empresa_nombre + hardware_nombre']
+                    'errors': ['Debe enviar empresa_nombre y hardware_nombre']
                 }
             if physical_status is None or not isinstance(physical_status, dict):
                 return {'success': False, 'errors': ['physical_status debe ser un objeto JSON']}
 
             physical_status['updated_at'] = datetime.utcnow().isoformat()
-            if topic:
-                updated = self.hardware_repo.update_physical_status_by_topic(topic, physical_status)
-            else:
-                updated = self.hardware_repo.update_physical_status_by_empresa_hardware(
-                    empresa_nombre,
-                    hardware_nombre,
-                    physical_status
-                )
+            updated = self.hardware_repo.update_physical_status_by_empresa_hardware(
+                empresa_nombre,
+                hardware_nombre,
+                physical_status
+            )
             if not updated:
                 return {'success': False, 'errors': ['Hardware no encontrado']}
 

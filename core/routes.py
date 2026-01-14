@@ -159,7 +159,7 @@ def toggle_hardware_status(hardware_id):
 
 @hardware_bp.route('/physical-status', methods=['PUT'])
 def update_physical_status_by_topic():
-    """PUT /api/hardware/physical-status - Actualizar physical_status por topic (token interno)"""
+    """PUT /api/hardware/physical-status - Actualizar physical_status por empresa y hardware (token interno)"""
     return hardware_controller.update_physical_status_by_topic()
 
 @hardware_bp.route('/physical-status/check', methods=['POST'])
