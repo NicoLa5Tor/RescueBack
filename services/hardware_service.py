@@ -378,7 +378,7 @@ class HardwareService:
             return {'success': False, 'errors': [str(exc)]}
 
     def check_physical_status_stale(self, empresa_id=None):
-        """Marca como desactivado el hardware con status vencido"""
+        """Marca como inactivo el hardware con status vencido"""
         try:
             excluded_types = [
                 item.strip().upper()
@@ -395,11 +395,14 @@ class HardwareService:
 
             updated_hardware = []
             for hardware in hardware_list:
+                if not hardware.activa:
+                    continue
                 tipo = (hardware.tipo or '').upper()
                 if tipo in excluded_types:
                     continue
 
                 physical_status = hardware.physical_status or {}
+                estado_actual = physical_status.get('estado')
                 updated_at = physical_status.get('updated_at')
                 last_update = None
                 if isinstance(updated_at, str):
@@ -409,11 +412,16 @@ class HardwareService:
                         last_update = None
 
                 is_stale = not last_update or (now - last_update) > timedelta(seconds=stale_seconds)
-                if not is_stale:
-                    continue
-
-                if physical_status.get('estado') != 'Inactivo':
+                should_update = False
+                if isinstance(estado_actual, str) and estado_actual.strip().lower() == 'desactivado':
                     physical_status['estado'] = 'Inactivo'
+                    should_update = True
+                elif is_stale:
+                    if physical_status.get('estado') != 'Inactivo':
+                        physical_status['estado'] = 'Inactivo'
+                    should_update = True
+                if not should_update:
+                    continue
                 updated = self.hardware_repo.update_physical_status_by_id(hardware._id, physical_status)
                 if updated:
                     empresa = self.empresa_repo.find_by_id(updated.empresa_id) if updated.empresa_id else None

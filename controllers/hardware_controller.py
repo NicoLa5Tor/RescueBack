@@ -180,7 +180,7 @@ class HardwareController:
 
     @require_empresa_or_admin_token
     def check_physical_status_stale(self):
-        """Revisar hardware vencido y marcar estado desactivado"""
+        """Revisar hardware vencido y marcar estado inactivo"""
         try:
             empresa_id = g.user_id if g.role == 'empresa' else None
             result = self.service.check_physical_status_stale(empresa_id)
