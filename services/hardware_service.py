@@ -104,6 +104,13 @@ class HardwareService:
             hardware.direccion_open_maps = direccion_url_openstreetmap
             hardware.coordenadas = coordenadas  # Nuevo campo para coordenadas
             hardware.topic = hardware.generate_topic(nombre_empresa, sede, tipo, nombre)
+            excluded_types = [
+                item.strip().upper()
+                for item in (Config.HARDWARE_STATUS_DEFAULT_EXCLUDED_TYPES or '').split(',')
+                if item.strip()
+            ]
+            if tipo.upper() not in excluded_types:
+                hardware.physical_status = {'estado': 'Inactivo'}
             
             created = self.hardware_repo.create(hardware)
             result = created.to_json()
