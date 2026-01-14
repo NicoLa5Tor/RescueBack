@@ -173,6 +173,7 @@ class HardwareController:
             hardware_nombre = data.get('hardware_nombre')
             physical_status = data.get('physical_status')
             result = self.service.update_physical_status(empresa_nombre, hardware_nombre, physical_status)
+            print(f"📦 physical-status result={result}")
             if result.get('success'):
                 return jsonify(result), 200
             if 'Hardware no encontrado' in result.get('errors', []):

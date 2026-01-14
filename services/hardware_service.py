@@ -371,6 +371,11 @@ class HardwareService:
                 physical_status
             )
             if not updated:
+                print(
+                    "⚠️ physical-status hardware not found",
+                    f"empresa_nombre={empresa_nombre}",
+                    f"hardware_nombre={hardware_nombre}"
+                )
                 return {'success': False, 'errors': ['Hardware no encontrado']}
 
             result = updated.to_json()
