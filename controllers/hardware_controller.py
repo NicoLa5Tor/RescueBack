@@ -165,15 +165,11 @@ class HardwareController:
     def update_physical_status_by_topic(self):
         """Actualizar physical_status por empresa y hardware (token interno)"""
         try:
-            raw_body = request.get_data(as_text=True)
-            print(f"📦 physical-status content_type={request.content_type} raw_body={raw_body}")
             data = request.get_json(silent=True) or {}
-            print(f"📦 physical-status parsed_body={data}")
             empresa_nombre = data.get('empresa_nombre')
             hardware_nombre = data.get('hardware_nombre')
             physical_status = data.get('physical_status')
             result = self.service.update_physical_status(empresa_nombre, hardware_nombre, physical_status)
-            print(f"📦 physical-status result={result}")
             if result.get('success'):
                 return jsonify(result), 200
             if 'Hardware no encontrado' in result.get('errors', []):
