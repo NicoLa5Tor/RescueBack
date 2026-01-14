@@ -167,8 +167,10 @@ class HardwareController:
         try:
             data = request.get_json() or {}
             topic = data.get('topic')
+            empresa_nombre = data.get('empresa_nombre')
+            hardware_nombre = data.get('hardware_nombre')
             physical_status = data.get('physical_status')
-            result = self.service.update_physical_status_by_topic(topic, physical_status)
+            result = self.service.update_physical_status(topic, empresa_nombre, hardware_nombre, physical_status)
             if result.get('success'):
                 return jsonify(result), 200
             if 'Hardware no encontrado' in result.get('errors', []):

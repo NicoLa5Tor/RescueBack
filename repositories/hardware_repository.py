@@ -236,6 +236,29 @@ class HardwareRepository:
         except Exception as exc:
             raise Exception(f'Error actualizando physical_status por topic: {str(exc)}')
 
+    def update_physical_status_by_empresa_hardware(self, empresa_nombre, hardware_nombre, physical_status):
+        """Update physical_status by empresa nombre and hardware nombre"""
+        try:
+            empresa = self.db.empresas.find_one({'nombre': empresa_nombre})
+            if not empresa:
+                return None
+
+            update_data = {
+                'physical_status': physical_status,
+                'fecha_actualizacion': datetime.utcnow()
+            }
+            query = {
+                'empresa_id': empresa.get('_id'),
+                'nombre': hardware_nombre
+            }
+            result = self.collection.update_one(query, {'$set': update_data})
+            if result.matched_count > 0:
+                data = self.collection.find_one(query)
+                return Hardware.from_dict(data) if data else None
+            return None
+        except Exception as exc:
+            raise Exception(f'Error actualizando physical_status por empresa/hardware: {str(exc)}')
+
     def update_physical_status_by_id(self, hardware_id, physical_status):
         """Update physical_status by hardware ID"""
         try:
