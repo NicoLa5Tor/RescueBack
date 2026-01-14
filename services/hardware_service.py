@@ -382,10 +382,10 @@ class HardwareService:
         try:
             excluded_types = [
                 item.strip().upper()
-                for item in (Config.HARDWARE_STATUS_EXCLUDED_TYPES or '').split(',')
+                for item in (Config.HARDWARE_STATUS_DEFAULT_EXCLUDED_TYPES or '').split(',')
                 if item.strip()
             ]
-            stale_minutes = Config.HARDWARE_STATUS_STALE_MINUTES
+            stale_seconds = Config.HARDWARE_STATUS_STALE_SECONDS
             now = datetime.utcnow()
 
             if empresa_id:
@@ -408,18 +408,22 @@ class HardwareService:
                     except ValueError:
                         last_update = None
 
-                is_stale = not last_update or (now - last_update) > timedelta(minutes=stale_minutes)
+                is_stale = not last_update or (now - last_update) > timedelta(seconds=stale_seconds)
                 if not is_stale:
                     continue
 
-                if physical_status.get('estado') != 'Desactivado':
-                    physical_status['estado'] = 'Desactivado'
+                if physical_status.get('estado') != 'Inactivo':
+                    physical_status['estado'] = 'Inactivo'
                 updated = self.hardware_repo.update_physical_status_by_id(hardware._id, physical_status)
                 if updated:
-                    result = updated.to_json()
                     empresa = self.empresa_repo.find_by_id(updated.empresa_id) if updated.empresa_id else None
-                    result['empresa_nombre'] = empresa.nombre if empresa else None
-                    updated_hardware.append(result)
+                    updated_hardware.append({
+                        '_id': str(updated._id) if updated._id else None,
+                        'nombre': updated.nombre,
+                        'empresa_nombre': empresa.nombre if empresa else None,
+                        'sede': updated.sede,
+                        'estado': (updated.physical_status or {}).get('estado')
+                    })
 
             return {'success': True, 'data': updated_hardware, 'count': len(updated_hardware)}
         except Exception as exc:

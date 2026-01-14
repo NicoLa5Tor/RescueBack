@@ -12,9 +12,8 @@ class Config:
     PORT = int(os.getenv('PORT', 5000))
     INTERNAL_TOKEN = os.getenv('INTERNAL_TOKEN')
     INTERNAL_TOKEN_HEADER = os.getenv('INTERNAL_TOKEN_HEADER', 'X-Internal-Token')
-    HARDWARE_STATUS_EXCLUDED_TYPES = os.getenv('HARDWARE_STATUS_EXCLUDED_TYPES', '')
     HARDWARE_STATUS_DEFAULT_EXCLUDED_TYPES = os.getenv('HARDWARE_STATUS_DEFAULT_EXCLUDED_TYPES', '')
-    HARDWARE_STATUS_STALE_MINUTES = int(os.getenv('HARDWARE_STATUS_STALE_MINUTES', 10))
+    HARDWARE_STATUS_STALE_SECONDS = int(os.getenv('HARDWARE_STATUS_STALE_SECONDS', 600))
     
     # Validar variables de entorno críticas
     @classmethod
