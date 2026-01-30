@@ -87,9 +87,9 @@ class UsuarioService:
                     'status_code': 400
                 }
 
-            # 6. Validar unicidad global de cédula y teléfono para usuarios activos
+            # 6. Validar unicidad global solo por teléfono para usuarios activos
             global_validation_errors = self.usuario_repository.validate_unique_global_fields(
-                usuario.cedula,
+                None,
                 usuario.telefono
             )
             if global_validation_errors:
@@ -99,32 +99,14 @@ class UsuarioService:
                     'status_code': 400
                 }
 
-            # 7. Buscar usuario inactivo por cédula o teléfono para reutilizar ID
-            inactive_by_cedula = None
-            inactive_by_telefono = None
-            if usuario.cedula:
-                inactive_by_cedula = self.usuario_repository.find_inactive_by_cedula_global(
-                    usuario.cedula
-                )
+            # 7. Buscar usuario inactivo por teléfono para reutilizar ID
+            usuario_inactivo = None
             if usuario.telefono:
-                inactive_by_telefono = self.usuario_repository.find_inactive_by_telefono_global(
+                usuario_inactivo = self.usuario_repository.find_inactive_by_telefono_global(
                     usuario.telefono
                 )
 
-            if inactive_by_cedula or inactive_by_telefono:
-                if (
-                    inactive_by_cedula
-                    and inactive_by_telefono
-                    and inactive_by_cedula._id != inactive_by_telefono._id
-                ):
-                    return {
-                        'success': False,
-                        'errors': ['La cédula y el teléfono pertenecen a usuarios inactivos distintos'],
-                        'status_code': 400
-                    }
-
-                usuario_inactivo = inactive_by_cedula or inactive_by_telefono
-
+            if usuario_inactivo:
                 updated_usuario = Usuario(
                     nombre=usuario_data.get('nombre'),
                     cedula=usuario_data.get('cedula'),
