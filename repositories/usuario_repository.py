@@ -312,6 +312,32 @@ class UsuarioRepository:
             return None
         except Exception as e:
             raise Exception(f"Error buscando usuario por teléfono global: {str(e)}")
+
+    def find_inactive_by_cedula_global(self, cedula):
+        """Busca un usuario inactivo por cédula a nivel global"""
+        try:
+            usuario_data = self.collection.find_one({
+                "cedula": str(cedula).strip(),
+                "activo": False
+            })
+            if usuario_data:
+                return Usuario.from_dict(usuario_data)
+            return None
+        except Exception as e:
+            raise Exception(f"Error buscando usuario inactivo por cédula global: {str(e)}")
+
+    def find_inactive_by_telefono_global(self, telefono):
+        """Busca un usuario inactivo por teléfono a nivel global"""
+        try:
+            usuario_data = self.collection.find_one({
+                "telefono": str(telefono).strip(),
+                "activo": False
+            })
+            if usuario_data:
+                return Usuario.from_dict(usuario_data)
+            return None
+        except Exception as e:
+            raise Exception(f"Error buscando usuario inactivo por teléfono global: {str(e)}")
     
     def validate_unique_global_fields(self, cedula, telefono, exclude_id=None):
         """Valida que cédula y teléfono sean únicos globalmente"""

@@ -86,8 +86,99 @@ class UsuarioService:
                     'errors': validation_errors,
                     'status_code': 400
                 }
-            
-            # 6. Verificar que no exista un usuario con la misma cédula en la empresa
+
+            # 6. Validar unicidad global de cédula y teléfono para usuarios activos
+            global_validation_errors = self.usuario_repository.validate_unique_global_fields(
+                usuario.cedula,
+                usuario.telefono
+            )
+            if global_validation_errors:
+                return {
+                    'success': False,
+                    'errors': global_validation_errors,
+                    'status_code': 400
+                }
+
+            # 7. Buscar usuario inactivo por cédula o teléfono para reutilizar ID
+            inactive_by_cedula = None
+            inactive_by_telefono = None
+            if usuario.cedula:
+                inactive_by_cedula = self.usuario_repository.find_inactive_by_cedula_global(
+                    usuario.cedula
+                )
+            if usuario.telefono:
+                inactive_by_telefono = self.usuario_repository.find_inactive_by_telefono_global(
+                    usuario.telefono
+                )
+
+            if inactive_by_cedula or inactive_by_telefono:
+                if (
+                    inactive_by_cedula
+                    and inactive_by_telefono
+                    and inactive_by_cedula._id != inactive_by_telefono._id
+                ):
+                    return {
+                        'success': False,
+                        'errors': ['La cédula y el teléfono pertenecen a usuarios inactivos distintos'],
+                        'status_code': 400
+                    }
+
+                usuario_inactivo = inactive_by_cedula or inactive_by_telefono
+
+                updated_usuario = Usuario(
+                    nombre=usuario_data.get('nombre'),
+                    cedula=usuario_data.get('cedula'),
+                    rol=normalize_role_name(rol_usuario),
+                    empresa_id=empresa_id_obj,
+                    especialidades=usuario_data.get('especialidades'),
+                    certificaciones=usuario_data.get('certificaciones'),
+                    tipo_turno=usuario_data.get('tipo_turno'),
+                    telefono=usuario_data.get('telefono'),
+                    email=usuario_data.get('email'),
+                    sede=sede,
+                    _id=usuario_inactivo._id
+                )
+                updated_usuario.fecha_creacion = usuario_inactivo.fecha_creacion
+                updated_usuario.activo = True
+
+                validation_errors = updated_usuario.validate()
+                if validation_errors:
+                    return {
+                        'success': False,
+                        'errors': validation_errors,
+                        'status_code': 400
+                    }
+
+                result = self.usuario_repository.update(usuario_inactivo._id, updated_usuario)
+                if not result:
+                    return {
+                        'success': False,
+                        'errors': ['Error reactivando usuario'],
+                        'status_code': 500
+                    }
+
+                response_data = result.to_json()
+                response_data['empresa'] = {
+                    'id': str(empresa.empresa_id) if hasattr(empresa, 'empresa_id') else str(empresa._id),
+                    'nombre': empresa.nombre
+                }
+
+                whatsapp_client.enviar_broadcast_plantilla(
+                    phones=[updated_usuario.telefono],
+                    template_name="bienvenido",
+                    language="es_CO",
+                    parameters=[updated_usuario.nombre, empresa.nombre],
+                    use_queue=True
+                )
+                print("usuario reactivado y enviado el mensaje")
+                return {
+                    'success': True,
+                    'data': response_data,
+                    'message': f'Usuario reactivado exitosamente para la empresa {empresa.nombre}',
+                    'status_code': 201
+                }
+
+            # 8. Verificar que no exista un usuario con la misma cédula en la empresa
             existing_usuario = self.usuario_repository.find_by_cedula_and_empresa(
                 usuario.cedula, empresa_id_obj
             )
@@ -98,10 +189,10 @@ class UsuarioService:
                     'status_code': 400
                 }
             
-            # 7. Crear usuario
+            # 9. Crear usuario
             created_usuario = self.usuario_repository.create(usuario)
             
-            # 8. Incluir información de la empresa en la respuesta
+            # 10. Incluir información de la empresa en la respuesta
             response_data = created_usuario.to_json()
             response_data['empresa'] = {
                 'id': str(empresa.empresa_id) if hasattr(empresa, 'empresa_id') else str(empresa._id),
