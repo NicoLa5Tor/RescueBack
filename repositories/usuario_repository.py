@@ -1,4 +1,5 @@
 from bson import ObjectId
+import re
 from datetime import datetime
 from core.database import Database
 from models.usuario import Usuario
@@ -25,6 +26,23 @@ class UsuarioRepository:
         if not candidates:
             return {}
         return {field_name: {"$in": list(dict.fromkeys(candidates))}}
+
+    def _build_phone_or_query(self, field_name, value):
+        if value is None:
+            return []
+        clauses = []
+        value_str = str(value).strip()
+        if not value_str:
+            return []
+        clauses.append({field_name: value_str})
+        if value_str.isdigit():
+            try:
+                clauses.append({field_name: int(value_str)})
+            except ValueError:
+                pass
+        escaped = re.escape(value_str)
+        clauses.append({field_name: {"$regex": f"^\\s*{escaped}\\s*$"}})
+        return clauses
     
     def _create_indexes(self):
         """Crea los índices necesarios para la colección"""
@@ -314,7 +332,11 @@ class UsuarioRepository:
             query = {
                 "activo": True
             }
-            query.update(self._build_number_query("telefono", telefono))
+            telefono_clauses = self._build_phone_or_query("telefono", telefono)
+            if telefono_clauses:
+                query["$or"] = telefono_clauses
+            else:
+                return None
             
             if exclude_id:
                 if isinstance(exclude_id, str):
@@ -349,7 +371,11 @@ class UsuarioRepository:
             query = {
                 "activo": False
             }
-            query.update(self._build_number_query("telefono", telefono))
+            telefono_clauses = self._build_phone_or_query("telefono", telefono)
+            if telefono_clauses:
+                query["$or"] = telefono_clauses
+            else:
+                return None
             usuario_data = self.collection.find_one(query)
             if usuario_data:
                 return Usuario.from_dict(usuario_data)

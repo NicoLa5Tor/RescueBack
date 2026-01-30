@@ -168,6 +168,10 @@ class Usuario:
             self.cedula = str(self.cedula).strip()
         if self.rol:
             self.rol = self.rol.strip().lower()
+        if self.telefono:
+            self.telefono = str(self.telefono).strip()
+        if self.email:
+            self.email = self.email.strip()
         if self.sede:
             self.sede = self.sede.strip()
         if self.especialidades and isinstance(self.especialidades, list):
