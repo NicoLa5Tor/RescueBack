@@ -9,6 +9,22 @@ class UsuarioRepository:
         self.collection = self.db.usuarios
         # Crear índices necesarios
         self._create_indexes()
+
+    def _build_number_query(self, field_name, value):
+        if value is None:
+            return {}
+        candidates = []
+        value_str = str(value).strip()
+        if value_str:
+            candidates.append(value_str)
+            if value_str.isdigit():
+                try:
+                    candidates.append(int(value_str))
+                except ValueError:
+                    pass
+        if not candidates:
+            return {}
+        return {field_name: {"$in": list(dict.fromkeys(candidates))}}
     
     def _create_indexes(self):
         """Crea los índices necesarios para la colección"""
@@ -275,9 +291,9 @@ class UsuarioRepository:
         """Busca un usuario por cédula a nivel global (todas las empresas)"""
         try:
             query = {
-                "cedula": str(cedula).strip(),
                 "activo": True
             }
+            query.update(self._build_number_query("cedula", cedula))
             
             if exclude_id:
                 if isinstance(exclude_id, str):
@@ -296,9 +312,9 @@ class UsuarioRepository:
         """Busca un usuario por teléfono a nivel global (todas las empresas)"""
         try:
             query = {
-                "telefono": str(telefono).strip(),
                 "activo": True
             }
+            query.update(self._build_number_query("telefono", telefono))
             
             if exclude_id:
                 if isinstance(exclude_id, str):
@@ -316,10 +332,11 @@ class UsuarioRepository:
     def find_inactive_by_cedula_global(self, cedula):
         """Busca un usuario inactivo por cédula a nivel global"""
         try:
-            usuario_data = self.collection.find_one({
-                "cedula": str(cedula).strip(),
+            query = {
                 "activo": False
-            })
+            }
+            query.update(self._build_number_query("cedula", cedula))
+            usuario_data = self.collection.find_one(query)
             if usuario_data:
                 return Usuario.from_dict(usuario_data)
             return None
@@ -329,10 +346,11 @@ class UsuarioRepository:
     def find_inactive_by_telefono_global(self, telefono):
         """Busca un usuario inactivo por teléfono a nivel global"""
         try:
-            usuario_data = self.collection.find_one({
-                "telefono": str(telefono).strip(),
+            query = {
                 "activo": False
-            })
+            }
+            query.update(self._build_number_query("telefono", telefono))
+            usuario_data = self.collection.find_one(query)
             if usuario_data:
                 return Usuario.from_dict(usuario_data)
             return None
