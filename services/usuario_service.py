@@ -9,6 +9,11 @@ class UsuarioService:
     def __init__(self):
         self.usuario_repository = UsuarioRepository()
         self.empresa_repository = EmpresaRepository()
+
+    def _delete_whatsapp_number(self, telefono):
+        if not telefono:
+            return
+        whatsapp_client.delete_number(telefono)
     
     def create_usuario_for_empresa(self, empresa_id, usuario_data):
         """Crea un usuario para una empresa específica"""
@@ -346,6 +351,7 @@ class UsuarioService:
             # Actualizar usuario
             result = self.usuario_repository.update(usuario_id, updated_usuario)
             if result:
+                self._delete_whatsapp_number(result.telefono)
                 response_data = result.to_json()
                 empresa = self.empresa_repository.find_by_id(result.empresa_id)
                 response_data['empresa'] = {
@@ -380,10 +386,14 @@ class UsuarioService:
             existing_result = self.get_usuario_by_id_and_empresa(usuario_id, empresa_id)
             if not existing_result['success']:
                 return existing_result
+
+            usuario = self.usuario_repository.find_by_id_including_inactive(usuario_id)
             
             # Eliminar usuario (soft delete)
             deleted = self.usuario_repository.soft_delete(usuario_id)
             if deleted:
+                if usuario:
+                    self._delete_whatsapp_number(usuario.telefono)
                 return {
                     'success': True,
                     'message': 'Usuario eliminado correctamente',
@@ -443,6 +453,7 @@ class UsuarioService:
             
             updated = self.usuario_repository.update_status_only(usuario_id, activo)
             if updated:
+                self._delete_whatsapp_number(updated.telefono)
                 status_text = "activado" if activo else "desactivado"
                 response_data = updated.to_json()
                 response_data['empresa'] = {

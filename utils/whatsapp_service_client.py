@@ -96,6 +96,82 @@ class WhatsAppServiceClient:
                 "data": None
             }
 
+    def delete_number(self, phone):
+        """
+        Elimina un numero del servicio de WhatsApp.
+        """
+        if not self.api_base_url:
+            return {
+                "success": False,
+                "error": "WHATSAPP_SERVICE_URL no configurado",
+                "data": None
+            }
+        if not phone:
+            return {
+                "success": False,
+                "error": "Numero de telefono faltante",
+                "data": None
+            }
+
+        endpoint = f"{self.api_base_url}/numbers/{phone}"
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.delete(
+                endpoint,
+                headers=headers,
+                timeout=self.timeout
+            )
+
+            try:
+                result = response.json()
+            except json.JSONDecodeError:
+                return {
+                    "success": False,
+                    "error": f"Respuesta no valida del servicio. Status: {response.status_code}",
+                    "data": None
+                }
+
+            if 200 <= response.status_code < 300:
+                return {
+                    "success": True,
+                    "data": result.get("data", result),
+                    "error": None
+                }
+
+            return {
+                "success": False,
+                "error": result.get("error", f"Error HTTP {response.status_code}"),
+                "data": None
+            }
+
+        except requests.exceptions.Timeout:
+            return {
+                "success": False,
+                "error": f"Timeout al conectar con el servicio de WhatsApp (>{self.timeout}s)",
+                "data": None
+            }
+        except requests.exceptions.ConnectionError:
+            return {
+                "success": False,
+                "error": "Error de conexion con el servicio de WhatsApp",
+                "data": None
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "success": False,
+                "error": f"Error en la peticion: {str(e)}",
+                "data": None
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error inesperado: {str(e)}",
+                "data": None
+            }
+
 
 # Instancia global del cliente
 whatsapp_client = WhatsAppServiceClient()
