@@ -272,6 +272,16 @@ class UsuarioRepository:
             return result.modified_count > 0
         except Exception as e:
             raise Exception(f"Error eliminando usuario: {str(e)}")
+
+    def delete(self, usuario_id):
+        """Elimina un usuario de forma permanente"""
+        try:
+            if isinstance(usuario_id, str):
+                usuario_id = ObjectId(usuario_id)
+            result = self.collection.delete_one({"_id": usuario_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            raise Exception(f"Error eliminando usuario: {str(e)}")
     
     def count_by_empresa(self, empresa_id):
         """Cuenta los usuarios activos de una empresa"""

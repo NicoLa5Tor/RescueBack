@@ -485,8 +485,8 @@ class UsuarioService:
                     'status_code': 403
                 }
             
-            # Eliminar usuario (soft delete)
-            deleted = self.usuario_repository.soft_delete(usuario_id)
+            # Eliminar usuario (hard delete)
+            deleted = self.usuario_repository.delete(usuario_id)
             if deleted:
                 if usuario:
                     self._delete_whatsapp_number(usuario.telefono)
