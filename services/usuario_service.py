@@ -115,7 +115,7 @@ class UsuarioService:
                     especialidades=usuario_data.get('especialidades'),
                     certificaciones=usuario_data.get('certificaciones'),
                     tipo_turno=usuario_data.get('tipo_turno'),
-                    telefono=usuario_data.get('telefono'),
+                    telefono=usuario_inactivo.telefono,
                     email=usuario_data.get('email'),
                     sede=sede,
                     _id=usuario_inactivo._id
