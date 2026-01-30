@@ -7,7 +7,11 @@ from controllers.hardware_type_controller import HardwareTypeController
 from controllers.tipo_empresa_controller import tipo_empresa_controller
 from controllers.tipo_alarma_controller import tipo_alarma_bp
 from controllers.super_admin_dashboard_controller import SuperAdminDashboardController
-from utils.permissions import require_empresa_or_admin_token, require_empresa_token
+from utils.permissions import (
+    require_empresa_or_admin_token,
+    require_empresa_token,
+    require_super_admin_token,
+)
 
 # ========== BLUEPRINT DE AUTENTICACIÓN ==========
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -280,7 +284,7 @@ def update_usuario_by_empresa(empresa_id, usuario_id):
     return multitenant_controller.update_usuario_by_empresa(empresa_id, usuario_id)
 
 @multitenant_bp.route('/<empresa_id>/usuarios/<usuario_id>', methods=['DELETE'])
-@require_empresa_or_admin_token
+@require_super_admin_token
 def delete_usuario_by_empresa(empresa_id, usuario_id):
     """DELETE /empresas/<empresa_id>/usuarios/<usuario_id> - Eliminar usuario"""
     return multitenant_controller.delete_usuario_by_empresa(empresa_id, usuario_id)
