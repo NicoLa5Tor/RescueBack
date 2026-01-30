@@ -455,12 +455,35 @@ class UsuarioService:
     def delete_usuario_for_empresa(self, usuario_id, empresa_id):
         """Elimina un usuario de una empresa específica"""
         try:
-            # Verificar que la empresa y usuario existen
-            existing_result = self.get_usuario_by_id_and_empresa(usuario_id, empresa_id)
-            if not existing_result['success']:
-                return existing_result
+            # Verificar que la empresa existe
+            if isinstance(empresa_id, str):
+                empresa_id_obj = ObjectId(empresa_id)
+            else:
+                empresa_id_obj = empresa_id
 
+            empresa = self.empresa_repository.find_by_id_including_inactive(empresa_id_obj)
+            if not empresa:
+                return {
+                    'success': False,
+                    'errors': ['La empresa especificada no existe'],
+                    'status_code': 404
+                }
+
+            # Buscar usuario incluyendo inactivos
             usuario = self.usuario_repository.find_by_id_including_inactive(usuario_id)
+            if not usuario:
+                return {
+                    'success': False,
+                    'errors': ['Usuario no encontrado'],
+                    'status_code': 404
+                }
+
+            if usuario.empresa_id != empresa_id_obj:
+                return {
+                    'success': False,
+                    'errors': ['El usuario no pertenece a esta empresa'],
+                    'status_code': 403
+                }
             
             # Eliminar usuario (soft delete)
             deleted = self.usuario_repository.soft_delete(usuario_id)
