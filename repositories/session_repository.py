@@ -228,3 +228,54 @@ class SessionRepository:
                 'success': False,
                 'errors': [f'Error obteniendo estadísticas: {str(e)}']
             }
+
+    def get_active_session_duration_stats(self):
+        """Promedio de duración de sesiones activas en minutos"""
+        try:
+            pipeline = [
+                {
+                    '$match': {
+                        'active': True,
+                        'expires_at': {'$gt': datetime.utcnow()}
+                    }
+                },
+                {
+                    '$project': {
+                        'duration_ms': {'$subtract': ['$last_used', '$created_at']}
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': None,
+                        'avg_duration_ms': {'$avg': '$duration_ms'},
+                        'active_sessions': {'$sum': 1}
+                    }
+                }
+            ]
+
+            stats = list(self.collection.aggregate(pipeline))
+            if not stats:
+                return {
+                    'success': True,
+                    'data': {
+                        'avg_session_duration': 0,
+                        'active_sessions': 0
+                    }
+                }
+
+            result = stats[0]
+            avg_ms = result.get('avg_duration_ms') or 0
+            avg_minutes = avg_ms / 60000
+            return {
+                'success': True,
+                'data': {
+                    'avg_session_duration': int(round(avg_minutes)),
+                    'active_sessions': result.get('active_sessions', 0)
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error obteniendo duración de sesiones: {str(e)}")
+            return {
+                'success': False,
+                'errors': [f'Error obteniendo duración de sesiones: {str(e)}']
+            }

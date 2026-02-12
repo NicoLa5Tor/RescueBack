@@ -1,3 +1,7 @@
+from datetime import datetime, timedelta
+import random
+import shutil
+import time
 from services.empresa_service import EmpresaService
 from services.usuario_service import UsuarioService
 from services.activity_service import ActivityService
@@ -7,8 +11,8 @@ from repositories.empresa_repository import EmpresaRepository
 from repositories.usuario_repository import UsuarioRepository
 from repositories.hardware_repository import HardwareRepository
 from repositories.activity_repository import ActivityRepository
-from datetime import datetime, timedelta
-import random
+from repositories.session_repository import SessionRepository
+from utils.performance_metrics import get_performance_metrics
 
 class SuperAdminDashboardService:
     """Service para el Super Admin Dashboard"""
@@ -23,6 +27,7 @@ class SuperAdminDashboardService:
         self.usuario_repository = UsuarioRepository()
         self.hardware_repository = HardwareRepository()
         self.activity_repository = ActivityRepository()
+        self.session_repository = SessionRepository()
 
     def get_dashboard_stats(self):
         """Obtiene estadísticas generales del dashboard"""
@@ -348,18 +353,99 @@ class SuperAdminDashboardService:
     def get_system_performance(self):
         """Obtiene métricas de rendimiento del sistema"""
         try:
-            # Generar datos de rendimiento del sistema (mock)
+            uptime_percentage = self._get_uptime_percentage()
+            response_time = self._get_average_response_time_ms()
+            error_rate = self._get_error_rate_percentage()
+            session_stats = self._get_session_stats()
+            cpu_usage = self._get_cpu_usage_percentage()
+            memory_usage = self._get_memory_usage_percentage()
+            disk_usage = self._get_disk_usage_percentage()
+
             performance_data = {
-                'uptime_percentage': round(random.uniform(98.5, 99.9), 2),
-                'response_time': random.randint(150, 500),  # milliseconds
-                'error_rate': round(random.uniform(0.1, 2.0), 2),  # percentage
-                'active_sessions': random.randint(200, 800),
-                'avg_session_duration': random.randint(15, 45),  # minutes
-                'cpu_usage': round(random.uniform(45.0, 85.0), 1),
-                'memory_usage': round(random.uniform(60.0, 90.0), 1),
-                'disk_usage': round(random.uniform(30.0, 70.0), 1)
+                'uptime_percentage': uptime_percentage,
+                'response_time': response_time,  # milliseconds
+                'error_rate': error_rate,  # percentage
+                'active_sessions': session_stats.get('active_sessions', 0),
+                'avg_session_duration': session_stats.get('avg_session_duration', 0),  # minutes
+                'cpu_usage': cpu_usage,
+                'memory_usage': memory_usage,
+                'disk_usage': disk_usage
             }
             
             return {'success': True, 'data': performance_data}
         except Exception as e:
             return {'success': False, 'errors': [str(e)]}
+
+    def _get_uptime_percentage(self, window_seconds=86400):
+        try:
+            with open('/proc/uptime', 'r', encoding='utf-8') as uptime_file:
+                uptime_seconds = float(uptime_file.read().split()[0])
+            percentage = min(100.0, (uptime_seconds / window_seconds) * 100)
+            return round(percentage, 2)
+        except Exception:
+            return 0
+
+    def _get_average_response_time_ms(self):
+        metrics = get_performance_metrics()
+        return int(round(metrics.get_average_response_time_ms()))
+
+    def _get_error_rate_percentage(self):
+        metrics = get_performance_metrics()
+        return round(metrics.get_error_rate_percentage(), 2)
+
+    def _get_session_stats(self):
+        try:
+            result = self.session_repository.get_active_session_duration_stats()
+            if result['success']:
+                return result['data']
+        except Exception:
+            pass
+        return {'active_sessions': 0, 'avg_session_duration': 0}
+
+    def _get_cpu_usage_percentage(self):
+        try:
+            def read_cpu_times():
+                with open('/proc/stat', 'r', encoding='utf-8') as stat_file:
+                    fields = stat_file.readline().split()[1:]
+                times = [int(field) for field in fields]
+                idle = times[3] + times[4]
+                total = sum(times)
+                return idle, total
+
+            idle_1, total_1 = read_cpu_times()
+            time.sleep(0.1)
+            idle_2, total_2 = read_cpu_times()
+
+            idle_delta = idle_2 - idle_1
+            total_delta = total_2 - total_1
+            if total_delta == 0:
+                return 0
+            usage = (1 - (idle_delta / total_delta)) * 100
+            return round(usage, 1)
+        except Exception:
+            return 0
+
+    def _get_memory_usage_percentage(self):
+        try:
+            meminfo = {}
+            with open('/proc/meminfo', 'r', encoding='utf-8') as mem_file:
+                for line in mem_file:
+                    key, value = line.split(':', 1)
+                    meminfo[key] = int(value.strip().split()[0])
+            total = meminfo.get('MemTotal', 0)
+            available = meminfo.get('MemAvailable', 0)
+            if total == 0:
+                return 0
+            used = total - available
+            return round((used / total) * 100, 1)
+        except Exception:
+            return 0
+
+    def _get_disk_usage_percentage(self):
+        try:
+            usage = shutil.disk_usage('/')
+            if usage.total == 0:
+                return 0
+            return round((usage.used / usage.total) * 100, 1)
+        except Exception:
+            return 0

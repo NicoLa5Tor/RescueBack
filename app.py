@@ -1,11 +1,15 @@
+import time
 from flask import Flask, jsonify, request, make_response, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+import jwt
 from core.config import Config
 from core.database import Database
 from core.routes import register_routes
 from services.activity_service import ActivityService
 from core.swagger_config import api_bp
+from utils.performance_metrics import get_performance_metrics
+from utils.auth_utils import get_auth_header
 
 def create_app():
     """Factory function para crear la aplicación Flask"""
@@ -53,6 +57,7 @@ def create_app():
     @app.before_request
     def handle_options_requests():
         """Responde a las peticiones OPTIONS para evitar errores 404"""
+        g.request_start = time.perf_counter()
         if request.method == 'OPTIONS':
             response = make_response()
             response.status_code = 204
@@ -63,7 +68,13 @@ def create_app():
     @app.after_request
     def after_request_handler(response):
         """Agrega encabezados CORS y registra actividad"""
+        start_time = getattr(g, 'request_start', None)
+        if start_time is not None:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            get_performance_metrics().record(duration_ms, response.status_code)
         empresa_id = getattr(g, 'empresa_id', None)
+        if not empresa_id:
+            empresa_id = _get_empresa_id_from_request()
         if empresa_id:
             activity_service.log(str(empresa_id), request.method, request.path)
         
@@ -88,6 +99,24 @@ def create_app():
         response.headers.setdefault('Access-Control-Allow-Methods',
                                    'GET,POST,PUT,DELETE,OPTIONS')
         return response
+
+    def _get_empresa_id_from_request():
+        auth_token = request.cookies.get('auth_token')
+        if not auth_token:
+            auth_token = get_auth_header(request)
+            if auth_token == 'cookie_auth':
+                auth_token = None
+        if not auth_token:
+            return None
+
+        try:
+            claims = jwt.decode(auth_token, Config.JWT_SECRET_KEY, algorithms=['HS256'])
+        except Exception:
+            return None
+
+        if claims.get('role') != 'empresa':
+            return None
+        return claims.get('sub')
     
     # Inicializar base de datos
     db = Database()

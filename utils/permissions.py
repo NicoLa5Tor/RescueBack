@@ -130,6 +130,7 @@ def require_empresa_token(f):
             
             g.user_id = claims.get('sub')
             g.role = "empresa"
+            g.empresa_id = g.user_id
             return f(*args, **kwargs)
             
         except Exception as e:
@@ -186,6 +187,8 @@ def require_empresa_or_admin_token(f):
             if role in ["empresa", "super_admin"]:
                 g.user_id = claims.get('sub')
                 g.role = role
+                if role == "empresa":
+                    g.empresa_id = g.user_id
             else:
                 return (
                     jsonify({"success": False, "errors": ["Permisos insuficientes"]}),
