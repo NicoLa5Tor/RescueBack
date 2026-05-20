@@ -95,7 +95,7 @@ class MqttAlertController:
         tipo_alarma_payload = None
 
         if tipo_alarma_info:
-            resolved_value = (tipo_alarma_info.color_alerta or tipo_alarma_info.tipo_alerta)
+            resolved_value = (tipo_alarma_info.tipo_alerta or tipo_alarma_info.color_alerta)
             if isinstance(resolved_value, str):
                 resolved_value = resolved_value.strip().upper()
             resolved_id = str(tipo_alarma_info._id) if getattr(tipo_alarma_info, '_id', None) else resolved_id
