@@ -45,3 +45,6 @@ class Config:
     # Configuración del servicio de WhatsApp
     WHATSAPP_SERVICE_URL = os.getenv('WHATSAPP_SERVICE_URL', 'http://localhost:5050/api')
     WHATSAPP_SERVICE_TIMEOUT = int(os.getenv('WHATSAPP_SERVICE_TIMEOUT', 30))
+
+    # URL interna del servicio MQTT/WebSocket para fanout
+    MQTT_SERVICE_URL = os.getenv('MQTT_SERVICE_URL', 'http://rescue-websocket:8081')

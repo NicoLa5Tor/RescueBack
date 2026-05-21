@@ -14,6 +14,22 @@ class MqttAlertController:
         self.service = MqttAlertService()
         self.hardware_auth_service = HardwareAuthService()
 
+    def _notify_mqtt_fanout(self, alert_data: dict) -> None:
+        """Notificar a MqttConnection para fanout MQTT - fire and forget en hilo separado"""
+        import threading
+        import requests as _requests
+        import logging as _logging
+        from core.config import Config
+
+        def _fire():
+            try:
+                url = f"{Config.MQTT_SERVICE_URL}/internal/fanout-alert"
+                _requests.post(url, json=alert_data, timeout=5)
+            except Exception as e:
+                _logging.getLogger(__name__).warning("Fanout MQTT no disponible: %s", e)
+
+        threading.Thread(target=_fire, daemon=True).start()
+
     def _extract_tipo_alerta_identifiers(self, raw_tipo_alerta):
         """Extrae identificadores válidos desde el payload recibido."""
         tipo_alerta_id = None
@@ -1351,7 +1367,10 @@ class MqttAlertController:
             
             # Guardar en base de datos
             created_alert = self.service.alert_repo.create_alert(alert)
-            
+
+            # Fanout MQTT: notificar a MqttConnection via HTTP interno (fire-and-forget)
+            self._notify_mqtt_fanout(created_alert.to_json())
+
             # Respuesta exitosa unificada
             return jsonify({
                 'success': True,
