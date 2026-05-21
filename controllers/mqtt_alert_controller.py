@@ -76,12 +76,15 @@ class MqttAlertController:
                 search_values.append(alt_value)
 
         if empresa_id:
-            for value in search_values:
-                tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_color(empresa_id, value)
-                if tipo_alarma_info:
-                    break
-            if not tipo_alarma_info and tipo_alerta_value:
+            # Buscar por nombre primero (hardware siempre manda el nombre)
+            if tipo_alerta_value:
                 tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_nombre(empresa_id, tipo_alerta_value)
+            # Fallback: buscar por color/tipo_alerta (ROJO, #FF0000, etc.)
+            if not tipo_alarma_info:
+                for value in search_values:
+                    tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_color(empresa_id, value)
+                    if tipo_alarma_info:
+                        break
         else:
             if not tipo_alarma_info and normalized_value:
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(normalized_value)
