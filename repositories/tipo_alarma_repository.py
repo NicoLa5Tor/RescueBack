@@ -287,6 +287,27 @@ class TipoAlarmaRepository:
         except Exception:
             return None
 
+    def find_by_empresa_and_nombre(self, empresa_id, nombre):
+        """Busca un tipo de alarma activo por nombre dentro de una empresa (o global)."""
+        try:
+            if not empresa_id or not nombre or not str(nombre).strip():
+                return None
+
+            regex = {'$regex': f'^{re.escape(str(nombre).strip())}$', '$options': 'i'}
+            query = {
+                'activo': True,
+                'nombre': regex,
+                '$or': [
+                    {'empresa_id': ObjectId(empresa_id)}
+                ] + self._global_conditions()
+            }
+            tipo_alarma_data = self.collection.find_one(query)
+            if tipo_alarma_data:
+                return TipoAlarma.from_dict(tipo_alarma_data)
+            return None
+        except Exception:
+            return None
+
     def update_tipo_alarma(self, tipo_alarma_id, tipo_alarma):
         """Actualiza un tipo de alarma"""
         try:

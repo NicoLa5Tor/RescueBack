@@ -43,20 +43,25 @@ class HardwareAuthService:
             # print(f"   Tipo Hardware: {tipo_hardware_normalizado}")
             # print(f"   Tópico: {empresa_nombre}/{sede_nombre}/{tipo_hardware_normalizado}/{hardware_nombre}")
             
-            # PASO 1: Verificar que el hardware existe (normalizar nombres quitando espacios)
+            # PASO 1: Verificar que el hardware existe
+            # Buscar por nombre exacto primero; si no encuentra, hacer búsqueda normalizada
             hardware_nombre_normalizado = hardware_nombre.strip().replace(' ', '')
-            
-            # Buscar hardware comparando nombres sin espacios
-            hardware_cursor = self.db.hardware.find({
+
+            hardware = self.db.hardware.find_one({
+                'nombre': hardware_nombre,
                 'activa': True
             })
-            
-            hardware = None
-            for hw in hardware_cursor:
-                hw_nombre_normalizado = hw.get('nombre', '').strip().replace(' ', '')
-                if hw_nombre_normalizado == hardware_nombre_normalizado:
-                    hardware = hw
-                    break
+
+            if not hardware:
+                # Fallback: búsqueda por nombre sin espacios (nombres con espacios en DB)
+                hardware_cursor = self.db.hardware.find(
+                    {'activa': True, 'nombre': {'$regex': f'^.{{1,100}}$'}},
+                    {'nombre': 1, 'topic': 1}
+                )
+                for hw in hardware_cursor:
+                    if hw.get('nombre', '').strip().replace(' ', '') == hardware_nombre_normalizado:
+                        hardware = self.db.hardware.find_one({'_id': hw['_id']})
+                        break
             
             if not hardware:
                 return {
@@ -70,8 +75,13 @@ class HardwareAuthService:
             # PASO 2: Verificar que el tópico coincide con el guardado
             topico_recibido = f"{empresa_nombre}/{sede_nombre}/{tipo_hardware_normalizado}/{hardware_nombre}"
             topico_guardado = hardware.get('topic', '')
-            
+
             if topico_recibido != topico_guardado:
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    "Topic mismatch hardware=%s recibido=%r guardado=%r",
+                    hardware_nombre, topico_recibido, topico_guardado
+                )
                 return {
                     'success': False,
                     'error': 'Credenciales inválidas',

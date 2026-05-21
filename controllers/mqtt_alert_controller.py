@@ -80,6 +80,8 @@ class MqttAlertController:
                 tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_color(empresa_id, value)
                 if tipo_alarma_info:
                     break
+            if not tipo_alarma_info and tipo_alerta_value:
+                tipo_alarma_info = tipo_alarma_repo.find_by_empresa_and_nombre(empresa_id, tipo_alerta_value)
         else:
             if not tipo_alarma_info and normalized_value:
                 tipo_alarma_info = tipo_alarma_repo.find_by_tipo_alerta(normalized_value)
