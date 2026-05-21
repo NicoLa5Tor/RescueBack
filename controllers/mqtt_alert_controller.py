@@ -1186,7 +1186,16 @@ class MqttAlertController:
                 
                 # Para empresas, no necesitamos un usuario_id específico, usaremos el ID de la empresa
                 usuario_id = empresa_id_creador
-            
+
+            # Re-resolver tipo_alerta con empresa_id ahora que tenemos la empresa
+            # La primera llamada fue sin empresa_id; esta garantiza búsqueda por nombre/color scoped
+            if empresa and not tipo_alerta_details.get('tipo_alarma_info'):
+                scoped_details = self._resolve_tipo_alerta(raw_tipo_alerta, empresa._id)
+                if scoped_details.get('tipo_alarma_info'):
+                    tipo_alarma_info = scoped_details['tipo_alarma_info']
+                    tipo_alarma_payload = scoped_details['tipo_alarma_payload']
+                    resolved_tipo_alerta = scoped_details['tipo_alerta_resolved'] or resolved_tipo_alerta
+
             # Obtener prioridad (opcional)
             prioridad = data.get('prioridad', 'media')
             
