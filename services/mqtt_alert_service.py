@@ -12,31 +12,38 @@ class MqttAlertService:
         self.usuario_repo = UsuarioRepository()
     
     def process_mqtt_message(self, mqtt_data):
-        """Procesa un mensaje MQTT y crea alertas"""
+        """Procesa un mensaje MQTT y crea una alerta"""
         try:
-            results = []
-            
-            # Verificar si es un mensaje con múltiples empresas
-            if isinstance(mqtt_data, dict):
-                for empresa_nombre, empresa_data in mqtt_data.items():
-                    if isinstance(empresa_data, dict):
-                        for tipo_alerta, datos_hardware in empresa_data.items():
-                            result = self._create_alert_from_mqtt(
-                                empresa_nombre, 
-                                tipo_alerta, 
-                                datos_hardware,
-                                mqtt_data
-                            )
-                            results.append(result)
-            
-            return results
+            if not isinstance(mqtt_data, dict):
+                return {'success': False, 'error': 'Formato de datos inválido'}
+
+            empresa = mqtt_data.get('empresa') or ''
+            sede = mqtt_data.get('sede') or ''
+            tipo_hardware = mqtt_data.get('tipo_hardware') or ''
+            nombre_hardware = mqtt_data.get('nombre_hardware') or ''
+            data = mqtt_data.get('data') or {}
+
+            tipo_alerta = data.get('tipo_alarma') or ''
+
+            datos_hardware = {
+                'nombre': nombre_hardware,
+                'sede': sede,
+                'tipo': tipo_hardware,
+            }
+
+            result = self._create_alert_from_mqtt(
+                empresa_nombre=empresa,
+                tipo_alerta=tipo_alerta,
+                datos_hardware=datos_hardware,
+                mensaje_original=mqtt_data
+            )
+            return result
         except Exception as e:
-            # print(f"Error procesando mensaje MQTT: {e}")
-            return [{
+            return {
                 'success': False,
                 'error': str(e),
                 'message': 'Error procesando mensaje MQTT'
-            }]
+            }
     
     def _create_alert_from_mqtt(self, empresa_nombre, tipo_alerta, datos_hardware, mensaje_original):
         """Crea una alerta desde datos MQTT"""
@@ -171,8 +178,24 @@ class MqttAlertService:
                     'embarcado': False
                 })
             
-            # Extraer topics de otros hardware (vacío por ahora para MQTT)
+            # Obtener topics de otros hardware (excluir botoneras) para fanout MQTT
             topics_otros_hardware = []
+            try:
+                empresa_data_local = verification_info.get('empresa_data') or {}
+                empresa_id_local = empresa_data_local.get('_id')
+                if empresa_id_local and sede_final:
+                    from repositories.hardware_repository import HardwareRepository
+                    hw_repo = HardwareRepository()
+                    todos_hw = hw_repo.find_with_filters({
+                        'empresa_id': empresa_id_local,
+                        'sede': sede_final,
+                    })
+                    topics_otros_hardware = [
+                        hw.topic for hw in todos_hw
+                        if hw.topic and hw.tipo.upper() != 'BOTONERA'
+                    ]
+            except Exception:
+                topics_otros_hardware = []
             
             # Crear la alerta usando el método de fábrica actualizado
             alert = MqttAlert.create_from_hardware(

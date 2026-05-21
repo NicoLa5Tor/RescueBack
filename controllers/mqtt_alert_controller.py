@@ -183,7 +183,12 @@ class MqttAlertController:
             
             # Procesar mensaje
             result = self.service.process_mqtt_message(data)
-            
+
+            if result.get('success') and result.get('alert_id'):
+                alert_obj = self.service.alert_repo.get_alert_by_id(result['alert_id'])
+                if alert_obj:
+                    return jsonify({'success': True, 'alert': alert_obj.to_json()}), 200
+
             return jsonify(result), 200
             
         except Exception as e:
